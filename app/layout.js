@@ -14,8 +14,14 @@ const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata = {
-  title: "rccolamachine",
-  description: "Rob’s personal site for photos, projects, and experiments.",
+  title: "Rob Chapleski | Quality Engineering & Creative Code",
+  description: "Lead SDET. Automation Architect. Vaporwave builder.",
+  openGraph: {
+    title: "Rob Chapleski",
+    description: "Automation engineering meets arcade aesthetics.",
+    url: "https://rccolamachine.com",
+    siteName: "rccolamachine",
+  },
 };
 
 export default function RootLayout({ children }) {
