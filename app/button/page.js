@@ -387,6 +387,12 @@ export default function ButtonGamePage() {
     marginRight: "calc(50% - 50vw)",
   };
 
+  // ✅ Shared “inner” width for ALL sections so columns line up
+  const innerStyle = {
+    width: "min(1100px, 92vw)",
+    margin: "0 auto",
+  };
+
   const bigBtnStyle = {
     padding: "18px 22px",
     borderRadius: 18,
@@ -428,51 +434,49 @@ export default function ButtonGamePage() {
       ) : null}
 
       {/* FULL-BLEED CONTROLS ROW */}
-      <div
-        style={{
-          ...fullBleedStyle,
-          marginTop: 16,
-        }}
-      >
+      <div style={{ ...fullBleedStyle, marginTop: 16 }}>
         <div
           style={{
-            padding: "14px 16px",
+            padding: "14px 0",
             borderTop: "1px solid rgba(255,255,255,0.10)",
             borderBottom: "1px solid rgba(255,255,255,0.10)",
             background:
               "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))",
           }}
         >
-          <div
-            style={{
-              maxWidth: 1100,
-              margin: "0 auto",
-              display: "grid",
-              gap: 12,
-              placeItems: "center", // ✅ centers contents in the row
-              gridTemplateColumns: "1fr", // ✅ single column
-            }}
-          >
+          <div style={innerStyle}>
+            {/* ✅ MATCH THE STATS ROW GRID EXACTLY */}
             <div
               style={{
-                display: "flex",
+                display: "grid",
                 gap: 12,
-                flexWrap: "wrap",
-                justifyContent: "center", // ✅ centers the buttons as a group
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                alignItems: "stretch",
               }}
             >
               <button
                 className="btn"
                 onClick={handleIncrement}
-                style={bigBtnStyle}
+                style={{
+                  ...bigBtnStyle,
+                  width: "100%", // ✅ fill the column
+                  minWidth: 0, // ✅ don’t fight the grid
+                  justifyContent: "center",
+                }}
               >
                 Increment <br />
                 (Current += 1)
               </button>
+
               <button
                 className="btn"
                 onClick={openResetModal}
-                style={bigBtnStyle}
+                style={{
+                  ...bigBtnStyle,
+                  width: "100%",
+                  minWidth: 0,
+                  justifyContent: "center",
+                }}
               >
                 Reset <br />
                 (Current = 0)
@@ -482,34 +486,38 @@ export default function ButtonGamePage() {
         </div>
       </div>
 
-      {/* STATS ROW */}
-      <div
-        style={{
-          marginTop: 14,
-          display: "grid",
-          gap: 12,
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        }}
-      >
-        <div className="card">
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Current</div>
-          <div style={{ fontSize: 42, lineHeight: 1.1, marginTop: 6 }}>
-            {displayValue}
-          </div>
-          {pendingUi ? (
-            <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
-              pending +{pendingUi}
-            </div>
-          ) : null}
-        </div>
+      {/* STATS ROW (wrapped in same innerStyle so it aligns with controls row) */}
+      <div style={{ ...innerStyle, marginTop: 14 }}>
+        <div
+          style={{
+            display: "grid",
+            gap: 12,
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            alignItems: "stretch",
+          }}
+        >
+          <div className="card" style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>Current</div>
 
-        <div className="card">
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Max</div>
-          <div style={{ fontSize: 42, lineHeight: 1.1, marginTop: 6 }}>
-            {max}
+            <div style={{ fontSize: 42, lineHeight: 1.1, marginTop: 6 }}>
+              {displayValue}
+            </div>
+
+            {pendingUi ? (
+              <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
+                pending +{pendingUi}
+              </div>
+            ) : null}
           </div>
-          <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
-            {maxAt ? new Date(maxAt).toLocaleString() : "—"}
+
+          <div className="card">
+            <div style={{ fontSize: 12, opacity: 0.8 }}>Max</div>
+            <div style={{ fontSize: 42, lineHeight: 1.1, marginTop: 6 }}>
+              {max}
+            </div>
+            <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
+              {maxAt ? new Date(maxAt).toLocaleString() : "—"}
+            </div>
           </div>
         </div>
       </div>
@@ -560,7 +568,6 @@ export default function ButtonGamePage() {
                     opacity: 10,
                     background: "rgba(0,0,0,0.18)",
                     textShadow: "0 2px 0 rgba(0,0,0,0.55)",
-                    // mixBlendMode: "multiply", // looks great on light photos
                   }}
                 >
                   CLICKED RESET
