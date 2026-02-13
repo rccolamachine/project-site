@@ -154,12 +154,12 @@ export default function AboutPage() {
           <div className="aboutLinks">
             <div className="aboutLinkRow">
               <span className="aboutLinkLabel">GitHub</span>
-              <span className="aboutLinkValue">github.com/YOUR_HANDLE</span>
+              <span className="aboutLinkValue">github.com/rccolamachine</span>
             </div>
             <div className="aboutLinkRow">
               <span className="aboutLinkLabel">LinkedIn</span>
               <span className="aboutLinkValue">
-                linkedin.com/in/YOUR_HANDLE
+                linkedin.com/in/robert-chapleski
               </span>
             </div>
             <div className="aboutLinkRow">

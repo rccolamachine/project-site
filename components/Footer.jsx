@@ -6,11 +6,19 @@ export default function Footer() {
         <span className="dot">•</span>
         <span>rccolamachine</span>
         <span className="dot">•</span>
-        <a href="https://github.com/" target="_blank" rel="noreferrer">
+        <a
+          href="https://github.com/rccolamachine"
+          target="_blank"
+          rel="noreferrer"
+        >
           GitHub
         </a>
         <span className="dot">•</span>
-        <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">
+        <a
+          href="https://www.linkedin.com/in/robert-chapleski"
+          target="_blank"
+          rel="noreferrer"
+        >
           LinkedIn
         </a>
       </div>

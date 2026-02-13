@@ -268,7 +268,7 @@ export default function ResumePage() {
                 </a>
                 <span className="dot">•</span>
                 <a
-                  href="https://github.com/YOUR_HANDLE"
+                  href="https://github.com/rccolamachine"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -287,7 +287,7 @@ export default function ResumePage() {
               {/* print: raw URLs */}
               <span className="printOnly">
                 linkedin.com/in/robert-chapleski <span className="dot">•</span>{" "}
-                github.com/YOUR_HANDLE <span className="dot">•</span>{" "}
+                github.com/rccolamachine <span className="dot">•</span>{" "}
                 rccolamachine.com
               </span>
             </div>
