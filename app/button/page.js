@@ -2,10 +2,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-function clamp(v, a, b) {
-  return Math.max(a, Math.min(b, v));
-}
-
 const inputStyle = {
   width: "100%",
   padding: "10px 12px",
@@ -23,6 +19,23 @@ async function fetchState() {
   return r.json();
 }
 
+function normalizeShame(shame) {
+  const arr = Array.isArray(shame) ? shame : [];
+  return arr
+    .map((x) => {
+      if (!x) return null;
+      if (typeof x === "string") {
+        try {
+          return JSON.parse(x);
+        } catch {
+          return null;
+        }
+      }
+      return x;
+    })
+    .filter(Boolean);
+}
+
 export default function ButtonGamePage() {
   // shared state from server
   const [value, setValue] = useState(0);
@@ -37,11 +50,16 @@ export default function ButtonGamePage() {
   const timerRef = useRef(null);
   const [pendingUi, setPendingUi] = useState(0);
 
+  // state sync dedupe/cooldown
+  const stateInFlightRef = useRef(null);
+  const lastStateAtRef = useRef(0);
+
   // reset modal
   const [showReset, setShowReset] = useState(false);
   const [resetName, setResetName] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
-  const [resetError, setResetError] = useState("");
+  const [resetError, setResetError] = useState(""); // validation/server errors
+  const [cameraError, setCameraError] = useState(""); // camera permission/device errors
   const [snapDataUrl, setSnapDataUrl] = useState("");
 
   // camera
@@ -53,31 +71,67 @@ export default function ButtonGamePage() {
 
   const displayValue = useMemo(() => value + pendingUi, [value, pendingUi]);
 
-  // initial load + light polling
+  const applyState = (s) => {
+    setValue(Number(s?.value ?? 0));
+    setMax(Number(s?.max ?? 0));
+    setMaxAt(String(s?.maxAt ?? ""));
+    setShame(normalizeShame(s?.shame));
+  };
+
+  const syncState = async (opts = {}) => {
+    const { force = false, minGapMs = 2000 } = opts;
+    const now = Date.now();
+
+    if (!force && now - lastStateAtRef.current < minGapMs) return;
+    if (stateInFlightRef.current) return stateInFlightRef.current;
+
+    stateInFlightRef.current = (async () => {
+      lastStateAtRef.current = Date.now();
+      const s = await fetchState();
+      applyState(s);
+      setErr("");
+      return s;
+    })()
+      .catch((e) => {
+        setErr(e?.message || String(e));
+        throw e;
+      })
+      .finally(() => {
+        stateInFlightRef.current = null;
+      });
+
+    return stateInFlightRef.current;
+  };
+
+  // initial load + light polling (deduped + only when visible)
   useEffect(() => {
     let alive = true;
 
-    const load = async () => {
+    const load = async (force = false) => {
       try {
-        setErr("");
-        const s = await fetchState();
         if (!alive) return;
-        setValue(s.value || 0);
-        setMax(s.max || 0);
-        setMaxAt(s.maxAt || "");
-        setShame(Array.isArray(s.shame) ? s.shame : []);
-      } catch (e) {
-        if (!alive) return;
-        setErr(e?.message || String(e));
+        await syncState({ force, minGapMs: 1500 });
+      } catch {
+        // err already set
       }
     };
 
-    load();
-    const t = setInterval(load, 4000);
+    load(true);
+
+    const t = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      load(false);
+    }, 15000);
+
+    const onVis = () => {
+      if (document.visibilityState === "visible") load(true);
+    };
+    document.addEventListener("visibilitychange", onVis);
 
     return () => {
       alive = false;
       clearInterval(t);
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
 
@@ -105,14 +159,9 @@ export default function ButtonGamePage() {
       setMaxAt(String(j.maxAt ?? ""));
       setErr("");
     } catch (e) {
-      // If increment fails, resync from server
       setErr(e?.message || String(e));
       try {
-        const s = await fetchState();
-        setValue(s.value || 0);
-        setMax(s.max || 0);
-        setMaxAt(s.maxAt || "");
-        setShame(Array.isArray(s.shame) ? s.shame : []);
+        await syncState({ force: true });
       } catch {}
     }
   };
@@ -131,7 +180,6 @@ export default function ButtonGamePage() {
     }
   };
 
-  // reset click should cancel pending batch and resync (per your rule)
   const openResetModal = async () => {
     // cancel pending increments and revert optimistic UI
     if (timerRef.current) {
@@ -141,17 +189,15 @@ export default function ButtonGamePage() {
     pendingRef.current = 0;
     setPendingUi(0);
 
-    // resync state so user sees the real current counter before reset
+    // resync before showing modal (deduped)
     try {
-      const s = await fetchState();
-      setValue(s.value || 0);
-      setMax(s.max || 0);
-      setMaxAt(s.maxAt || "");
-      setShame(Array.isArray(s.shame) ? s.shame : []);
+      await syncState({ force: true });
     } catch {}
 
     setResetError("");
+    setCameraError("");
     setSnapDataUrl("");
+    setResetName("");
     setShowReset(true);
   };
 
@@ -163,7 +209,7 @@ export default function ButtonGamePage() {
 
     const start = async () => {
       try {
-        setResetError("");
+        setCameraError("");
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "user" },
           audio: false,
@@ -203,7 +249,7 @@ export default function ButtonGamePage() {
 
         rafRef.current = requestAnimationFrame(draw);
       } catch (e) {
-        setResetError(
+        setCameraError(
           e?.name === "NotAllowedError"
             ? "Camera permission denied."
             : `Camera error: ${e?.message || String(e)}`,
@@ -254,19 +300,26 @@ export default function ButtonGamePage() {
 
     const url = snap.toDataURL("image/png");
     setSnapDataUrl(url);
+    setResetError("");
   };
 
   const handleDiscard = () => {
     setSnapDataUrl("");
   };
 
+  const canSubmitReset =
+    !resetBusy && !cameraError && resetName.trim().length > 0 && !!snapDataUrl;
+
   const submitReset = async () => {
     const name = resetName.trim();
     if (!name) return setResetError("Name is required.");
     if (!snapDataUrl) return setResetError("Photo is required. Click Snap.");
+    if (cameraError) return setResetError("Camera is not available.");
 
     setResetBusy(true);
     setResetError("");
+
+    const before = value;
 
     try {
       const r = await fetch("/api/counter/reset", {
@@ -282,19 +335,35 @@ export default function ButtonGamePage() {
 
       // close modal
       setShowReset(false);
+      setResetBusy(false);
       setSnapDataUrl("");
       setResetName("");
-      setResetBusy(false);
+      setCameraError("");
+      setResetError("");
 
-      // update local state
+      // immediate UI update
       setValue(0);
 
-      // refresh shame + max
-      const s = await fetchState();
-      setValue(s.value || 0);
-      setMax(s.max || 0);
-      setMaxAt(s.maxAt || "");
-      setShame(Array.isArray(s.shame) ? s.shame : []);
+      // optimistic shame insert from API (preferred)
+      if (j?.entry) {
+        setShame((prev) => [j.entry, ...(Array.isArray(prev) ? prev : [])]);
+      } else {
+        setShame((prev) => [
+          {
+            id: `local-${Date.now()}`,
+            name,
+            photoDataUrl: snapDataUrl,
+            resetAt: new Date().toISOString(),
+            beforeValue: before,
+          },
+          ...(Array.isArray(prev) ? prev : []),
+        ]);
+      }
+
+      // resync soon (deduped) to ensure authoritative state
+      setTimeout(() => {
+        syncState({ force: true }).catch(() => {});
+      }, 1200);
     } catch (e) {
       setResetError(e?.message || String(e));
       setResetBusy(false);
@@ -310,6 +379,22 @@ export default function ButtonGamePage() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [showReset, resetBusy]);
+
+  // Full-bleed helper: breaks out of any centered container
+  const fullBleedStyle = {
+    width: "100vw",
+    marginLeft: "calc(50% - 50vw)",
+    marginRight: "calc(50% - 50vw)",
+  };
+
+  const bigBtnStyle = {
+    padding: "18px 22px",
+    borderRadius: 18,
+    fontSize: 18,
+    fontWeight: 800,
+    minWidth: 200,
+    letterSpacing: 0.2,
+  };
 
   return (
     <section className="page">
@@ -342,12 +427,68 @@ export default function ButtonGamePage() {
         </div>
       ) : null}
 
+      {/* FULL-BLEED CONTROLS ROW */}
+      <div
+        style={{
+          ...fullBleedStyle,
+          marginTop: 16,
+        }}
+      >
+        <div
+          style={{
+            padding: "14px 16px",
+            borderTop: "1px solid rgba(255,255,255,0.10)",
+            borderBottom: "1px solid rgba(255,255,255,0.10)",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 1100,
+              margin: "0 auto",
+              display: "grid",
+              gap: 12,
+              placeItems: "center", // ✅ centers contents in the row
+              gridTemplateColumns: "1fr", // ✅ single column
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: 12,
+                flexWrap: "wrap",
+                justifyContent: "center", // ✅ centers the buttons as a group
+              }}
+            >
+              <button
+                className="btn"
+                onClick={handleIncrement}
+                style={bigBtnStyle}
+              >
+                Increment <br />
+                (Current += 1)
+              </button>
+              <button
+                className="btn"
+                onClick={openResetModal}
+                style={bigBtnStyle}
+              >
+                Reset <br />
+                (Current = 0)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* STATS ROW */}
       <div
         style={{
           marginTop: 14,
           display: "grid",
           gap: 12,
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
         }}
       >
         <div className="card">
@@ -371,49 +512,74 @@ export default function ButtonGamePage() {
             {maxAt ? new Date(maxAt).toLocaleString() : "—"}
           </div>
         </div>
-
-        <div className="card">
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Controls</div>
-          <div
-            style={{
-              marginTop: 10,
-              display: "flex",
-              gap: 10,
-              flexWrap: "wrap",
-            }}
-          >
-            <button className="btn" onClick={handleIncrement}>
-              Increment
-            </button>
-            <button className="btn" onClick={openResetModal}>
-              Reset
-            </button>
-          </div>
-          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.8 }}>
-            Reset requires a snapped photo + name.
-          </div>
-        </div>
       </div>
 
       <h2 style={{ marginTop: 18 }}>Wall of Shame</h2>
       <div className="grid" style={{ marginTop: 12 }}>
         {shame?.length ? (
-          shame.map((e) => (
-            <figure key={e.id} className="tile">
-              <img src={e.photoDataUrl} alt={`${e.name} reset`} />
-              <figcaption>
-                <div className="capTitle">{e.name}</div>
-                <div className="capMeta">
-                  reset at{" "}
-                  {e.resetAt ? new Date(e.resetAt).toLocaleString() : "—"}
+          shame.slice(0, 9).map((e, i) => {
+            const photo = e.photoDataUrl || e.photo || e.photo_url || "";
+            const key = e.id ?? `${e.resetAt ?? "x"}-${i}`;
+            return (
+              <figure
+                key={key}
+                className="tile"
+                style={{ position: "relative", overflow: "hidden" }}
+              >
+                {photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photo} alt={`${e.name || "Someone"} reset`} />
+                ) : (
+                  <div style={{ padding: 16, opacity: 0.8 }}>
+                    (no photo returned by API)
+                  </div>
+                )}
+
+                {/* DIAGONAL STAMP */}
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    left: "-12%",
+                    top: "18%",
+                    width: "130%",
+                    transform: "rotate(-25deg)",
+                    textAlign: "center",
+                    pointerEvents: "none",
+
+                    color: "#ff2a2a",
+                    border: "4px solid #ff2a2a",
+                    borderRadius: 10,
+                    padding: "10px 0",
+
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    fontSize: 25,
+                    textTransform: "uppercase",
+
+                    opacity: 10,
+                    background: "rgba(0,0,0,0.18)",
+                    textShadow: "0 2px 0 rgba(0,0,0,0.55)",
+                    // mixBlendMode: "multiply", // looks great on light photos
+                  }}
+                >
+                  CLICKED RESET
                 </div>
-                <div className="capMeta">
-                  value before reset:{" "}
-                  <strong>{Number(e.beforeValue ?? 0)}</strong>
-                </div>
-              </figcaption>
-            </figure>
-          ))
+
+                <figcaption>
+                  <div className="capTitle">{e.name || "—"}</div>
+                  <div className="capMeta">
+                    reset at{" "}
+                    {e.resetAt ? new Date(e.resetAt).toLocaleString() : "—"}
+                  </div>
+                  <div className="capMeta">
+                    value before reset:{" "}
+                    <strong>{Number(e.beforeValue ?? 0)}</strong>
+                  </div>
+                </figcaption>
+              </figure>
+            );
+          })
         ) : (
           <div style={{ opacity: 0.8 }}>
             No resets yet. Incredible restraint.
@@ -493,7 +659,6 @@ export default function ButtonGamePage() {
                     background: "#000",
                   }}
                 >
-                  {/* live tiny canvas scaled up via CSS for pixel look */}
                   <canvas
                     ref={liveCanvasRef}
                     style={{
@@ -518,7 +683,12 @@ export default function ButtonGamePage() {
                   <button
                     className="btn"
                     onClick={handleSnap}
-                    disabled={resetBusy || !!resetError}
+                    disabled={resetBusy || !!cameraError}
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 14,
+                      fontWeight: 700,
+                    }}
                   >
                     Snap
                   </button>
@@ -526,10 +696,23 @@ export default function ButtonGamePage() {
                     className="btn"
                     onClick={handleDiscard}
                     disabled={resetBusy || !snapDataUrl}
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 14,
+                      fontWeight: 700,
+                    }}
                   >
                     Discard
                   </button>
                 </div>
+
+                {cameraError ? (
+                  <div
+                    style={{ marginTop: 10, fontSize: 12, color: "#ffb4b4" }}
+                  >
+                    {cameraError}
+                  </div>
+                ) : null}
 
                 {snapDataUrl ? (
                   <div style={{ marginTop: 10 }}>
@@ -538,6 +721,7 @@ export default function ButtonGamePage() {
                     >
                       Snapshot preview
                     </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={snapDataUrl}
                       alt="snapshot preview"
@@ -568,7 +752,10 @@ export default function ButtonGamePage() {
                   <span style={{ fontSize: 12, opacity: 0.85 }}>Name</span>
                   <input
                     value={resetName}
-                    onChange={(e) => setResetName(e.target.value)}
+                    onChange={(e) => {
+                      setResetName(e.target.value);
+                      if (resetError) setResetError("");
+                    }}
                     placeholder="Your name"
                     style={inputStyle}
                     disabled={resetBusy}
@@ -601,7 +788,21 @@ export default function ButtonGamePage() {
                   <button
                     className="btn"
                     onClick={submitReset}
-                    disabled={resetBusy}
+                    disabled={!canSubmitReset}
+                    title={
+                      !snapDataUrl
+                        ? "Snap a photo first"
+                        : !resetName.trim()
+                          ? "Enter your name"
+                          : cameraError
+                            ? "Fix camera permissions"
+                            : ""
+                    }
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 14,
+                      fontWeight: 800,
+                    }}
                   >
                     {resetBusy ? "Submitting..." : "Submit & Reset"}
                   </button>
