@@ -134,7 +134,7 @@ type PairBondParam = { r0: number; kLit: number };
 
 const K_SCALE = 0.015;
 
-const PAIR_BOND_PARAMS: Record<PairKey, PairBondParam> = {
+const PAIR_BOND_PARAMS: Partial<Record<PairKey, PairBondParam>> = {
   // H
   "H-H": { r0: 0.74, kLit: 440 },
   "H-C": { r0: 1.09, kLit: 340 },
