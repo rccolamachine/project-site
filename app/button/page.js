@@ -36,6 +36,23 @@ function normalizeShame(shame) {
     .filter(Boolean);
 }
 
+// ✅ Canvas grayscale that works on mobile Safari / WebViews (don’t trust ctx.filter)
+function forceGrayscale2D(ctx, w, h) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i];
+    const g = d[i + 1];
+    const b = d[i + 2];
+    const y = (0.2126 * r + 0.7152 * g + 0.0722 * b) | 0;
+    d[i] = y;
+    d[i + 1] = y;
+    d[i + 2] = y;
+    // alpha stays d[i+3]
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
 export default function ButtonGamePage() {
   // shared state from server
   const [value, setValue] = useState(0);
@@ -225,7 +242,10 @@ export default function ButtonGamePage() {
         await video.play();
 
         const live = liveCanvasRef.current;
-        const ctx = live.getContext("2d", { alpha: false });
+        const ctx = live.getContext("2d", {
+          alpha: false,
+          willReadFrequently: true,
+        });
 
         const draw = () => {
           const vw = video.videoWidth || 640;
@@ -239,10 +259,13 @@ export default function ButtonGamePage() {
           live.height = tinyH;
 
           ctx.save();
-          ctx.filter = "grayscale(1)";
+          ctx.filter = "none"; // ✅ don’t rely on ctx.filter (mobile can ignore it)
           ctx.imageSmoothingEnabled = true; // smooth into tiny
           ctx.drawImage(video, 0, 0, tinyW, tinyH);
           ctx.restore();
+
+          // ✅ guaranteed grayscale everywhere
+          forceGrayscale2D(ctx, tinyW, tinyH);
 
           rafRef.current = requestAnimationFrame(draw);
         };
@@ -293,10 +316,16 @@ export default function ButtonGamePage() {
     snap.width = outW;
     snap.height = outH;
 
-    const sctx = snap.getContext("2d", { alpha: false });
+    const sctx = snap.getContext("2d", {
+      alpha: false,
+      willReadFrequently: true,
+    });
     sctx.imageSmoothingEnabled = false;
     sctx.clearRect(0, 0, outW, outH);
     sctx.drawImage(live, 0, 0, outW, outH);
+
+    // ✅ also enforce grayscale on the exported image
+    forceGrayscale2D(sctx, outW, outH);
 
     const url = snap.toDataURL("image/png");
     setSnapDataUrl(url);
@@ -459,8 +488,8 @@ export default function ButtonGamePage() {
                 onClick={handleIncrement}
                 style={{
                   ...bigBtnStyle,
-                  width: "100%", // ✅ fill the column
-                  minWidth: 0, // ✅ don’t fight the grid
+                  width: "100%",
+                  minWidth: 0,
                   justifyContent: "center",
                 }}
               >
@@ -486,7 +515,7 @@ export default function ButtonGamePage() {
         </div>
       </div>
 
-      {/* STATS ROW (wrapped in same innerStyle so it aligns with controls row) */}
+      {/* STATS ROW */}
       <div style={{ ...innerStyle, marginTop: 14 }}>
         <div
           style={{
