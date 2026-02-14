@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 const KEY_VALUE = "game:counter:value";
 const KEY_MAX = "game:counter:max";
 const KEY_MAX_AT = "game:counter:maxAt";
+const KEY_LAST_CLICK_AT = "game:counter:lastClickAt";
 
 // simple per-IP rate limit: 10 requests / 60 seconds
 async function rateLimit(req, limit = 10, windowSec = 60) {
@@ -41,19 +42,22 @@ export async function POST(req) {
       ? Math.max(1, Math.min(100, Math.floor(deltaRaw)))
       : 1;
 
+    const now = new Date().toISOString();
+
     // incrby is supported by Redis; @vercel/kv exposes it.
     // If your typings complain, it still works at runtime.
     const newValue = await kv.incrby(KEY_VALUE, delta);
+    await kv.set(KEY_LAST_CLICK_AT, now);
 
     const currentMax = Number((await kv.get(KEY_MAX)) ?? 0);
     if (newValue > currentMax) {
-      const now = new Date().toISOString();
       await Promise.all([kv.set(KEY_MAX, newValue), kv.set(KEY_MAX_AT, now)]);
     }
 
-    const [max, maxAt] = await Promise.all([
+    const [max, maxAt, lastClickAt] = await Promise.all([
       kv.get(KEY_MAX),
       kv.get(KEY_MAX_AT),
+      kv.get(KEY_LAST_CLICK_AT),
     ]);
 
     return NextResponse.json({
@@ -61,6 +65,7 @@ export async function POST(req) {
       max: Number(max ?? 0),
       maxAt: String(maxAt ?? ""),
       remaining: rl.remaining,
+      lastClickAt: String(lastClickAt ?? ""),
     });
   } catch (e) {
     return new NextResponse(`Increment failed: ${e?.message || String(e)}`, {
