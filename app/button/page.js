@@ -107,6 +107,7 @@ export default function ButtonGamePage() {
     setValue(Number(s?.value ?? 0));
     setMax(Number(s?.max ?? 0));
     setMaxAt(String(s?.maxAt ?? ""));
+    setLastClickAt(String(s?.lastClickAt ?? ""));
     setShame(normalizeShame(s?.shame));
   };
 
@@ -189,6 +190,7 @@ export default function ButtonGamePage() {
       setValue(Number(j.value ?? 0));
       setMax(Number(j.max ?? 0));
       setMaxAt(String(j.maxAt ?? ""));
+      setLastClickAt(String(j.lastClickAt ?? ""));
       setErr("");
     } catch (e) {
       setErr(e?.message || String(e));
