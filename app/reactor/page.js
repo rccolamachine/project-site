@@ -914,9 +914,6 @@ export default function ReactorPage() {
             <div style={ui.headerRow}>
               <div>
                 <div style={ui.title}>Controls</div>
-                <div style={ui.small}>
-                  Simulation + LJ parameters (wells included)
-                </div>
               </div>
               <button
                 onClick={() => setControlsOpen(false)}
