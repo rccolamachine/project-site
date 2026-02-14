@@ -75,7 +75,7 @@ export default function ReactorPage() {
   // LJ editor element (separate from placement element)
   const [ljElement, setLjElement] = useState("C");
 
-  // overlays (Controls hidden by default for mobile)
+  // overlays (controls hidden by default for mobile friendliness)
   const [controlsOpen, setControlsOpen] = useState(false);
   const [wellsOpen, setWellsOpen] = useState(true);
 
@@ -137,7 +137,6 @@ export default function ReactorPage() {
       dihedralKScale: 1.0,
       dihedralForceCap: 6,
 
-      // Electrostatics
       enableElectrostatics: true,
       charges: { ...DEFAULT_CHARGES },
       ke: 0.6,
@@ -152,26 +151,15 @@ export default function ReactorPage() {
     controls.enabled = tool === TOOL.ROTATE;
   }, [tool]);
 
-  // Center framing (no right-bias)
-  function applyCenteredFraming() {
-    const t = threeRef.current;
-    if (!t.controls) return;
-    t.controls.target.set(0, 0, 0);
-    t.controls.update();
-  }
-
   // Reset camera orientation/view to defaults (centered)
   function resetView() {
     const t = threeRef.current;
-    if (!t.camera || !t.controls || !t.renderer) return;
+    if (!t.camera || !t.controls) return;
 
     t.camera.position.set(0, 0.6, 14);
     t.camera.up.set(0, 1, 0);
-    t.camera.lookAt(0, 0, 0);
-
     t.controls.target.set(0, 0, 0);
     t.controls.update();
-    applyCenteredFraming();
   }
 
   // update box visuals when size or edges-toggle changes
@@ -195,6 +183,7 @@ export default function ReactorPage() {
     t.scene.add(boxHelper);
     t.boxHelper = boxHelper;
 
+    // Ensure any old grids are removed (and we keep them hidden)
     if (t.grid) t.scene.remove(t.grid);
     if (t.grid2) t.scene.remove(t.grid2);
 
@@ -203,17 +192,14 @@ export default function ReactorPage() {
 
     const grid = new THREE.GridHelper(size, divisions, 0x94a3b8, 0x94a3b8);
     grid.material.transparent = true;
-    grid.material.opacity = 0.12;
-    grid.position.y = -S * 0.65;
+    grid.material.opacity = 0.0;
     grid.visible = false;
     t.scene.add(grid);
     t.grid = grid;
 
     const grid2 = new THREE.GridHelper(size, divisions, 0x94a3b8, 0x94a3b8);
     grid2.material.transparent = true;
-    grid2.material.opacity = 0.06;
-    grid2.rotation.x = Math.PI / 2;
-    grid2.position.z = -S * 0.65;
+    grid2.material.opacity = 0.0;
     grid2.visible = false;
     t.scene.add(grid2);
     t.grid2 = grid2;
@@ -376,17 +362,13 @@ export default function ReactorPage() {
         col = col.lerp(highlight, 0.55 * lambert);
         col = col.lerp(new THREE.Color("#ffffff"), 0.12 * rim);
 
-        ctx.fillStyle = `rgb(${Math.round(col.r * 255)},${Math.round(
-          col.g * 255,
-        )},${Math.round(col.b * 255)})`;
+        ctx.fillStyle = `rgb(${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)})`;
         ctx.fillRect(x, y, px, px);
       }
     }
 
     ctx.globalAlpha = 0.9;
-    ctx.fillStyle = `rgb(${Math.round(outline.r * 255)},${Math.round(
-      outline.g * 255,
-    )},${Math.round(outline.b * 255)})`;
+    ctx.fillStyle = `rgb(${Math.round(outline.r * 255)},${Math.round(outline.g * 255)},${Math.round(outline.b * 255)})`;
     for (let a = 0; a < 360; a += 2) {
       const rad = (a * Math.PI) / 180;
       const ox = Math.round((cx + Math.cos(rad) * (R + 1)) / px) * px;
@@ -583,8 +565,6 @@ export default function ReactorPage() {
     controls.panSpeed = 0.6;
     controls.zoomSpeed = 0.8;
     controls.enabled = toolRef.current === TOOL.ROTATE;
-
-    // centered target (no right bias)
     controls.target.set(0, 0, 0);
     controls.update();
 
@@ -600,11 +580,12 @@ export default function ReactorPage() {
     const resize = () => {
       const rect = mount.getBoundingClientRect();
       const w = Math.max(320, Math.floor(rect.width));
-      renderer.setSize(w, w, false);
-      camera.aspect = 1;
+      const h = Math.max(240, Math.floor(rect.height)); // ✅ use container height too
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; // ✅ rectangle aspect
       camera.updateProjectionMatrix();
-      applyCenteredFraming();
     };
+
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
@@ -809,7 +790,6 @@ export default function ReactorPage() {
     nudgeAll(simRef.current, 1.8);
   }
 
-  // Spawn random cluster (centered)
   function spawnRandom() {
     const sim = simRef.current;
     for (let i = 0; i < 10; i++) {
@@ -827,7 +807,6 @@ export default function ReactorPage() {
     shake();
   }
 
-  // Spawn a bunch of the currently-selected place element (centered)
   function spawnSelected() {
     const sim = simRef.current;
     for (let i = 0; i < 10; i++) {
@@ -863,7 +842,7 @@ export default function ReactorPage() {
     setLj(structuredClone(DEFAULT_LJ));
     setLjElement("C");
 
-    setControlsOpen(true);
+    // leave controlsOpen as-is (don’t force open on mobile)
     setWellsOpen(true);
   }
 
@@ -916,9 +895,7 @@ export default function ReactorPage() {
         {controlsOpen ? (
           <div id="controls-overlay" style={ui.controls}>
             <div style={ui.headerRow}>
-              <div>
-                <div style={ui.title}>Controls</div>
-              </div>
+              <div style={ui.title}>Controls</div>
               <button
                 onClick={() => setControlsOpen(false)}
                 style={ui.btnLight}
@@ -949,6 +926,7 @@ export default function ReactorPage() {
               <div style={{ fontSize: 11, fontWeight: 950, color: "#0f172a" }}>
                 Simulation
               </div>
+
               <MiniSlider
                 label="Temp (K)"
                 value={temperatureK}
@@ -1169,7 +1147,15 @@ export default function ReactorPage() {
           </div>
         </div>
 
-        <div ref={mountRef} style={{ width: "100%", minHeight: 520 }} />
+        {/* ✅ Rectangle canvas: set explicit height */}
+        <div
+          ref={mountRef}
+          style={{
+            width: "100%",
+            height: "min(660px, 72vh)", // smaller vertically so you can see everything
+            minHeight: 320,
+          }}
+        />
       </div>
     </section>
   );
