@@ -92,6 +92,12 @@ export default function SiteHeader() {
           >
             Guestbook
           </Link>
+          <Link
+            className={pathname.startsWith("/todo") ? "active" : ""}
+            href="/todo"
+          >
+            To-Do
+          </Link>
         </nav>
       </div>
     </header>

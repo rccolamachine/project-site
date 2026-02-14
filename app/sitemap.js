@@ -26,5 +26,9 @@ export default function sitemap() {
       url: `${baseUrl}/button`,
       lastModified: new Date(),
     },
+    {
+      url: `${baseUrl}/todo`,
+      lastModified: new Date(),
+    },
   ];
 }
