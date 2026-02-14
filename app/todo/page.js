@@ -83,6 +83,16 @@ const DEFAULT_ITEMS = [
     notes:
       "Add page exhibiting live APRS data from local iGate. Try to get a map working with real-time position updates. Could be fun and also a neat demo of live data handling.",
   },
+  {
+    id: "add-favicon",
+    title: "Add Favicon",
+    area: "General",
+    priority: "P3",
+    status: "todo",
+    notes:
+      "Add a favicon to the site for better branding and user experience.",
+
+  },
 ];
 
 function safeParse(json) {
