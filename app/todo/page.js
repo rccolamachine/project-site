@@ -284,13 +284,13 @@ export default function TodoPage() {
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <span style={pillStyle("P2")}>open: {openCount}</span>
           <span style={pillStyle("P3")}>done: {doneCount}</span>
-          <button
+          {/* <button
             className="btn"
             onClick={resetToDefaults}
             title="Reset list back to the seeded items"
           >
             Reset list
-          </button>
+          </button> */}
         </div>
       </div>
 
