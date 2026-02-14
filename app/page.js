@@ -44,6 +44,17 @@ export default function Home() {
         </div>
 
         <div className="card">
+          <h2>Reactor</h2>
+          <p>
+            Fun little molecular modeling sandbox: throw some atoms into a box,
+            change the conditions and the physics, and watch matter change.
+          </p>
+          <Link className="btn" href="/reactor">
+            Do computational chemistry
+          </Link>
+        </div>
+
+        <div className="card">
           <h2>What's Next?</h2>
           <p>
             Always fixing. Always building. Check the To-Do list for the latest.

@@ -81,6 +81,12 @@ export default function SiteHeader() {
             Button
           </Link>
           <Link
+            className={pathname.startsWith("/reactor") ? "active" : ""}
+            href="/reactor"
+          >
+            Reactor
+          </Link>
+          <Link
             className={pathname.startsWith("/photobooth") ? "active" : ""}
             href="/photobooth"
           >
