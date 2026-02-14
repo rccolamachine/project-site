@@ -32,6 +32,16 @@ export default function Home() {
             Try it
           </Link>
         </div>
+
+        <div className="card">
+          <h2>Button MMORPG</h2>
+          <p>
+            Click the button for everyone. Or reset it and reveal your shame.
+          </p>
+          <Link className="btn" href="/button">
+            Play now.
+          </Link>
+        </div>
       </div>
     </section>
   );
