@@ -75,8 +75,8 @@ export default function ReactorPage() {
   // LJ editor element (separate from placement element)
   const [ljElement, setLjElement] = useState("C");
 
-  // overlays
-  const [controlsOpen, setControlsOpen] = useState(true);
+  // overlays (Controls hidden by default for mobile)
+  const [controlsOpen, setControlsOpen] = useState(false);
   const [wellsOpen, setWellsOpen] = useState(true);
 
   const mountRef = useRef(null);
@@ -130,13 +130,14 @@ export default function ReactorPage() {
 
       grabK: 80,
       grabMaxForce: 140,
+
       angleK: 2.2,
       angleForceCap: 10,
       enableDihedrals: true,
       dihedralKScale: 1.0,
       dihedralForceCap: 6,
 
-      // ✅ Electrostatics (NEW)
+      // Electrostatics
       enableElectrostatics: true,
       charges: { ...DEFAULT_CHARGES },
       ke: 0.6,
@@ -151,27 +152,15 @@ export default function ReactorPage() {
     controls.enabled = tool === TOOL.ROTATE;
   }, [tool]);
 
-  // right-bias framing so box center appears on right ~1/3 of canvas
-  function applyRightBiasFraming() {
+  // Center framing (no right-bias)
+  function applyCenteredFraming() {
     const t = threeRef.current;
-    if (!t.renderer || !t.camera || !t.controls) return;
-
-    const w = t.renderer.domElement.width || 1;
-    const h = t.renderer.domElement.height || 1;
-
-    const cam = t.camera;
-    const dist = cam.position.distanceTo(t.controls.target);
-    const fovRad = (cam.fov * Math.PI) / 180;
-    const aspect = w / h;
-
-    const ndcX = 0.33;
-    const worldX = ndcX * Math.tan(fovRad / 2) * dist * aspect;
-
-    t.controls.target.set(-worldX, 0, 0);
+    if (!t.controls) return;
+    t.controls.target.set(0, 0, 0);
     t.controls.update();
   }
 
-  // Reset camera orientation/view to defaults (plus right-bias)
+  // Reset camera orientation/view to defaults (centered)
   function resetView() {
     const t = threeRef.current;
     if (!t.camera || !t.controls || !t.renderer) return;
@@ -180,9 +169,9 @@ export default function ReactorPage() {
     t.camera.up.set(0, 1, 0);
     t.camera.lookAt(0, 0, 0);
 
-    t.controls.target.set(-1.8, 0, 0);
+    t.controls.target.set(0, 0, 0);
     t.controls.update();
-    applyRightBiasFraming();
+    applyCenteredFraming();
   }
 
   // update box visuals when size or edges-toggle changes
@@ -278,7 +267,6 @@ export default function ReactorPage() {
         marginBottom: 8,
       },
       title: { fontSize: 12, fontWeight: 950, color: "#0f172a" },
-      small: { fontSize: 11, color: "#475569" },
 
       btnDark: {
         padding: "8px 10px",
@@ -388,13 +376,17 @@ export default function ReactorPage() {
         col = col.lerp(highlight, 0.55 * lambert);
         col = col.lerp(new THREE.Color("#ffffff"), 0.12 * rim);
 
-        ctx.fillStyle = `rgb(${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)})`;
+        ctx.fillStyle = `rgb(${Math.round(col.r * 255)},${Math.round(
+          col.g * 255,
+        )},${Math.round(col.b * 255)})`;
         ctx.fillRect(x, y, px, px);
       }
     }
 
     ctx.globalAlpha = 0.9;
-    ctx.fillStyle = `rgb(${Math.round(outline.r * 255)},${Math.round(outline.g * 255)},${Math.round(outline.b * 255)})`;
+    ctx.fillStyle = `rgb(${Math.round(outline.r * 255)},${Math.round(
+      outline.g * 255,
+    )},${Math.round(outline.b * 255)})`;
     for (let a = 0; a < 360; a += 2) {
       const rad = (a * Math.PI) / 180;
       const ox = Math.round((cx + Math.cos(rad) * (R + 1)) / px) * px;
@@ -592,8 +584,8 @@ export default function ReactorPage() {
     controls.zoomSpeed = 0.8;
     controls.enabled = toolRef.current === TOOL.ROTATE;
 
-    // initial right-bias
-    controls.target.set(-1.8, 0, 0);
+    // centered target (no right bias)
+    controls.target.set(0, 0, 0);
     controls.update();
 
     threeRef.current.renderer = renderer;
@@ -611,13 +603,13 @@ export default function ReactorPage() {
       renderer.setSize(w, w, false);
       camera.aspect = 1;
       camera.updateProjectionMatrix();
-      applyRightBiasFraming();
+      applyCenteredFraming();
     };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
-    // seed cluster slightly to the right
+    // seed cluster centered
     const sim = simRef.current;
     clearSim3D(sim);
     const seed = ["C", "O", "N", "S", "P", "H"];
@@ -625,7 +617,7 @@ export default function ReactorPage() {
       const el = seed[i % seed.length];
       addAtom3D(
         sim,
-        1.8 + (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 4,
         (Math.random() - 0.5) * 3,
         (Math.random() - 0.5) * 3,
         el,
@@ -817,14 +809,14 @@ export default function ReactorPage() {
     nudgeAll(simRef.current, 1.8);
   }
 
-  // Spawn random cluster (same behavior as old Controls Spawn)
+  // Spawn random cluster (centered)
   function spawnRandom() {
     const sim = simRef.current;
     for (let i = 0; i < 10; i++) {
       const el = ELEMENTS[i % ELEMENTS.length];
       addAtom3D(
         sim,
-        1.8 + (Math.random() - 0.5) * 1.4,
+        (Math.random() - 0.5) * 1.4,
         (Math.random() - 0.5) * 1.4,
         (Math.random() - 0.5) * 1.4,
         el,
@@ -835,13 +827,13 @@ export default function ReactorPage() {
     shake();
   }
 
-  // Spawn a bunch of the currently-selected place element
+  // Spawn a bunch of the currently-selected place element (centered)
   function spawnSelected() {
     const sim = simRef.current;
     for (let i = 0; i < 10; i++) {
       addAtom3D(
         sim,
-        1.8 + (Math.random() - 0.5) * 1.4,
+        (Math.random() - 0.5) * 1.4,
         (Math.random() - 0.5) * 1.4,
         (Math.random() - 0.5) * 1.4,
         placeElement,
@@ -935,7 +927,6 @@ export default function ReactorPage() {
               </button>
             </div>
 
-            {/* NOTE: Spawn removed from Controls */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button onClick={() => setPaused((p) => !p)} style={ui.btnDark}>
                 {paused ? "Resume" : "Pause"}
