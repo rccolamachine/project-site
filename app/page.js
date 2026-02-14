@@ -8,18 +8,18 @@ export default function Home() {
         Personal site for photos, projects, and whatever I’m building next.
       </p>
 
-      <div className="cardRow">
+      {/* <div className="cardRow">
         <div className="card">
           <h2>Pictures</h2>
           <p>A small gallery (easy to expand).</p>
           <Link className="btn" href="/pictures">
             View pictures
           </Link>
-        </div>
+        </div> */}
 
         <div className="card">
           <h2>About</h2>
-          <p>Short bio + links.</p>
+          <p>Short bio + links. More to come!</p>
           <Link className="btn" href="/about">
             Read more
           </Link>
