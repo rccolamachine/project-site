@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 
-const LS_KEY = "rccolamachine.todo.v1";
+const PAGE_SIZE = 6;
 
-const DEFAULT_ITEMS = [
+const ITEMS = [
   {
     id: "pb-email-fix",
     title: "Photobooth: fix email field/handling",
     area: "Photobooth",
     priority: "P1",
-    status: "todo",
+    status: "todo", // todo | inProgress | done
     notes:
       "Email input/submit isn’t correct (validation, formatting, or wiring). Fix UI + API contract and confirm it persists/gets displayed correctly.",
     links: [{ label: "Open Photobooth", href: "/photobooth" }],
@@ -84,6 +84,25 @@ const DEFAULT_ITEMS = [
       "Add page exhibiting live APRS data from local iGate. Try to get a map working with real-time position updates. Could be fun and also a neat demo of live data handling.",
   },
   {
+    id: "add-pager-page",
+    title: "Add Pager page",
+    area: "General",
+    priority: "P3",
+    status: "todo",
+    notes:
+      "I have some POCSAG, FLEX, and Zebra pagers that I'd like to get working with Javascript SDKs. Hope to chronicle my efforts.",
+  },
+  {
+    id: "add-print-postcard-functionality",
+    title: "Add Postcard printing functionality to Photobooth",
+    area: "Photobooth",
+    priority: "P3",
+    status: "todo",
+    notes:
+      "Add CUPS printing support to the Photobooth app. Users will be able to print their photos as postcards directly from the browser to a thermal printer in Rob's apartment.",
+    links: [{ label: "Open Photobooth", href: "/photobooth" }],
+  },
+  {
     id: "add-favicon",
     title: "Add Favicon",
     area: "General",
@@ -92,18 +111,6 @@ const DEFAULT_ITEMS = [
     notes: "Add a favicon to the site for better branding and user experience.",
   },
 ];
-
-function safeParse(json) {
-  try {
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
-
-function nowIso() {
-  return new Date().toISOString();
-}
 
 function pillStyle(priority) {
   const base = {
@@ -136,132 +143,112 @@ function pillStyle(priority) {
   return base;
 }
 
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function prettyStatus(s) {
+  if (s === "inProgress") return "in progress";
+  return s || "todo";
+}
+
+function isOpenStatus(status) {
+  return status === "todo" || status === "inProgress";
+}
+
 export default function TodoPage() {
-  const [items, setItems] = useState(DEFAULT_ITEMS);
   const [filter, setFilter] = useState("open"); // open | all | done
   const [query, setQuery] = useState("");
-  const [newTitle, setNewTitle] = useState("");
-  const [newArea, setNewArea] = useState("General");
-  const [newPriority, setNewPriority] = useState("P3");
+  const [page, setPage] = useState(1); // 1-based
 
-  // load from localStorage
+  // reset to page 1 when search/filter changes
   useEffect(() => {
-    const raw =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem(LS_KEY)
-        : null;
-    const parsed = raw ? safeParse(raw) : null;
-
-    if (Array.isArray(parsed) && parsed.length) {
-      setItems(parsed);
-    } else {
-      // seed initial
-      window.localStorage.setItem(LS_KEY, JSON.stringify(DEFAULT_ITEMS));
-    }
-  }, []);
-
-  // persist
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(LS_KEY, JSON.stringify(items));
-  }, [items]);
+    setPage(1);
+  }, [query, filter]);
 
   const openCount = useMemo(
-    () => items.filter((x) => x.status !== "done").length,
-    [items],
+    () => ITEMS.filter((x) => isOpenStatus(x.status)).length,
+    [],
   );
   const doneCount = useMemo(
-    () => items.filter((x) => x.status === "done").length,
-    [items],
+    () => ITEMS.filter((x) => x.status === "done").length,
+    [],
   );
 
-  const visibleItems = useMemo(() => {
+  const filteredSortedItems = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    return items
-      .filter((x) => {
-        if (filter === "open") return x.status !== "done";
-        if (filter === "done") return x.status === "done";
-        return true;
-      })
+    return ITEMS.filter((x) => {
+      if (filter === "open") return isOpenStatus(x.status);
+      if (filter === "done") return x.status === "done";
+      return true; // all
+    })
       .filter((x) => {
         if (!q) return true;
         return (
-          x.title.toLowerCase().includes(q) ||
+          (x.title || "").toLowerCase().includes(q) ||
           (x.area || "").toLowerCase().includes(q) ||
-          (x.notes || "").toLowerCase().includes(q)
+          (x.notes || "").toLowerCase().includes(q) ||
+          (x.status || "").toLowerCase().includes(q) ||
+          (x.priority || "").toLowerCase().includes(q)
         );
       })
       .sort((a, b) => {
-        // sort by priority then status then updatedAt
         const priRank = (p) =>
           p === "P1" ? 1 : p === "P2" ? 2 : p === "P3" ? 3 : 9;
-        const sRank = (s) => (s === "done" ? 9 : s === "in-progress" ? 2 : 1);
-        const r =
+        const sRank = (s) => (s === "done" ? 9 : s === "inProgress" ? 2 : 1);
+        return (
           priRank(a.priority) - priRank(b.priority) ||
-          sRank(a.status) - sRank(b.status);
-
-        if (r !== 0) return r;
-
-        const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
-        const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
-        return tb - ta;
+          sRank(a.status) - sRank(b.status) ||
+          (a.title || "").localeCompare(b.title || "")
+        );
       });
-  }, [items, filter, query]);
+  }, [filter, query]);
 
-  const setStatus = (id, status) => {
-    setItems((prev) =>
-      prev.map((x) =>
-        x.id === id ? { ...x, status, updatedAt: nowIso() } : x,
-      ),
-    );
+  const totalItems = filteredSortedItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const currentPage = clamp(page, 1, totalPages);
+
+  const pagedItems = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredSortedItems.slice(start, start + PAGE_SIZE);
+  }, [filteredSortedItems, currentPage]);
+
+  const rangeText = useMemo(() => {
+    if (!totalItems) return "0";
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(totalItems, currentPage * PAGE_SIZE);
+    return `${start}-${end} of ${totalItems}`;
+  }, [totalItems, currentPage]);
+
+  const gotoPrev = () => setPage((p) => Math.max(1, p - 1));
+  const gotoNext = () => setPage((p) => Math.min(totalPages, p + 1));
+
+  const inputStyle = {
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(0,0,0,0.25)",
+    color: "#eaeaea",
+    outline: "none",
   };
 
-  const toggleDone = (id) => {
-    setItems((prev) =>
-      prev.map((x) => {
-        if (x.id !== id) return x;
-        const nextStatus = x.status === "done" ? "todo" : "done";
-        return { ...x, status: nextStatus, updatedAt: nowIso() };
-      }),
-    );
+  const selectStyle = {
+    padding: "10px 12px",
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(0,0,0,0.25)",
+    color: "#eaeaea",
+    outline: "none",
+    minWidth: 140,
   };
 
-  const removeItem = (id) => {
-    setItems((prev) => prev.filter((x) => x.id !== id));
-  };
-
-  const addItem = () => {
-    const title = newTitle.trim();
-    if (!title) return;
-
-    const id =
-      title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "") +
-      "-" +
-      Date.now();
-
-    const newItem = {
-      id,
-      title,
-      area: newArea || "General",
-      priority: newPriority || "P3",
-      status: "todo",
-      notes: "",
-      links: [],
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    };
-
-    setItems((prev) => [newItem, ...prev]);
-    setNewTitle("");
-  };
-
-  const resetToDefaults = () => {
-    setItems(DEFAULT_ITEMS);
-  };
+  const pagerBtnStyle = (disabled) => ({
+    opacity: disabled ? 0.45 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
+    transform: "none",
+  });
 
   return (
     <section className="page">
@@ -284,13 +271,6 @@ export default function TodoPage() {
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <span style={pillStyle("P2")}>open: {openCount}</span>
           <span style={pillStyle("P3")}>done: {doneCount}</span>
-          {/* <button
-            className="btn"
-            onClick={resetToDefaults}
-            title="Reset list back to the seeded items"
-          >
-            Reset list
-          </button> */}
         </div>
       </div>
 
@@ -308,29 +288,13 @@ export default function TodoPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search issues…"
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(0,0,0,0.25)",
-              color: "#eaeaea",
-              outline: "none",
-            }}
+            style={inputStyle}
           />
 
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(0,0,0,0.25)",
-              color: "#eaeaea",
-              outline: "none",
-              minWidth: 140,
-            }}
+            style={selectStyle}
           >
             <option value="open">Open</option>
             <option value="all">All</option>
@@ -338,86 +302,49 @@ export default function TodoPage() {
           </select>
 
           <div style={{ fontSize: 12, opacity: 0.85, textAlign: "right" }}>
-            {visibleItems.length} shown
+            {rangeText}
           </div>
         </div>
 
-        {/* Add item */}
-        {/* <div
+        {/* Pagination */}
+        <div
           style={{
             marginTop: 12,
-            display: "grid",
-            gridTemplateColumns: "1fr auto auto auto",
-            gap: 10,
+            display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
           }}
         >
-          <input
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Add a new issue…"
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(0,0,0,0.25)",
-              color: "#eaeaea",
-              outline: "none",
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addItem();
-            }}
-          />
+          <div style={{ fontSize: 12, opacity: 0.85 }}>
+            Page <strong>{currentPage}</strong> / {totalPages}
+          </div>
 
-          <select
-            value={newArea}
-            onChange={(e) => setNewArea(e.target.value)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(0,0,0,0.25)",
-              color: "#eaeaea",
-              outline: "none",
-              minWidth: 140,
-            }}
-          >
-            <option>General</option>
-            <option>Photobooth</option>
-            <option>Guestbook</option>
-            <option>Pictures</option>
-            <option>Resume</option>
-            <option>Button</option>
-          </select>
-
-          <select
-            value={newPriority}
-            onChange={(e) => setNewPriority(e.target.value)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(0,0,0,0.25)",
-              color: "#eaeaea",
-              outline: "none",
-              minWidth: 90,
-            }}
-          >
-            <option value="P1">P1</option>
-            <option value="P2">P2</option>
-            <option value="P3">P3</option>
-          </select>
-
-          <button className="btn" onClick={addItem} disabled={!newTitle.trim()}>
-            Add
-          </button>
-        </div> */}
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <button
+              className="btn"
+              onClick={gotoPrev}
+              disabled={currentPage <= 1}
+              style={pagerBtnStyle(currentPage <= 1)}
+            >
+              Prev
+            </button>
+            <button
+              className="btn"
+              onClick={gotoNext}
+              disabled={currentPage >= totalPages}
+              style={pagerBtnStyle(currentPage >= totalPages)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Items */}
       <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
-        {visibleItems.map((it) => {
+        {pagedItems.map((it) => {
           const isDone = it.status === "done";
 
           return (
@@ -428,147 +355,125 @@ export default function TodoPage() {
                 opacity: isDone ? 0.65 : 1,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ minWidth: 260, flex: 1 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 10,
-                      flexWrap: "wrap",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span style={pillStyle(it.priority)}>{it.priority}</span>
-                    <span
-                      style={{
-                        ...pillStyle("P3"),
-                        borderColor: "rgba(255,255,255,0.10)",
-                        opacity: 0.9,
-                      }}
-                    >
-                      {it.area || "General"}
-                    </span>
-                    <span
-                      style={{
-                        ...pillStyle("P3"),
-                        opacity: 0.85,
-                      }}
-                    >
-                      {it.status || "todo"}
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: 10,
-                      fontSize: 14,
-                      lineHeight: 1.5,
-                      textDecoration: isDone ? "line-through" : "none",
-                    }}
-                  >
-                    {it.title}
-                  </div>
-
-                  {it.notes ? (
-                    <div
-                      style={{
-                        marginTop: 8,
-                        fontSize: 12,
-                        opacity: 0.85,
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {it.notes}
-                    </div>
-                  ) : null}
-
-                  {Array.isArray(it.links) && it.links.length ? (
-                    <div
-                      style={{
-                        marginTop: 10,
-                        display: "flex",
-                        gap: 10,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      {it.links.map((l, idx) => (
-                        <a key={idx} className="btn" href={l.href}>
-                          {l.label}
-                        </a>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div style={{ marginTop: 10, fontSize: 11, opacity: 0.7 }}>
-                    {it.updatedAt
-                      ? `updated ${new Date(it.updatedAt).toLocaleString()}`
-                      : null}
-                  </div>
-                </div>
-
+              <div style={{ minWidth: 260 }}>
                 <div
                   style={{
                     display: "flex",
                     gap: 10,
                     flexWrap: "wrap",
-                    justifyContent: "flex-end",
                     alignItems: "center",
                   }}
                 >
-                  {/* <button className="btn" onClick={() => toggleDone(it.id)}>
-                    {isDone ? "Re-open" : "Done"}
-                  </button> */}
+                  <span style={pillStyle(it.priority)}>{it.priority}</span>
 
-                  {/* <select
-                    value={it.status || "todo"}
-                    onChange={(e) => setStatus(it.id, e.target.value)}
+                  <span
                     style={{
-                      padding: "10px 12px",
-                      borderRadius: 12,
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      background: "rgba(0,0,0,0.25)",
-                      color: "#eaeaea",
-                      outline: "none",
-                      minWidth: 160,
+                      ...pillStyle("P3"),
+                      borderColor: "rgba(255,255,255,0.10)",
+                      opacity: 0.9,
                     }}
                   >
-                    <option value="todo">todo</option>
-                    <option value="in-progress">in-progress</option>
-                    <option value="blocked">blocked</option>
-                    <option value="done">done</option>
-                  </select> */}
+                    {it.area || "General"}
+                  </span>
 
-                  {/* <button
-                    className="btn"
-                    onClick={() => removeItem(it.id)}
-                    title="Remove from list"
-                    style={{
-                      borderColor: "rgba(255, 79, 216, 0.35)",
-                      background: "rgba(255, 79, 216, 0.10)",
-                    }}
-                  >
-                    Remove
-                  </button> */}
+                  <span style={{ ...pillStyle("P3"), opacity: 0.85 }}>
+                    {prettyStatus(it.status)}
+                  </span>
                 </div>
+
+                <div
+                  style={{
+                    marginTop: 10,
+                    fontSize: 14,
+                    lineHeight: 1.5,
+                    textDecoration: isDone ? "line-through" : "none",
+                  }}
+                >
+                  {it.title}
+                </div>
+
+                {it.notes ? (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 12,
+                      opacity: 0.85,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {it.notes}
+                  </div>
+                ) : null}
+
+                {Array.isArray(it.links) && it.links.length ? (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      display: "flex",
+                      gap: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {it.links.map((l, idx) => (
+                      <a key={idx} className="btn" href={l.href}>
+                        {l.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           );
         })}
 
-        {!visibleItems.length ? (
+        {!filteredSortedItems.length ? (
           <div className="card" style={{ opacity: 0.85 }}>
             Nothing here with the current filter/search.
           </div>
         ) : null}
       </div>
+
+      {/* Bottom pager (nice on mobile) */}
+      {filteredSortedItems.length ? (
+        <div
+          style={{ marginTop: 14, display: "flex", justifyContent: "center" }}
+        >
+          <div
+            className="card"
+            style={{
+              padding: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+              justifyContent: "center",
+              width: "fit-content",
+            }}
+          >
+            <button
+              className="btn"
+              onClick={gotoPrev}
+              disabled={currentPage <= 1}
+              style={pagerBtnStyle(currentPage <= 1)}
+            >
+              Prev
+            </button>
+
+            <div style={{ fontSize: 12, opacity: 0.85 }}>
+              {rangeText} • page <strong>{currentPage}</strong> / {totalPages}
+            </div>
+
+            <button
+              className="btn"
+              onClick={gotoNext}
+              disabled={currentPage >= totalPages}
+              style={pagerBtnStyle(currentPage >= totalPages)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
