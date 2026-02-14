@@ -1,34 +1,15 @@
 // lib/sim/physics3d.ts
 /**
- * Toy Chemistry 3D Physics (LJ + bond-order springs with pair "literature-like" defaults)
+ * Toy Chemistry 3D Physics
+ * - LJ nonbonded (per-element sigma/epsilon, Lorentz–Berthelot mixing)
+ * - Screened electrostatics (Yukawa / Debye) with per-element constant charges (toy)
+ * - Bond-order springs (1/2/3)
+ * - Angle terms (3-body) from bond graph
+ * - Basic dihedrals (4-body) from bond graph
+ *
  * Elements: H, C, N, O, P, S
  *
- * Nonbonded:
- * - LJ per element (sigma/epsilon) with Lorentz–Berthelot mixing
- * - cutoff for performance/stability
- *
- * Bonded:
- * - Bonds are harmonic springs with an integer "order": 1,2,3
- * - Pair parameters provide a SINGLE-bond equilibrium length r0 (Å-ish world units)
- *   and stiffness kSingle derived from typical literature/force-field magnitudes,
- *   then scaled to be stable/fun.
- * - Bond order modifies r0 and k:
- *     r0(order) = r0_single * (1 - 0.08*(order-1))   // shorter for higher order
- *     k(order)  = kSingle * (1 + 0.9*(order-1))      // stiffer for higher order
- *
- * Formation/breaking are PHYSICAL (forces) — not just visuals.
- * We hardcode heuristics (no sliders):
- * - A candidate bond forms if distance < formFactor * r0_single and valence allows.
- * - Bond order is chosen from distance thresholds (closer => higher order).
- * - Bond breaks if distance > breakFactor * r0(order)
- *
- * Bond-order recomputation:
- * - Bonds can upgrade/downgrade order periodically (call recomputeBondOrders()).
- * - Uses hysteresis so bond orders don’t flicker.
- * - Valence-safe: will not upgrade if either atom can’t pay.
- *
- * Notes:
- * - These are toy rules, designed for usability and performance, not chemical accuracy.
+ * This is a toy: stable + fun > chemically accurate.
  */
 
 export type ElementKey = "H" | "C" | "N" | "O" | "P" | "S";
@@ -37,7 +18,7 @@ export type ElementDef = {
   label: string;
   mass: number;
   radius: number;
-  valence: number; // total bond-order capacity
+  valence: number; // bond-order capacity
 };
 
 export type Atom3D = {
@@ -59,7 +40,7 @@ export type Atom3D = {
   mass: number;
   r: number;
   valenceMax: number;
-  valenceUsed: number; // consumes bond order (single=1, double=2, triple=3)
+  valenceUsed: number;
 };
 
 export type BondOrder = 1 | 2 | 3;
@@ -68,9 +49,21 @@ export type Bond3D = {
   aId: number;
   bId: number;
   order: BondOrder;
-  r0: number; // equilibrium length used for this order
-  k: number; // stiffness used for this order
-  breakR: number; // snap distance
+  r0: number;
+  k: number;
+  breakR: number;
+};
+
+type Neighbor = { id: number; order: BondOrder };
+
+type DihedralTerm = {
+  iId: number;
+  jId: number;
+  kId: number;
+  lId: number;
+  n: number;
+  delta: number; // radians
+  k: number; // toy units
 };
 
 export type Sim3D = {
@@ -80,23 +73,42 @@ export type Sim3D = {
 
   grabbedId: number | null;
   grabTarget: { x: number; y: number; z: number } | null;
+
+  // cached torsions (rebuilt periodically)
+  dihedrals?: DihedralTerm[];
 };
 
 export type LJPerElement = Record<ElementKey, { sigma: number; epsilon: number }>;
+export type ChargePerElement = Record<ElementKey, number>;
 
 export type Params3D = {
-  // nonbonded
+  // nonbonded LJ
   lj: LJPerElement;
   cutoff: number;
   minR: number;
   maxPairForce: number;
 
+  // electrostatics (toy)
+  enableElectrostatics: boolean;
+  charges: ChargePerElement;   // constant per element
+  ke: number;                  // strength multiplier (toy)
+  screeningLength: number;     // lambda, in world units
+
   // bond system
-  bondScale: number; // global multiplier for k (UI slider)
-  allowMultipleBonds: boolean; // allow order 2/3 bonds
+  bondScale: number;
+  allowMultipleBonds: boolean;
+
+  // angle system
+  angleK: number;
+  angleForceCap: number;
+
+  // dihedral system
+  enableDihedrals: boolean;
+  dihedralKScale: number;
+  dihedralForceCap: number;
 
   // dynamics
-  temperature: number; // scalar factor (300K -> 1.0 in UI mapping)
+  temperature: number;
   damping: number;
   tempVelKick: number;
 
@@ -129,11 +141,22 @@ export const DEFAULT_LJ: LJPerElement = {
   S: { sigma: 1.25, epsilon: 1.05 },
 };
 
+// Toy constant charges (not real partial charges; just "feels right")
+export const DEFAULT_CHARGES: ChargePerElement = {
+  H: +0.20,
+  C: 0.0,
+  N: -0.25,
+  O: -0.35,
+  P: +0.15,
+  S: -0.15,
+};
+
 type PairKey = `${ElementKey}-${ElementKey}`;
 type PairBondParam = { r0: number; kLit: number };
 
 const K_SCALE = 0.015;
 
+// Canonical-only keys (A-B where A<=B)
 const PAIR_BOND_PARAMS: Partial<Record<PairKey, PairBondParam>> = {
   // H
   "H-H": { r0: 0.74, kLit: 440 },
@@ -176,12 +199,7 @@ function pairKey(a: ElementKey, b: ElementKey): PairKey {
 function getPairBondParam(a: ElementKey, b: ElementKey): PairBondParam {
   const key = pairKey(a, b);
   const p = PAIR_BOND_PARAMS[key];
-  return (
-    p || {
-      r0: 1.6,
-      kLit: 250,
-    }
-  );
+  return p || { r0: 1.6, kLit: 250 };
 }
 
 function orderAdjustedR0(r0Single: number, order: BondOrder) {
@@ -200,11 +218,16 @@ export function createSim3D(): Sim3D {
     nextId: 1,
     grabbedId: null,
     grabTarget: null,
+    dihedrals: [],
   };
 }
 
 export function clamp(v: number, a: number, b: number) {
   return Math.max(a, Math.min(b, v));
+}
+
+function degToRad(d: number) {
+  return (d * Math.PI) / 180;
 }
 
 export function clearSim3D(sim: Sim3D) {
@@ -213,6 +236,7 @@ export function clearSim3D(sim: Sim3D) {
   sim.nextId = 1;
   sim.grabbedId = null;
   sim.grabTarget = null;
+  sim.dihedrals = [];
 }
 
 export function getAtom(sim: Sim3D, id: number): Atom3D | null {
@@ -268,7 +292,8 @@ function canBondOrder(a: Atom3D, b: Atom3D, order: BondOrder) {
   return true;
 }
 
-// LJ force magnitude along r axis (positive repulsion, negative attraction)
+/* ------------------------------- Nonbonded LJ ------------------------------ */
+
 function ljForce(r: number, eps: number, sig: number) {
   const inv = sig / r;
   const inv2 = inv * inv;
@@ -277,7 +302,6 @@ function ljForce(r: number, eps: number, sig: number) {
   return (24 * eps * (2 * inv12 - inv6)) / r;
 }
 
-// LJ potential U(r) = 4ε[(σ/r)^12 - (σ/r)^6]
 export function ljPotential(r: number, eps: number, sig: number) {
   const inv = sig / r;
   const inv2 = inv * inv;
@@ -297,9 +321,24 @@ export function mixLorentzBerthelot(lj: LJPerElement, a: ElementKey, b: ElementK
   return { sigma, epsilon };
 }
 
-function bondForce(r: number, r0: number, k: number) {
-  return k * (r - r0);
+/* -------------------------- Screened Electrostatics -------------------------
+ * Yukawa / Debye screened Coulomb:
+ *   U(r) = ke * qi*qj * exp(-r/lambda) / r
+ *   F(r) = ke * qi*qj * exp(-r/lambda) * (1/r^2 + 1/(lambda*r))
+ * Force is along r-hat.
+ */
+
+function yukawaForce(r: number, ke: number, qi: number, qj: number, lambda: number) {
+  const qq = qi * qj;
+  if (Math.abs(qq) < 1e-9) return 0;
+  const lam = Math.max(1e-3, lambda);
+  const e = Math.exp(-r / lam);
+  const invR = 1 / r;
+  const invR2 = invR * invR;
+  return ke * qq * e * (invR2 + invR / lam);
 }
+
+/* --------------------------------- Bonds ---------------------------------- */
 
 function pruneBrokenBonds(sim: Sim3D) {
   const kept: Bond3D[] = [];
@@ -366,9 +405,7 @@ function tryFormBonds(sim: Sim3D, params: Params3D) {
 
       let order = chooseBondOrder(d, r0Single, params.allowMultipleBonds);
 
-      while (order > 1 && !canBondOrder(ai, aj, order)) {
-        order = (order - 1) as BondOrder;
-      }
+      while (order > 1 && !canBondOrder(ai, aj, order)) order = (order - 1) as BondOrder;
       if (!canBondOrder(ai, aj, order)) continue;
 
       const kSingle = kLit * K_SCALE * params.bondScale;
@@ -378,14 +415,7 @@ function tryFormBonds(sim: Sim3D, params: Params3D) {
       const BREAK_FACTOR = 1.75;
       const breakR = r0 * BREAK_FACTOR;
 
-      sim.bonds.push({
-        aId: ai.id,
-        bId: aj.id,
-        order,
-        r0,
-        k,
-        breakR,
-      });
+      sim.bonds.push({ aId: ai.id, bId: aj.id, order, r0, k, breakR });
 
       const cost = bondValenceCost(order);
       ai.valenceUsed += cost;
@@ -406,27 +436,14 @@ export function setGrabTarget(sim: Sim3D, x: number, y: number, z: number) {
   sim.grabTarget = { x, y, z };
 }
 
-/**
- * Periodically recompute bond orders from current distances.
- *
- * Why: keeps visuals and physics aligned as atoms move (single <-> double <-> triple),
- * without doing expensive logic every frame.
- *
- * Behavior:
- * - If params.allowMultipleBonds is false => orders are forced to 1 (and r0/k updated).
- * - Uses hysteresis so order doesn’t flicker near thresholds.
- * - Valence-safe upgrades: will not upgrade if either atom can’t pay for the higher order.
- */
 export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
   const allow = params.allowMultipleBonds;
 
-  // Hysteresis thresholds (relative to single-bond r0)
-  // Upgrade happens at tighter distance; downgrade requires looser distance.
   const UP_1_TO_2 = 0.92;
   const DOWN_2_TO_1 = 0.97;
 
   const UP_2_TO_3 = 0.85;
-  const DOWN_3_TO_2 = 0.90;
+  const DOWN_3_TO_2 = 0.9;
 
   const BREAK_FACTOR = 1.75;
 
@@ -442,7 +459,6 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
 
     const { r0: r0Single, kLit } = getPairBondParam(a.el, c.el);
 
-    // decide target order with hysteresis, starting from current order
     let target: BondOrder = b.order;
 
     if (!allow) {
@@ -458,11 +474,9 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
       }
     }
 
-    // Valence-safe: if upgrading, ensure both atoms can pay delta
     if (target > b.order) {
-      const delta = target - b.order; // 1 or 2
+      const delta = target - b.order;
       if (a.valenceUsed + delta > a.valenceMax || c.valenceUsed + delta > c.valenceMax) {
-        // degrade to the highest affordable order
         let tryOrder: BondOrder = target;
         while (tryOrder > b.order) {
           const d2 = tryOrder - b.order;
@@ -473,7 +487,6 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
       }
     }
 
-    // apply any order change: update valenceUsed and bond params
     if (target !== b.order) {
       const old = b.order;
       const delta = target - old;
@@ -482,13 +495,361 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
       b.order = target;
     }
 
-    // update r0/k/breakR every time (so clamping multiple-bond->single keeps physics consistent)
     const kSingle = kLit * K_SCALE * params.bondScale;
     b.r0 = orderAdjustedR0(r0Single, b.order);
     b.k = orderAdjustedK(kSingle, b.order);
     b.breakR = b.r0 * BREAK_FACTOR;
   }
+
+  rebuildDihedrals(sim, params);
 }
+
+/* --------------------------------- Angles --------------------------------- */
+
+function buildNeighbors(sim: Sim3D): Map<number, Neighbor[]> {
+  const map = new Map<number, Neighbor[]>();
+  for (const b of sim.bonds) {
+    if (!map.has(b.aId)) map.set(b.aId, []);
+    if (!map.has(b.bId)) map.set(b.bId, []);
+    map.get(b.aId)!.push({ id: b.bId, order: b.order });
+    map.get(b.bId)!.push({ id: b.aId, order: b.order });
+  }
+  return map;
+}
+
+function targetAngleRad(j: Atom3D, neigh: Neighbor[] | undefined): number {
+  const n = neigh?.length ?? 0;
+  const hasMultiple = !!neigh?.some((x) => x.order >= 2);
+
+  switch (j.el) {
+    case "O":
+      return degToRad(104.5);
+    case "N":
+      if (hasMultiple || n === 2) return degToRad(120);
+      if (n === 3) return degToRad(107);
+      return degToRad(109.5);
+    case "C":
+      if (hasMultiple) return degToRad(120);
+      return degToRad(109.5);
+    case "P":
+      if (hasMultiple) return degToRad(110);
+      return degToRad(109.5);
+    case "S":
+      if (n <= 2) return degToRad(100);
+      return degToRad(109.5);
+    case "H":
+    default:
+      return degToRad(109.5);
+  }
+}
+
+function applyAngleForces(sim: Sim3D, params: Params3D) {
+  if (sim.bonds.length < 2) return;
+
+  const neighbors = buildNeighbors(sim);
+  const kBase = Math.max(0, params.angleK);
+  if (kBase <= 1e-9) return;
+
+  const cap = Math.max(0.1, params.angleForceCap);
+  const eps = 1e-6;
+
+  const byId = new Map<number, Atom3D>();
+  for (const a of sim.atoms) byId.set(a.id, a);
+
+  const capVec = (x: number, y: number, z: number) => {
+    const m = Math.sqrt(x * x + y * y + z * z) || 0;
+    if (m <= cap) return { x, y, z };
+    const s = cap / m;
+    return { x: x * s, y: y * s, z: z * s };
+  };
+
+  for (const [jId, neigh] of neighbors.entries()) {
+    if (neigh.length < 2) continue;
+
+    const j = byId.get(jId);
+    if (!j) continue;
+
+    const theta0 = targetAngleRad(j, neigh);
+    const hasMultiple = neigh.some((x) => x.order >= 2);
+    const kTheta = kBase * (hasMultiple ? 1.25 : 1.0);
+
+    for (let aIdx = 0; aIdx < neigh.length - 1; aIdx++) {
+      const i = byId.get(neigh[aIdx].id);
+      if (!i) continue;
+
+      const r1x = i.x - j.x;
+      const r1y = i.y - j.y;
+      const r1z = i.z - j.z;
+      const r1sq = r1x * r1x + r1y * r1y + r1z * r1z;
+      const r1 = Math.sqrt(r1sq) + eps;
+
+      for (let bIdx = aIdx + 1; bIdx < neigh.length; bIdx++) {
+        const k = byId.get(neigh[bIdx].id);
+        if (!k) continue;
+
+        const r2x = k.x - j.x;
+        const r2y = k.y - j.y;
+        const r2z = k.z - j.z;
+        const r2sq = r2x * r2x + r2y * r2y + r2z * r2z;
+        const r2 = Math.sqrt(r2sq) + eps;
+
+        const dot = r1x * r2x + r1y * r2y + r1z * r2z;
+        let cosT = dot / (r1 * r2);
+        cosT = clamp(cosT, -0.999999, 0.999999);
+
+        const theta = Math.acos(cosT);
+        const dTheta = theta - theta0;
+
+        const dUdTheta = kTheta * dTheta;
+
+        const sinT = Math.sqrt(Math.max(1 - cosT * cosT, 1e-8));
+        const dUdCos = dUdTheta * (-1 / sinT);
+
+        const invR1 = 1 / r1;
+        const invR2 = 1 / r2;
+        const common = invR1 * invR2;
+
+        const invR1sq = invR1 * invR1;
+        const invR2sq = invR2 * invR2;
+
+        const dcos1x = r2x * common - cosT * r1x * invR1sq;
+        const dcos1y = r2y * common - cosT * r1y * invR1sq;
+        const dcos1z = r2z * common - cosT * r1z * invR1sq;
+
+        const dcos2x = r1x * common - cosT * r2x * invR2sq;
+        const dcos2y = r1y * common - cosT * r2y * invR2sq;
+        const dcos2z = r1z * common - cosT * r2z * invR2sq;
+
+        let Fix = -dUdCos * dcos1x;
+        let Fiy = -dUdCos * dcos1y;
+        let Fiz = -dUdCos * dcos1z;
+
+        let Fkx = -dUdCos * dcos2x;
+        let Fky = -dUdCos * dcos2y;
+        let Fkz = -dUdCos * dcos2z;
+
+        let Fjx = -(Fix + Fkx);
+        let Fjy = -(Fiy + Fky);
+        let Fjz = -(Fiz + Fkz);
+
+        ({ x: Fix, y: Fiy, z: Fiz } = capVec(Fix, Fiy, Fiz));
+        ({ x: Fkx, y: Fky, z: Fkz } = capVec(Fkx, Fky, Fkz));
+        ({ x: Fjx, y: Fjy, z: Fjz } = capVec(Fjx, Fjy, Fjz));
+
+        i.fx += Fix; i.fy += Fiy; i.fz += Fiz;
+        k.fx += Fkx; k.fy += Fky; k.fz += Fkz;
+        j.fx += Fjx; j.fy += Fjy; j.fz += Fjz;
+      }
+    }
+  }
+}
+
+/* -------------------------------- Dihedrals -------------------------------- */
+
+type DihedralParam = { k: number; n: number; deltaDeg: number };
+
+// Basic torsions (toy)
+const DIHEDRAL_PARAMS: Partial<Record<PairKey, DihedralParam>> = {
+  "C-C": { k: 0.35, n: 3, deltaDeg: 0 },
+  "C-N": { k: 0.30, n: 3, deltaDeg: 0 },
+  "C-O": { k: 0.22, n: 3, deltaDeg: 0 },
+  "N-N": { k: 0.24, n: 3, deltaDeg: 0 },
+  "C-S": { k: 0.18, n: 3, deltaDeg: 0 },
+  "C-P": { k: 0.18, n: 3, deltaDeg: 0 },
+  "P-S": { k: 0.14, n: 3, deltaDeg: 0 },
+};
+
+function getDihedralParam(a: ElementKey, b: ElementKey): DihedralParam | null {
+  const key = pairKey(a, b);
+  const p = DIHEDRAL_PARAMS[key];
+  return p || null;
+}
+
+function cross(ax: number, ay: number, az: number, bx: number, by: number, bz: number) {
+  return { x: ay * bz - az * by, y: az * bx - ax * bz, z: ax * by - ay * bx };
+}
+function dot(ax: number, ay: number, az: number, bx: number, by: number, bz: number) {
+  return ax * bx + ay * by + az * bz;
+}
+function norm(x: number, y: number, z: number) {
+  return Math.sqrt(x * x + y * y + z * z);
+}
+
+function computeDihedralPhi(i: Atom3D, j: Atom3D, k: Atom3D, l: Atom3D): { phi: number; ok: boolean } {
+  const r12x = i.x - j.x, r12y = i.y - j.y, r12z = i.z - j.z;
+  const r23x = j.x - k.x, r23y = j.y - k.y, r23z = j.z - k.z;
+  const r34x = k.x - l.x, r34y = k.y - l.y, r34z = k.z - l.z;
+
+  const A = cross(r12x, r12y, r12z, r23x, r23y, r23z);
+  const B = cross(r34x, r34y, r34z, r23x, r23y, r23z);
+
+  const r23mag = norm(r23x, r23y, r23z);
+  const Amag = norm(A.x, A.y, A.z);
+  const Bmag = norm(B.x, B.y, B.z);
+  if (r23mag < 1e-8 || Amag < 1e-10 || Bmag < 1e-10) return { phi: 0, ok: false };
+
+  const x = dot(A.x, A.y, A.z, B.x, B.y, B.z);
+  const y = r23mag * dot(r12x, r12y, r12z, B.x, B.y, B.z);
+  return { phi: Math.atan2(y, x), ok: true };
+}
+
+function dihedralForces(i: Atom3D, j: Atom3D, k: Atom3D, l: Atom3D, dUdPhi: number) {
+  const r12x = i.x - j.x, r12y = i.y - j.y, r12z = i.z - j.z;
+  const r23x = j.x - k.x, r23y = j.y - k.y, r23z = j.z - k.z;
+  const r34x = k.x - l.x, r34y = k.y - l.y, r34z = k.z - l.z;
+
+  const A = cross(r12x, r12y, r12z, r23x, r23y, r23z);
+  const B = cross(r34x, r34y, r34z, r23x, r23y, r23z);
+
+  const r23mag = norm(r23x, r23y, r23z);
+  const r23mag2 = r23x * r23x + r23y * r23y + r23z * r23z;
+
+  const Amag2 = A.x * A.x + A.y * A.y + A.z * A.z;
+  const Bmag2 = B.x * B.x + B.y * B.y + B.z * B.z;
+
+  if (r23mag < 1e-8 || Amag2 < 1e-12 || Bmag2 < 1e-12) {
+    return { fi: { x: 0, y: 0, z: 0 }, fj: { x: 0, y: 0, z: 0 }, fk: { x: 0, y: 0, z: 0 }, fl: { x: 0, y: 0, z: 0 }, ok: false };
+  }
+
+  const sA = -r23mag / Amag2;
+  const dphidr1x = sA * A.x, dphidr1y = sA * A.y, dphidr1z = sA * A.z;
+
+  const sB = +r23mag / Bmag2;
+  const dphidr4x = sB * B.x, dphidr4y = sB * B.y, dphidr4z = sB * B.z;
+
+  const dot12_23 = dot(r12x, r12y, r12z, r23x, r23y, r23z);
+  const dot34_23 = dot(r34x, r34y, r34z, r23x, r23y, r23z);
+
+  const c1 = dot12_23 / r23mag2;
+  const c2 = dot34_23 / r23mag2;
+
+  const dphidr2x = -dphidr1x + c1 * dphidr1x - c2 * dphidr4x;
+  const dphidr2y = -dphidr1y + c1 * dphidr1y - c2 * dphidr4y;
+  const dphidr2z = -dphidr1z + c1 * dphidr1z - c2 * dphidr4z;
+
+  const dphidr3x = -dphidr4x - c1 * dphidr1x + c2 * dphidr4x;
+  const dphidr3y = -dphidr4y - c1 * dphidr1y + c2 * dphidr4y;
+  const dphidr3z = -dphidr4z - c1 * dphidr1z + c2 * dphidr4z;
+
+  const fi = { x: -dUdPhi * dphidr1x, y: -dUdPhi * dphidr1y, z: -dUdPhi * dphidr1z };
+  const fl = { x: -dUdPhi * dphidr4x, y: -dUdPhi * dphidr4y, z: -dUdPhi * dphidr4z };
+  const fj = { x: -dUdPhi * dphidr2x, y: -dUdPhi * dphidr2y, z: -dUdPhi * dphidr2z };
+  const fk = { x: -dUdPhi * dphidr3x, y: -dUdPhi * dphidr3y, z: -dUdPhi * dphidr3z };
+
+  return { fi, fj, fk, fl, ok: true };
+}
+
+export function rebuildDihedrals(sim: Sim3D, params: Params3D) {
+  if (!params.enableDihedrals) {
+    sim.dihedrals = [];
+    return;
+  }
+
+  const neigh = buildNeighbors(sim);
+
+  const byId = new Map<number, Atom3D>();
+  for (const a of sim.atoms) byId.set(a.id, a);
+
+  const torsions: DihedralTerm[] = [];
+  const seen = new Set<string>();
+
+  for (const b of sim.bonds) {
+    const j = byId.get(b.aId);
+    const k = byId.get(b.bId);
+    if (!j || !k) continue;
+
+    const effectiveOrder: BondOrder = params.allowMultipleBonds ? b.order : 1;
+    if (effectiveOrder !== 1) continue;
+
+    const p = getDihedralParam(j.el, k.el);
+    if (!p) continue;
+
+    const jN = neigh.get(j.id) || [];
+    const kN = neigh.get(k.id) || [];
+
+    const jOuter = jN.filter((x) => x.id !== k.id);
+    const kOuter = kN.filter((x) => x.id !== j.id);
+    if (jOuter.length === 0 || kOuter.length === 0) continue;
+
+    for (const io of jOuter) {
+      for (const lo of kOuter) {
+        if (io.id === lo.id) continue;
+
+        const key = `${io.id}-${j.id}-${k.id}-${lo.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        const iAtom = byId.get(io.id);
+        const lAtom = byId.get(lo.id);
+        if (!iAtom || !lAtom) continue;
+
+        let kTerm = p.k;
+        if (iAtom.el === "H") kTerm *= 0.65;
+        if (lAtom.el === "H") kTerm *= 0.65;
+
+        torsions.push({
+          iId: io.id,
+          jId: j.id,
+          kId: k.id,
+          lId: lo.id,
+          n: p.n,
+          delta: degToRad(p.deltaDeg),
+          k: kTerm * Math.max(0, params.dihedralKScale),
+        });
+      }
+    }
+  }
+
+  sim.dihedrals = torsions;
+}
+
+function applyDihedralForces(sim: Sim3D, params: Params3D) {
+  if (!params.enableDihedrals) return;
+  const terms = sim.dihedrals || [];
+  if (!terms.length) return;
+
+  const cap = Math.max(0.1, params.dihedralForceCap);
+
+  const byId = new Map<number, Atom3D>();
+  for (const a of sim.atoms) byId.set(a.id, a);
+
+  const capVec = (x: number, y: number, z: number) => {
+    const m = Math.sqrt(x * x + y * y + z * z) || 0;
+    if (m <= cap) return { x, y, z };
+    const s = cap / m;
+    return { x: x * s, y: y * s, z: z * s };
+  };
+
+  for (const t of terms) {
+    const i = byId.get(t.iId);
+    const j = byId.get(t.jId);
+    const k = byId.get(t.kId);
+    const l = byId.get(t.lId);
+    if (!i || !j || !k || !l) continue;
+    if (t.k <= 1e-9) continue;
+
+    const { phi, ok } = computeDihedralPhi(i, j, k, l);
+    if (!ok) continue;
+
+    const arg = t.n * phi - t.delta;
+    const dUdPhi = -t.k * t.n * Math.sin(arg);
+
+    const f = dihedralForces(i, j, k, l, dUdPhi);
+    if (!f.ok) continue;
+
+    const fi = capVec(f.fi.x, f.fi.y, f.fi.z);
+    const fj = capVec(f.fj.x, f.fj.y, f.fj.z);
+    const fk = capVec(f.fk.x, f.fk.y, f.fk.z);
+    const fl = capVec(f.fl.x, f.fl.y, f.fl.z);
+
+    i.fx += fi.x; i.fy += fi.y; i.fz += fi.z;
+    j.fx += fj.x; j.fy += fj.y; j.fz += fj.z;
+    k.fx += fk.x; k.fy += fk.y; k.fz += fk.z;
+    l.fx += fl.x; l.fy += fl.y; l.fz += fl.z;
+  }
+}
+
+/* ----------------------------------- Step ---------------------------------- */
 
 export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
   const atoms = sim.atoms;
@@ -499,7 +860,6 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
     a.fz = 0;
   }
 
-  // nonbonded
   const cut2 = params.cutoff * params.cutoff;
 
   for (let i = 0; i < atoms.length; i++) {
@@ -517,25 +877,42 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
       let r = Math.sqrt(r2) || 1e-6;
       if (r < params.minR) r = params.minR;
 
+      // LJ
       const mixed = mixLorentzBerthelot(params.lj, ai.el, aj.el);
       const sig = mixed.sigma;
       const eps = mixed.epsilon;
-      if (eps <= 1e-6) continue;
+      if (eps > 1e-6) {
+        let fmag = ljForce(r, eps, sig);
+        fmag = clamp(fmag, -params.maxPairForce, params.maxPairForce);
 
-      let fmag = ljForce(r, eps, sig);
-      fmag = clamp(fmag, -params.maxPairForce, params.maxPairForce);
+        const invR = 1 / r;
+        const fx = fmag * dx * invR;
+        const fy = fmag * dy * invR;
+        const fz = fmag * dz * invR;
 
-      const invR = 1 / r;
-      const fx = fmag * dx * invR;
-      const fy = fmag * dy * invR;
-      const fz = fmag * dz * invR;
+        ai.fx -= fx; ai.fy -= fy; ai.fz -= fz;
+        aj.fx += fx; aj.fy += fy; aj.fz += fz;
+      }
 
-      ai.fx -= fx;
-      ai.fy -= fy;
-      ai.fz -= fz;
-      aj.fx += fx;
-      aj.fy += fy;
-      aj.fz += fz;
+      // Electrostatics (screened)
+      if (params.enableElectrostatics) {
+        const qi = params.charges[ai.el] ?? 0;
+        const qj = params.charges[aj.el] ?? 0;
+        const ke = params.ke;
+        if (Math.abs(qi * qj) > 1e-9 && ke !== 0) {
+          let fmagE = yukawaForce(r, ke, qi, qj, params.screeningLength);
+          fmagE = clamp(fmagE, -params.maxPairForce, params.maxPairForce);
+
+          const invR = 1 / r;
+          const fx = fmagE * dx * invR;
+          const fy = fmagE * dy * invR;
+          const fz = fmagE * dz * invR;
+
+          // NOTE: positive fmagE means repulsive when qi*qj>0 and attractive when qi*qj<0
+          ai.fx -= fx; ai.fy -= fy; ai.fz -= fz;
+          aj.fx += fx; aj.fy += fy; aj.fz += fz;
+        }
+      }
     }
   }
 
@@ -551,7 +928,7 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
 
     const r = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-6;
 
-    let fmag = bondForce(r, b.r0, b.k);
+    let fmag = b.k * (r - b.r0);
     fmag = clamp(fmag, -params.maxPairForce, params.maxPairForce);
 
     const invR = 1 / r;
@@ -559,13 +936,12 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
     const fy = fmag * dy * invR;
     const fz = fmag * dz * invR;
 
-    a.fx += fx;
-    a.fy += fy;
-    a.fz += fz;
-    c.fx -= fx;
-    c.fy -= fy;
-    c.fz -= fz;
+    a.fx += fx; a.fy += fy; a.fz += fz;
+    c.fx -= fx; c.fy -= fy; c.fz -= fz;
   }
+
+  applyAngleForces(sim, params);
+  applyDihedralForces(sim, params);
 
   // container walls
   const S = params.boxHalfSize;
@@ -602,14 +978,10 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
       const mag = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1e-6;
       if (mag > params.grabMaxForce) {
         const s = params.grabMaxForce / mag;
-        fx *= s;
-        fy *= s;
-        fz *= s;
+        fx *= s; fy *= s; fz *= s;
       }
 
-      g.fx += fx;
-      g.fy += fy;
-      g.fz += fz;
+      g.fx += fx; g.fy += fy; g.fz += fz;
     }
   }
 
@@ -625,7 +997,6 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
     a.vy = (a.vy + ay * dt) * damp;
     a.vz = (a.vz + az * dt) * damp;
 
-    // Brownian velocity kicks
     if (params.temperature > 0) {
       const kick = params.tempVelKick * params.temperature * Math.sqrt(dt);
       const mScale = 1 / Math.sqrt(Math.max(0.6, a.mass));
@@ -665,6 +1036,10 @@ export function removeAtom3D(sim: Sim3D, atomId: number) {
 
   sim.bonds = sim.bonds.filter((b) => b.aId !== atomId && b.bId !== atomId);
   sim.atoms = sim.atoms.filter((a) => a.id !== atomId);
+
+  sim.dihedrals = (sim.dihedrals || []).filter(
+    (t) => t.iId !== atomId && t.jId !== atomId && t.kId !== atomId && t.lId !== atomId
+  );
 
   if (sim.grabbedId === atomId) {
     sim.grabbedId = null;

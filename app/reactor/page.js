@@ -19,6 +19,7 @@ import {
   setGrab,
   setGrabTarget,
   stepSim3D,
+  DEFAULT_CHARGES,
 } from "@/lib/sim/physics3d";
 
 const ELEMENTS = ["S", "P", "O", "N", "C", "H"];
@@ -129,6 +130,17 @@ export default function ReactorPage() {
 
       grabK: 80,
       grabMaxForce: 140,
+      angleK: 2.2,
+      angleForceCap: 10,
+      enableDihedrals: true,
+      dihedralKScale: 1.0,
+      dihedralForceCap: 6,
+
+      // ✅ Electrostatics (NEW)
+      enableElectrostatics: true,
+      charges: { ...DEFAULT_CHARGES },
+      ke: 0.6,
+      screeningLength: 4.0,
     };
   }, [lj, temperatureK, damping, bondScale, allowMultipleBonds, boxHalfSize]);
 
@@ -629,7 +641,7 @@ export default function ReactorPage() {
     const MAX_SUBSTEPS = 6;
 
     let bondOrderTimer = 0;
-    const BOND_ORDER_PERIOD = 0.12;
+    const BOND_ORDER_PERIOD = 0.25;
 
     const tick = (now) => {
       rafRef.current = requestAnimationFrame(tick);
