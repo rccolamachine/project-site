@@ -103,6 +103,16 @@ const ITEMS = [
     links: [{ label: "Open Photobooth", href: "/photobooth" }],
   },
   {
+    id: "photobooth-style-upgrade",
+    title: "Photobooth: style upgrade and UI polish",
+    area: "Photobooth",
+    priority: "P4",
+    status: "todo", // todo | inProgress | done
+    notes:
+      "Make some design tweaks on the Photobooth page, including the Pixelation slider.",
+    links: [{ label: "Open Photobooth", href: "/photobooth" }],
+  },
+  {
     id: "add-favicon",
     title: "Add Favicon",
     area: "General",
