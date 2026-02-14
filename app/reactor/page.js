@@ -999,7 +999,7 @@ export default function ReactorPage() {
                 <span
                   style={{ fontSize: 12, fontWeight: 900, color: "#0f172a" }}
                 >
-                  Bonds
+                  Visualize Bonds
                 </span>
                 <input
                   type="checkbox"
