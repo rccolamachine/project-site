@@ -89,9 +89,7 @@ const DEFAULT_ITEMS = [
     area: "General",
     priority: "P3",
     status: "todo",
-    notes:
-      "Add a favicon to the site for better branding and user experience.",
-
+    notes: "Add a favicon to the site for better branding and user experience.",
   },
 ];
 
@@ -525,11 +523,11 @@ export default function TodoPage() {
                     alignItems: "center",
                   }}
                 >
-                  <button className="btn" onClick={() => toggleDone(it.id)}>
+                  {/* <button className="btn" onClick={() => toggleDone(it.id)}>
                     {isDone ? "Re-open" : "Done"}
-                  </button>
+                  </button> */}
 
-                  <select
+                  {/* <select
                     value={it.status || "todo"}
                     onChange={(e) => setStatus(it.id, e.target.value)}
                     style={{
@@ -546,9 +544,9 @@ export default function TodoPage() {
                     <option value="in-progress">in-progress</option>
                     <option value="blocked">blocked</option>
                     <option value="done">done</option>
-                  </select>
+                  </select> */}
 
-                  <button
+                  {/* <button
                     className="btn"
                     onClick={() => removeItem(it.id)}
                     title="Remove from list"
@@ -558,7 +556,7 @@ export default function TodoPage() {
                     }}
                   >
                     Remove
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>
