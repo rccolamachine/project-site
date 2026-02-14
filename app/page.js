@@ -39,7 +39,17 @@ export default function Home() {
             Click the button for everyone. Or reset it and reveal your shame.
           </p>
           <Link className="btn" href="/button">
-            Play now.
+            Play now
+          </Link>
+        </div>
+
+        <div className="card">
+          <h2>What's Next?</h2>
+          <p>
+            Always fixing. Always building. Check the To-Do list for the latest.
+          </p>
+          <Link className="btn" href="/todo">
+            Scope the horizon
           </Link>
         </div>
       </div>
