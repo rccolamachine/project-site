@@ -562,7 +562,7 @@ export default function ButtonGamePage() {
               {pendingUi
                 ? `pending +${pendingUi}`
                 : lastClickAt
-                  ? `last click: ${new Date(lastClickAt).toLocaleString()}`
+                  ? `last increment: ${new Date(lastClickAt).toLocaleString()}`
                   : "—"}
             </div>
           </div>
