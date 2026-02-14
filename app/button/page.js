@@ -80,6 +80,7 @@ export default function ButtonGamePage() {
   const pendingRef = useRef(0);
   const timerRef = useRef(null);
   const [pendingUi, setPendingUi] = useState(0);
+  const [lastClickAt, setLastClickAt] = useState("");
 
   // state sync dedupe/cooldown
   const stateInFlightRef = useRef(null);
@@ -199,6 +200,7 @@ export default function ButtonGamePage() {
 
   const handleIncrement = () => {
     setErr("");
+    setLastClickAt(new Date().toISOString());
 
     pendingRef.current += 1;
     setPendingUi((p) => p + 1);
@@ -554,11 +556,13 @@ export default function ButtonGamePage() {
               {displayValue}
             </div>
 
-            {pendingUi ? (
-              <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
-                pending +{pendingUi}
-              </div>
-            ) : null}
+            <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>
+              {pendingUi
+                ? `pending +${pendingUi}`
+                : lastClickAt
+                  ? `last click: ${new Date(lastClickAt).toLocaleString()}`
+                  : "—"}
+            </div>
           </div>
 
           <div className="card">
