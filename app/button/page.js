@@ -723,6 +723,8 @@ export default function ButtonGamePage() {
                       height: "240px",
                       display: "block",
                       imageRendering: "pixelated",
+                      filter: "grayscale(1)", // ✅ iOS-proof preview grayscale
+                      WebkitFilter: "grayscale(1)", // ✅ extra for Safari
                     }}
                   />
                 </div>

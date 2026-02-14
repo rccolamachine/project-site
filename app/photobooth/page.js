@@ -863,6 +863,8 @@ export default function Page() {
           width: "100%",
           height: "100%",
           pointerEvents: "none",
+          filter: "grayscale(1)", // ✅ iOS-proof preview grayscale
+          WebkitFilter: "grayscale(1)", // ✅ extra for Safari
         }}
       />
 
@@ -976,6 +978,8 @@ export default function Page() {
               display: "block",
               background: "#000",
               imageRendering: "pixelated",
+              filter: "grayscale(1)", // ✅ iOS-proof preview grayscale
+              WebkitFilter: "grayscale(1)", // ✅ extra for Safari
             }}
           />
         </div>
