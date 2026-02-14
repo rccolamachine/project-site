@@ -10,9 +10,9 @@ const ITEMS = [
     title: "Photobooth: fix email field/handling",
     area: "Photobooth",
     priority: "P1",
-    status: "todo", // todo | inProgress | done
+    status: "inProgress", // todo | inProgress | done
     notes:
-      "Email input/submit isn’t correct (validation, formatting, or wiring). Fix UI + API contract and confirm it persists/gets displayed correctly.",
+      "Email input/submit isn’t correct (validation, formatting, or wiring). Fix UI + API contract and confirm it persists/gets displayed correctly. Progress update: emails are currently being sent to the user when specified, but never to Rob's email.",
     links: [{ label: "Open Photobooth", href: "/photobooth" }],
   },
   {
@@ -20,7 +20,7 @@ const ITEMS = [
     title: "Guestbook: fix photo storage",
     area: "Guestbook",
     priority: "P1",
-    status: "todo",
+    status: "done",
     notes:
       "Store uploaded photos reliably (avoid huge payloads / broken persistence). Decide DB vs blob storage strategy and update API accordingly.",
     links: [{ label: "Open Guestbook", href: "/guestbook" }],
@@ -30,7 +30,7 @@ const ITEMS = [
     title: "Guestbook: fix GET pictures endpoint",
     area: "Guestbook",
     priority: "P1",
-    status: "todo",
+    status: "done",
     notes:
       "GET should return the correct shape, newest-first ordering, and include photo URLs/data consistently. Confirm caching headers for Vercel.",
     links: [{ label: "Open Guestbook", href: "/guestbook" }],
@@ -40,7 +40,7 @@ const ITEMS = [
     title: "Pictures page: move photos to database",
     area: "Pictures",
     priority: "P1",
-    status: "todo",
+    status: "done",
     notes:
       "Stop hardcoding/local-file listing for the public gallery. Store metadata in DB, load via API, and render grid from DB results.",
     links: [{ label: "Open Pictures", href: "/pictures" }],

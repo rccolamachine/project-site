@@ -1,190 +1,236 @@
-// app/guestbook/GuestbookClient.jsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+
+function readCookie(name) {
+  if (typeof document === "undefined") return "";
+  const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+  return m ? decodeURIComponent(m[1]) : "";
+}
 
 function formatDate(iso) {
-  try {
-    return new Date(iso).toLocaleString();
-  } catch {
-    return iso;
-  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "Invalid Date";
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 }
 
 export default function GuestbookClient() {
+  const mySid = useMemo(() => readCookie("gb_sid"), []);
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-  const [deletingId, setDeletingId] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const [busyId, setBusyId] = useState(null); // deleting id
 
-  const load = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
-    setErr("");
+    setLoadError("");
+
     try {
-      const res = await fetch("/api/pictures", { cache: "no-store" });
+      const res = await fetch("/api/pictures?limit=50", { cache: "no-store" });
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(text || `Failed to load (${res.status})`);
+        const t = await res.text().catch(() => "");
+        throw new Error(t || `Failed to load (${res.status})`);
       }
-      const json = await res.json(); // { items }
+      const json = await res.json();
       setItems(Array.isArray(json.items) ? json.items : []);
     } catch (e) {
-      setErr(e?.message || String(e));
+      setLoadError(e?.message || String(e));
+      setItems([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    load();
   }, []);
 
-  const onDelete = async (id) => {
-    if (!id) return;
-    const ok = window.confirm(
-      "Delete this guestbook entry? This cannot be undone.",
-    );
-    if (!ok) return;
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
 
-    setDeletingId(id);
-    setErr("");
+  const onDelete = useCallback(
+    async (id) => {
+      if (!id) return;
+      if (!confirm("Delete this guestbook entry? This cannot be undone."))
+        return;
 
-    try {
-      const res = await fetch(`/api/pictures/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
+      setBusyId(id);
+      try {
+        const res = await fetch(`/api/pictures?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          const t = await res.text().catch(() => "");
+          throw new Error(t || `Delete failed (${res.status})`);
+        }
 
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(text || `Delete failed (${res.status})`);
+        // optimistic update
+        setItems((prev) => prev.filter((x) => x.id !== id));
+      } catch (e) {
+        alert(e?.message || String(e));
+      } finally {
+        setBusyId(null);
       }
-
-      // Optimistic remove
-      setItems((prev) => prev.filter((x) => x.id !== id));
-    } catch (e) {
-      setErr(e?.message || String(e));
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="card" style={{ marginTop: 16 }}>
-        Loading…
-      </div>
-    );
-  }
-
-  if (err) {
-    return (
-      <div
-        className="card"
-        style={{
-          marginTop: 16,
-          borderColor: "rgba(255,0,0,0.25)",
-        }}
-      >
-        <div style={{ marginBottom: 10, color: "#ffb4b4" }}>{err}</div>
-        <button onClick={load}>Retry</button>
-      </div>
-    );
-  }
-
-  if (!items.length) {
-    return (
-      <div className="card" style={{ marginTop: 16 }}>
-        No entries yet. Go snap a photo and save it.
-      </div>
-    );
-  }
+    },
+    [setItems],
+  );
 
   return (
-    <div style={{ marginTop: 18 }}>
+    <div style={{ display: "grid", gap: 12 }}>
       <div
         style={{
           display: "flex",
           gap: 10,
           alignItems: "center",
-          marginBottom: 12,
+          flexWrap: "wrap",
         }}
       >
-        <button onClick={load}>Refresh</button>
-        <div style={{ fontSize: 12, opacity: 0.8 }}>
-          Showing <strong>{items.length}</strong> entr
-          {items.length === 1 ? "y" : "ies"}
+        <button onClick={fetchItems} disabled={loading}>
+          {loading ? "Loading…" : "Refresh"}
+        </button>
+
+        <div style={{ opacity: 0.85, fontSize: 12 }}>
+          {loading
+            ? "Loading…"
+            : `Showing ${items.length} entr${items.length === 1 ? "y" : "ies"}`}
         </div>
       </div>
 
-      <div className="grid">
-        {items.map((it) => (
-          <figure key={it.id} className="tile">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={it.image_url} alt={`Photobooth by ${it.name}`} />
+      {loadError ? (
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 12,
+            background: "#2a1414",
+            border: "1px solid #5a2b2b",
+            color: "#ffd5d5",
+          }}
+        >
+          <div style={{ marginBottom: 8 }}>Failed to load</div>
+          <div style={{ fontSize: 12, opacity: 0.9, whiteSpace: "pre-wrap" }}>
+            {loadError}
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <button onClick={fetchItems} disabled={loading}>
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : null}
 
-            <figcaption>
-              <div style={{ display: "flex", gap: 10, alignItems: "start" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="capTitle">{it.name}</div>
-                  <div className="capMeta">
-                    {formatDate(it.created_at)}
-                    {it.pixel_size ? ` • ${it.pixel_size}px` : ""}
+      <div
+        className="grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: 14,
+        }}
+      >
+        {items.map((it) => {
+          const canDelete = !!mySid && !!it.sid && mySid === it.sid;
+
+          return (
+            <figure
+              key={it.id} // ✅ unique
+              className="tile"
+              style={{
+                margin: 0,
+                borderRadius: 16,
+                overflow: "hidden",
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(0,0,0,0.18)",
+                boxShadow: "0 16px 40px rgba(0,0,0,0.35)",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={it.image_url}
+                alt={`Photobooth by ${it.name || "Guest"}`}
+                style={{
+                  width: "100%",
+                  height: 220,
+                  objectFit: "cover",
+                  display: "block",
+                  imageRendering: "pixelated",
+                  filter: "grayscale(1)",
+                }}
+              />
+
+              <figcaption style={{ padding: 12, display: "grid", gap: 6 }}>
+                <div
+                  style={{ display: "flex", alignItems: "baseline", gap: 10 }}
+                >
+                  <div style={{ fontWeight: 700 }}>{it.name || "Guest"}</div>
+                  <div
+                    style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}
+                  >
+                    {formatDate(it.created_at || it.uploadedAt)}
                   </div>
                 </div>
-
-                {it.can_delete ? (
-                  <button
-                    onClick={() => onDelete(it.id)}
-                    disabled={deletingId === it.id}
-                    title="You can delete entries created in your current session"
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: 12,
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      background: "rgba(0,0,0,0.2)",
-                      color: "#eaeaea",
-                      cursor: deletingId === it.id ? "not-allowed" : "pointer",
-                      opacity: deletingId === it.id ? 0.7 : 1,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {deletingId === it.id ? "Deleting…" : "Delete"}
-                  </button>
-                ) : null}
-              </div>
-
-              <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
-                {it.linkedin_url ? (
-                  <div style={{ fontSize: 14, opacity: 0.92 }}>
-                    <span style={{ opacity: 0.75 }}>LinkedIn: </span>
-                    <a href={it.linkedin_url} target="_blank" rel="noreferrer">
-                      {it.linkedin_url}
-                    </a>
-                  </div>
-                ) : null}
 
                 {it.message ? (
                   <div
                     style={{
-                      fontSize: 14,
+                      fontSize: 13,
                       opacity: 0.92,
                       whiteSpace: "pre-wrap",
                     }}
                   >
-                    <span style={{ opacity: 0.75 }}>Message: </span>
                     {it.message}
                   </div>
-                ) : null}
-
-                {!it.linkedin_url && !it.message ? (
-                  <div style={{ fontSize: 14, opacity: 0.75 }}>
+                ) : (
+                  <div style={{ fontSize: 13, opacity: 0.7 }}>
                     (No message.)
                   </div>
-                ) : null}
-              </div>
-            </figcaption>
-          </figure>
-        ))}
+                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    alignItems: "center",
+                    marginTop: 6,
+                  }}
+                >
+                  {it.linkedinUrl ? (
+                    <a
+                      href={it.linkedinUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: 12, opacity: 0.9 }}
+                    >
+                      LinkedIn
+                    </a>
+                  ) : null}
+
+                  <div style={{ marginLeft: "auto" }} />
+
+                  {canDelete ? (
+                    <button
+                      onClick={() => onDelete(it.id)}
+                      disabled={busyId === it.id}
+                      style={{
+                        fontSize: 12,
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        border: "1px solid rgba(255,90,90,0.45)",
+                        background: "rgba(120, 20, 20, 0.35)",
+                      }}
+                      title="You can delete entries you created in this browser session."
+                    >
+                      {busyId === it.id ? "Deleting…" : "Delete"}
+                    </button>
+                  ) : null}
+                </div>
+              </figcaption>
+            </figure>
+          );
+        })}
       </div>
     </div>
   );
