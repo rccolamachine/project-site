@@ -40,10 +40,20 @@ const ITEMS = [
     title: "Pictures page: move photos to database",
     area: "Pictures",
     priority: "P1",
-    status: "done",
+    status: "todo",
     notes:
       "Stop hardcoding/local-file listing for the public gallery. Store metadata in DB, load via API, and render grid from DB results.",
     links: [{ label: "Open Pictures", href: "/pictures" }],
+  },
+  {
+    id: "reactor-page-in-mobile",
+    title: "Fix Reactor page on mobile",
+    area: "Reactor",
+    priority: "P3",
+    status: "todo",
+    notes:
+      "Currently the Reactor page is pretty broken on mobile (overflow, controls hard to use). Make it responsive and usable on smaller screens, or disable the page on mobile with a message. It’s a bit of a niche use case but would be nice to have it work decently.",
+    links: [{ label: "Open Reactor", href: "/reactor" }],
   },
   {
     id: "update-about-page",
