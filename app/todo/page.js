@@ -52,7 +52,7 @@ const ITEMS = [
     priority: "P1",
     status: "todo",
     notes:
-      "Add content and stylize About page. Include bio, links, and whatever else seems fun. It’s been a placeholder for too long. Add spotify playlist?",
+      "Add content and stylize About page. Include bio, links, and whatever else seems fun. It’s been a placeholder for too long. Add spotify playlist? Fix Links.",
     links: [{ label: "Open About", href: "/about" }],
   },
   {
