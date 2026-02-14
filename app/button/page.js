@@ -36,21 +36,35 @@ function normalizeShame(shame) {
     .filter(Boolean);
 }
 
-// ✅ Canvas grayscale that works on mobile Safari / WebViews (don’t trust ctx.filter)
-function forceGrayscale2D(ctx, w, h) {
-  const img = ctx.getImageData(0, 0, w, h);
-  const d = img.data;
+/**
+ * iOS Safari often ignores ctx.filter="grayscale(1)" for video->canvas.
+ * So we force grayscale by converting pixels in-place.
+ */
+function toGrayInPlace(imageData) {
+  const d = imageData.data;
   for (let i = 0; i < d.length; i += 4) {
     const r = d[i];
     const g = d[i + 1];
     const b = d[i + 2];
+    // perceptual luma (good-looking grayscale)
     const y = (0.2126 * r + 0.7152 * g + 0.0722 * b) | 0;
     d[i] = y;
     d[i + 1] = y;
     d[i + 2] = y;
-    // alpha stays d[i+3]
+    // alpha unchanged
   }
-  ctx.putImageData(img, 0, 0);
+}
+
+function forceGrayscale2D(ctx, w, h) {
+  if (!ctx || !w || !h) return;
+  try {
+    const img = ctx.getImageData(0, 0, w, h);
+    toGrayInPlace(img);
+    ctx.putImageData(img, 0, 0);
+  } catch {
+    // If getImageData fails for any reason, do nothing.
+    // (It should not fail for getUserMedia video, but keep it safe.)
+  }
 }
 
 export default function ButtonGamePage() {
@@ -75,8 +89,8 @@ export default function ButtonGamePage() {
   const [showReset, setShowReset] = useState(false);
   const [resetName, setResetName] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
-  const [resetError, setResetError] = useState(""); // validation/server errors
-  const [cameraError, setCameraError] = useState(""); // camera permission/device errors
+  const [resetError, setResetError] = useState("");
+  const [cameraError, setCameraError] = useState("");
   const [snapDataUrl, setSnapDataUrl] = useState("");
 
   // camera
@@ -227,18 +241,23 @@ export default function ButtonGamePage() {
     const start = async () => {
       try {
         setCameraError("");
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "user" },
           audio: false,
         });
+
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
+
         streamRef.current = stream;
 
         const video = videoRef.current;
         video.srcObject = stream;
+
+        // iOS sometimes needs this explicit play
         await video.play();
 
         const live = liveCanvasRef.current;
@@ -255,16 +274,16 @@ export default function ButtonGamePage() {
           const tinyW = 64;
           const tinyH = Math.max(1, Math.round((tinyW * vh) / vw));
 
+          // set size BEFORE drawing
           live.width = tinyW;
           live.height = tinyH;
 
-          ctx.save();
-          ctx.filter = "none"; // ✅ don’t rely on ctx.filter (mobile can ignore it)
+          // DO NOT rely on ctx.filter on iOS
+          ctx.filter = "none";
           ctx.imageSmoothingEnabled = true; // smooth into tiny
           ctx.drawImage(video, 0, 0, tinyW, tinyH);
-          ctx.restore();
 
-          // ✅ guaranteed grayscale everywhere
+          // ✅ GUARANTEED grayscale
           forceGrayscale2D(ctx, tinyW, tinyH);
 
           rafRef.current = requestAnimationFrame(draw);
@@ -320,11 +339,15 @@ export default function ButtonGamePage() {
       alpha: false,
       willReadFrequently: true,
     });
+
+    sctx.filter = "none";
     sctx.imageSmoothingEnabled = false;
     sctx.clearRect(0, 0, outW, outH);
+
+    // draw from live -> snap
     sctx.drawImage(live, 0, 0, outW, outH);
 
-    // ✅ also enforce grayscale on the exported image
+    // ✅ GUARANTEED grayscale export too (in case live ever isn’t)
     forceGrayscale2D(sctx, outW, outH);
 
     const url = snap.toDataURL("image/png");
@@ -416,7 +439,7 @@ export default function ButtonGamePage() {
     marginRight: "calc(50% - 50vw)",
   };
 
-  // ✅ Shared “inner” width for ALL sections so columns line up
+  // Shared inner width
   const innerStyle = {
     width: "min(1100px, 92vw)",
     margin: "0 auto",
@@ -474,7 +497,6 @@ export default function ButtonGamePage() {
           }}
         >
           <div style={innerStyle}>
-            {/* ✅ MATCH THE STATS ROW GRID EXACTLY */}
             <div
               style={{
                 display: "grid",
@@ -572,7 +594,6 @@ export default function ButtonGamePage() {
                   </div>
                 )}
 
-                {/* DIAGONAL STAMP */}
                 <div
                   aria-hidden="true"
                   style={{
