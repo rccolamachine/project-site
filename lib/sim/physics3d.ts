@@ -70,6 +70,7 @@ export type Sim3D = {
   atoms: Atom3D[];
   bonds: Bond3D[];
   nextId: number;
+  stepCount: number;
 
   grabbedId: number | null;
   grabTarget: { x: number; y: number; z: number } | null;
@@ -93,6 +94,9 @@ export type Params3D = {
   charges: ChargePerElement;   // constant per element
   ke: number;                  // strength multiplier (toy)
   screeningLength: number;     // lambda, in world units
+  electroRepulsionScale?: number; // >1 boosts like-charge repulsion only
+  electroAttractionScale?: number; // >1 boosts opposite-charge attraction only
+  electroBondBiasStrength?: number; // 0..2; favors opposite-charge bond formation
 
   // bond system
   bondScale: number;
@@ -111,6 +115,9 @@ export type Params3D = {
   temperature: number;
   damping: number;
   tempVelKick: number;
+  thermostatInterval?: number; // steps between velocity rescaling
+  thermostatStrength?: number; // 0..1 blend toward target kinetic energy
+  thermostatClamp?: number; // max fractional rescale per application
 
   // container
   boxHalfSize: number;
@@ -136,7 +143,8 @@ export const DEFAULT_LJ: LJPerElement = {
   H: { sigma: 1.0, epsilon: 0.55 },
   C: { sigma: 1.15, epsilon: 1.05 },
   N: { sigma: 1.12, epsilon: 1.0 },
-  O: { sigma: 1.1, epsilon: 1.15 },
+  // Slightly reduced vs original, but less suppressed to allow more O2 encounters.
+  O: { sigma: 1.1, epsilon: 0.95 },
   P: { sigma: 1.22, epsilon: 0.95 },
   S: { sigma: 1.25, epsilon: 1.05 },
 };
@@ -159,10 +167,10 @@ const K_SCALE = 0.015;
 // Canonical-only keys (A-B where A<=B)
 const PAIR_BOND_PARAMS: Partial<Record<PairKey, PairBondParam>> = {
   // H
-  "H-H": { r0: 0.74, kLit: 440 },
+  "H-H": { r0: 0.74, kLit: 470 },
   "H-C": { r0: 1.09, kLit: 340 },
   "H-N": { r0: 1.01, kLit: 350 },
-  "H-O": { r0: 0.96, kLit: 370 },
+  "H-O": { r0: 0.96, kLit: 430 },
   "H-P": { r0: 1.42, kLit: 250 },
   "H-S": { r0: 1.34, kLit: 250 },
 
@@ -180,7 +188,7 @@ const PAIR_BOND_PARAMS: Partial<Record<PairKey, PairBondParam>> = {
   "N-S": { r0: 1.68, kLit: 200 },
 
   // O
-  "O-O": { r0: 1.48, kLit: 300 },
+  "O-O": { r0: 1.48, kLit: 270 },
   "O-P": { r0: 1.63, kLit: 240 },
   "O-S": { r0: 1.58, kLit: 240 },
 
@@ -192,6 +200,13 @@ const PAIR_BOND_PARAMS: Partial<Record<PairKey, PairBondParam>> = {
   "S-S": { r0: 2.05, kLit: 160 },
 };
 
+const PAIR_FORMATION_BIAS: Partial<Record<PairKey, number>> = {
+  // Encourage key small stable species and suppress oxygen oligomer growth.
+  "H-H": 1.15,
+  "H-O": 1.25,
+  "O-O": 0.92,
+};
+
 function pairKey(a: ElementKey, b: ElementKey): PairKey {
   return (a <= b ? `${a}-${b}` : `${b}-${a}`) as PairKey;
 }
@@ -200,6 +215,10 @@ function getPairBondParam(a: ElementKey, b: ElementKey): PairBondParam {
   const key = pairKey(a, b);
   const p = PAIR_BOND_PARAMS[key];
   return p || { r0: 1.6, kLit: 250 };
+}
+
+function getPairFormationBias(a: ElementKey, b: ElementKey) {
+  return PAIR_FORMATION_BIAS[pairKey(a, b)] ?? 1.0;
 }
 
 function orderAdjustedR0(r0Single: number, order: BondOrder) {
@@ -216,6 +235,7 @@ export function createSim3D(): Sim3D {
     atoms: [],
     bonds: [],
     nextId: 1,
+    stepCount: 0,
     grabbedId: null,
     grabTarget: null,
     dihedrals: [],
@@ -234,6 +254,7 @@ export function clearSim3D(sim: Sim3D) {
   sim.atoms = [];
   sim.bonds = [];
   sim.nextId = 1;
+  sim.stepCount = 0;
   sim.grabbedId = null;
   sim.grabTarget = null;
   sim.dihedrals = [];
@@ -285,6 +306,38 @@ function bondValenceCost(order: BondOrder) {
   return order;
 }
 
+function targetValenceForOctet(atom: Atom3D) {
+  // H follows duet (1 bond pair), others use octet-like capacities.
+  if (atom.el === "H") return 1;
+  return atom.valenceMax;
+}
+
+function recomputeValenceUsage(sim: Sim3D) {
+  const byId = new Map<number, Atom3D>();
+  for (const a of sim.atoms) {
+    a.valenceUsed = 0;
+    byId.set(a.id, a);
+  }
+
+  for (const b of sim.bonds) {
+    const a = byId.get(b.aId);
+    const c = byId.get(b.bId);
+    if (!a || !c) continue;
+
+    const cost = bondValenceCost(b.order);
+    a.valenceUsed = clamp(a.valenceUsed + cost, 0, a.valenceMax);
+    c.valenceUsed = clamp(c.valenceUsed + cost, 0, c.valenceMax);
+  }
+}
+
+function valenceDeficit(atom: Atom3D) {
+  return Math.max(0, targetValenceForOctet(atom) - atom.valenceUsed);
+}
+
+function hasFullShell(atom: Atom3D) {
+  return valenceDeficit(atom) <= 0;
+}
+
 function canBondOrder(a: Atom3D, b: Atom3D, order: BondOrder) {
   const cost = bondValenceCost(order);
   if (a.valenceUsed + cost > a.valenceMax) return false;
@@ -328,19 +381,34 @@ export function mixLorentzBerthelot(lj: LJPerElement, a: ElementKey, b: ElementK
  * Force is along r-hat.
  */
 
-function yukawaForce(r: number, ke: number, qi: number, qj: number, lambda: number) {
+function yukawaForce(
+  r: number,
+  ke: number,
+  qi: number,
+  qj: number,
+  lambda: number,
+  electroRepulsionScale = 2.2,
+  electroAttractionScale = 2.0
+) {
   const qq = qi * qj;
   if (Math.abs(qq) < 1e-9) return 0;
   const lam = Math.max(1e-3, lambda);
   const e = Math.exp(-r / lam);
   const invR = 1 / r;
   const invR2 = invR * invR;
-  return ke * qq * e * (invR2 + invR / lam);
+  const signScale = qq > 0
+    ? Math.max(0, electroRepulsionScale)
+    : Math.max(0, electroAttractionScale);
+  return ke * qq * signScale * e * (invR2 + invR / lam);
 }
 
 /* --------------------------------- Bonds ---------------------------------- */
 
 function pruneBrokenBonds(sim: Sim3D) {
+  const FULL_SHELL_BREAK_STRETCH = 1.25;
+  const PARTIAL_SHELL_BREAK_STRETCH = 1.1;
+  const BREAK_OUTWARD_VEL_MIN = 0.2;
+
   const kept: Bond3D[] = [];
   for (const b of sim.bonds) {
     const a = getAtom(sim, b.aId);
@@ -352,7 +420,26 @@ function pruneBrokenBonds(sim: Sim3D) {
     const dz = c.z - a.z;
     const r = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0;
 
-    if (r > b.breakR) {
+    const fullA = hasFullShell(a);
+    const fullC = hasFullShell(c);
+    const barrierMult = fullA && fullC
+      ? FULL_SHELL_BREAK_STRETCH
+      : fullA || fullC
+      ? PARTIAL_SHELL_BREAK_STRETCH
+      : 1.0;
+    const barrierBreakR = b.breakR * barrierMult;
+
+    // Kinetic barrier: stretched bonds only break if also moving apart.
+    const invR = r > 1e-8 ? 1 / r : 0;
+    const ux = dx * invR;
+    const uy = dy * invR;
+    const uz = dz * invR;
+    const rvx = c.vx - a.vx;
+    const rvy = c.vy - a.vy;
+    const rvz = c.vz - a.vz;
+    const outwardSpeed = rvx * ux + rvy * uy + rvz * uz;
+
+    if (r > barrierBreakR && outwardSpeed > BREAK_OUTWARD_VEL_MIN) {
       const cost = bondValenceCost(b.order);
       a.valenceUsed = Math.max(0, a.valenceUsed - cost);
       c.valenceUsed = Math.max(0, c.valenceUsed - cost);
@@ -370,10 +457,53 @@ function chooseBondOrder(d: number, r0Single: number, allowMultiple: boolean): B
   return 1;
 }
 
+function chooseBondOrderWithOctetBias(
+  a: Atom3D,
+  b: Atom3D,
+  d: number,
+  r0Single: number,
+  allowMultiple: boolean
+): BondOrder | null {
+  const baseline = chooseBondOrder(d, r0Single, allowMultiple);
+  const maxOrder = allowMultiple ? 3 : 1;
+
+  const deficitA = valenceDeficit(a);
+  const deficitB = valenceDeficit(b);
+  const deficitNow = deficitA + deficitB;
+  if (deficitNow <= 0) return null;
+
+  const desired = clamp(Math.min(deficitA, deficitB), 1, maxOrder) as BondOrder;
+
+  let bestOrder: BondOrder | null = null;
+  let bestScore = -Infinity;
+
+  for (let order = 1 as BondOrder; order <= maxOrder; order = (order + 1) as BondOrder) {
+    if (!canBondOrder(a, b, order)) continue;
+
+    const remainingA = Math.max(0, deficitA - order);
+    const remainingB = Math.max(0, deficitB - order);
+    const octetGain = deficitNow - (remainingA + remainingB);
+    if (octetGain <= 0) continue;
+
+    const r0 = orderAdjustedR0(r0Single, order);
+    const strain = Math.abs(d - r0) / Math.max(1e-6, r0Single);
+    const baselinePenalty = Math.abs(order - baseline);
+    const desiredPenalty = Math.abs(order - desired);
+
+    const score = octetGain * 5 - strain * 2 - baselinePenalty * 0.5 - desiredPenalty * 0.35;
+    if (score > bestScore) {
+      bestScore = score;
+      bestOrder = order;
+    }
+  }
+
+  return bestOrder;
+}
+
 function tryFormBonds(sim: Sim3D, params: Params3D) {
   const FORM_FACTOR = 1.1;
   const REL_SPEED_MAX = 3.2;
-  const MAX_NEW_BONDS_PER_STEP = 6;
+  const MAX_NEW_BONDS_PER_STEP = 10;
 
   let made = 0;
 
@@ -392,7 +522,18 @@ function tryFormBonds(sim: Sim3D, params: Params3D) {
       const d2 = dx * dx + dy * dy + dz * dz;
 
       const { r0: r0Single, kLit } = getPairBondParam(ai.el, aj.el);
-      const formR = r0Single * FORM_FACTOR;
+      let electroBias = 1.0;
+      if (params.enableElectrostatics) {
+        const qi = params.charges[ai.el] ?? 0;
+        const qj = params.charges[aj.el] ?? 0;
+        const qq = qi * qj;
+        const biasStrength = clamp(params.electroBondBiasStrength ?? 0.7, 0, 2);
+        const mag = Math.min(1, Math.abs(qq) / 0.08);
+        if (qq < 0) electroBias = 1 + 0.5 * biasStrength * mag;
+        else if (qq > 0) electroBias = 1 - 0.35 * biasStrength * mag;
+      }
+
+      const formR = r0Single * FORM_FACTOR * getPairFormationBias(ai.el, aj.el) * electroBias;
       if (d2 > formR * formR) continue;
 
       const d = Math.sqrt(d2) || 1e-6;
@@ -401,12 +542,11 @@ function tryFormBonds(sim: Sim3D, params: Params3D) {
       const rvy = ai.vy - aj.vy;
       const rvz = ai.vz - aj.vz;
       const relSpeed = Math.sqrt(rvx * rvx + rvy * rvy + rvz * rvz);
-      if (relSpeed > REL_SPEED_MAX) continue;
+      const relSpeedMax = REL_SPEED_MAX * (electroBias > 1 ? 1.12 : 1.0);
+      if (relSpeed > relSpeedMax) continue;
 
-      let order = chooseBondOrder(d, r0Single, params.allowMultipleBonds);
-
-      while (order > 1 && !canBondOrder(ai, aj, order)) order = (order - 1) as BondOrder;
-      if (!canBondOrder(ai, aj, order)) continue;
+      const order = chooseBondOrderWithOctetBias(ai, aj, d, r0Single, params.allowMultipleBonds);
+      if (!order) continue;
 
       const kSingle = kLit * K_SCALE * params.bondScale;
       const r0 = orderAdjustedR0(r0Single, order);
@@ -427,6 +567,71 @@ function tryFormBonds(sim: Sim3D, params: Params3D) {
   }
 }
 
+function applyTemperatureEquilibration(sim: Sim3D, params: Params3D) {
+  if (params.temperature <= 0) return;
+  if (sim.atoms.length === 0) return;
+
+  const interval = Math.max(1, Math.floor(params.thermostatInterval ?? 20));
+  if (sim.stepCount % interval !== 0) return;
+
+  // Remove translational drift so thermostat acts on internal thermal motion.
+  removeCenterOfMassDrift(sim.atoms);
+
+  let kinetic = 0;
+  for (const a of sim.atoms) {
+    const v2 = a.vx * a.vx + a.vy * a.vy + a.vz * a.vz;
+    kinetic += 0.5 * Math.max(0.1, a.mass) * v2;
+  }
+
+  const currentPerAtom = kinetic / Math.max(1, sim.atoms.length);
+  const targetPerAtom = Math.max(1e-6, params.temperature);
+  if (currentPerAtom <= 1e-12) return;
+
+  const idealScale = Math.sqrt(targetPerAtom / currentPerAtom);
+  const strength = clamp(params.thermostatStrength ?? 0.25, 0, 1);
+  let scale = 1 + (idealScale - 1) * strength;
+
+  const clampFrac = Math.max(0.05, params.thermostatClamp ?? 0.2);
+  scale = clamp(scale, 1 - clampFrac, 1 + clampFrac);
+
+  for (const a of sim.atoms) {
+    a.vx *= scale;
+    a.vy *= scale;
+    a.vz *= scale;
+  }
+
+  // Numerical safety: keep system drift-free after rescaling.
+  removeCenterOfMassDrift(sim.atoms);
+}
+
+function removeCenterOfMassDrift(atoms: Atom3D[]) {
+  if (atoms.length === 0) return;
+
+  let mTot = 0;
+  let px = 0;
+  let py = 0;
+  let pz = 0;
+
+  for (const a of atoms) {
+    const m = Math.max(0.1, a.mass);
+    mTot += m;
+    px += m * a.vx;
+    py += m * a.vy;
+    pz += m * a.vz;
+  }
+  if (mTot <= 1e-12) return;
+
+  const vxCom = px / mTot;
+  const vyCom = py / mTot;
+  const vzCom = pz / mTot;
+
+  for (const a of atoms) {
+    a.vx -= vxCom;
+    a.vy -= vyCom;
+    a.vz -= vzCom;
+  }
+}
+
 export function setGrab(sim: Sim3D, id: number | null) {
   sim.grabbedId = id;
   if (id === null) sim.grabTarget = null;
@@ -437,6 +642,8 @@ export function setGrabTarget(sim: Sim3D, x: number, y: number, z: number) {
 }
 
 export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
+  recomputeValenceUsage(sim);
+
   const allow = params.allowMultipleBonds;
 
   const UP_1_TO_2 = 0.92;
@@ -465,9 +672,11 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
       target = 1;
     } else {
       if (b.order === 1) {
-        if (d < r0Single * UP_1_TO_2) target = 2;
+        const gain2 = Math.min(valenceDeficit(a), valenceDeficit(c)) >= 2;
+        if (d < r0Single * UP_1_TO_2 || gain2) target = 2;
       } else if (b.order === 2) {
-        if (d < r0Single * UP_2_TO_3) target = 3;
+        const gain3 = Math.min(valenceDeficit(a), valenceDeficit(c)) >= 3;
+        if (d < r0Single * UP_2_TO_3 || gain3) target = 3;
         else if (d > r0Single * DOWN_2_TO_1) target = 1;
       } else if (b.order === 3) {
         if (d > r0Single * DOWN_3_TO_2) target = 2;
@@ -501,6 +710,7 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
     b.breakR = b.r0 * BREAK_FACTOR;
   }
 
+  recomputeValenceUsage(sim);
   rebuildDihedrals(sim, params);
 }
 
@@ -853,6 +1063,8 @@ function applyDihedralForces(sim: Sim3D, params: Params3D) {
 
 export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
   const atoms = sim.atoms;
+  sim.stepCount += 1;
+  recomputeValenceUsage(sim);
 
   for (const a of atoms) {
     a.fx = 0;
@@ -900,7 +1112,15 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
         const qj = params.charges[aj.el] ?? 0;
         const ke = params.ke;
         if (Math.abs(qi * qj) > 1e-9 && ke !== 0) {
-          let fmagE = yukawaForce(r, ke, qi, qj, params.screeningLength);
+          let fmagE = yukawaForce(
+            r,
+            ke,
+            qi,
+            qj,
+            params.screeningLength,
+            params.electroRepulsionScale ?? 2.2,
+            params.electroAttractionScale ?? 2.0
+          );
           fmagE = clamp(fmagE, -params.maxPairForce, params.maxPairForce);
 
           const invR = 1 / r;
@@ -997,21 +1217,56 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
     a.vy = (a.vy + ay * dt) * damp;
     a.vz = (a.vz + az * dt) * damp;
 
-    if (params.temperature > 0) {
-      const kick = params.tempVelKick * params.temperature * Math.sqrt(dt);
+  }
+
+  if (params.temperature > 0) {
+    // Stochastic bath kicks with exact zero net momentum injection.
+    const kick = params.tempVelKick * params.temperature * Math.sqrt(dt);
+    let mTot = 0;
+    let dPx = 0;
+    let dPy = 0;
+    let dPz = 0;
+
+    for (const a of atoms) {
+      const m = Math.max(0.1, a.mass);
       const mScale = 1 / Math.sqrt(Math.max(0.6, a.mass));
-      a.vx += (Math.random() - 0.5) * kick * mScale;
-      a.vy += (Math.random() - 0.5) * kick * mScale;
-      a.vz += (Math.random() - 0.5) * kick * mScale;
+      const dvx = (Math.random() - 0.5) * kick * mScale;
+      const dvy = (Math.random() - 0.5) * kick * mScale;
+      const dvz = (Math.random() - 0.5) * kick * mScale;
+      a.vx += dvx;
+      a.vy += dvy;
+      a.vz += dvz;
+
+      mTot += m;
+      dPx += m * dvx;
+      dPy += m * dvy;
+      dPz += m * dvz;
     }
 
+    if (mTot > 1e-12) {
+      const corrX = dPx / mTot;
+      const corrY = dPy / mTot;
+      const corrZ = dPz / mTot;
+      for (const a of atoms) {
+        a.vx -= corrX;
+        a.vy -= corrY;
+        a.vz -= corrZ;
+      }
+    }
+  }
+
+  for (const a of atoms) {
     a.x += a.vx * dt;
     a.y += a.vy * dt;
     a.z += a.vz * dt;
   }
 
   pruneBrokenBonds(sim);
+  recomputeValenceUsage(sim);
   tryFormBonds(sim, params);
+  recomputeBondOrders(sim, params);
+  recomputeValenceUsage(sim);
+  applyTemperatureEquilibration(sim, params);
 }
 
 export function nudgeAll(sim: Sim3D, strength = 1.0) {
