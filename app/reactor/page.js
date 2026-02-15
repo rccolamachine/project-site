@@ -61,9 +61,9 @@ export default function ReactorPage() {
   useEffect(() => void (pausedRef.current = paused), [paused]);
 
   // Kelvin 0..1000
-  const [temperatureK, setTemperatureK] = useState(300);
-  const [damping, setDamping] = useState(0.985);
-  const [bondScale, setBondScale] = useState(3.0);
+  const [temperatureK, setTemperatureK] = useState(400);
+  const [damping, setDamping] = useState(0.975);
+  const [bondScale, setBondScale] = useState(3.5);
 
   // box size (half-size)
   const [boxHalfSize, setBoxHalfSize] = useState(6.0);
@@ -831,9 +831,9 @@ export default function ReactorPage() {
   // Reset ALL controls EXCEPT the currently-selected tool mode
   function resetAllControls() {
     setPaused(false);
-    setTemperatureK(300);
-    setDamping(0.985);
-    setBondScale(3.0);
+    setTemperatureK(400);
+    setDamping(0.975);
+    setBondScale(3.5);
 
     setBoxHalfSize(6.0);
     setShowBoxEdges(true);
