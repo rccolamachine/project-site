@@ -97,6 +97,7 @@ export type Params3D = {
   electroRepulsionScale?: number; // >1 boosts like-charge repulsion only
   electroAttractionScale?: number; // >1 boosts opposite-charge attraction only
   electroBondBiasStrength?: number; // 0..2; favors opposite-charge bond formation
+  electroDihedral180Scale?: number; // >0 adds anti (180 deg) bias for non-H terminal dihedral pairs
 
   // bond system
   bondScale: number;
@@ -338,6 +339,67 @@ function hasFullShell(atom: Atom3D) {
   return valenceDeficit(atom) <= 0;
 }
 
+type MoleculeState = {
+  compByAtomId: Map<number, number>;
+  atomsByComp: Map<number, Atom3D[]>;
+  chargeByComp: Map<number, number>;
+  deficitByComp: Map<number, number>;
+};
+
+function buildMoleculeState(sim: Sim3D, params: Params3D): MoleculeState {
+  const adj = new Map<number, number[]>();
+  for (const a of sim.atoms) adj.set(a.id, []);
+  for (const b of sim.bonds) {
+    if (!adj.has(b.aId)) adj.set(b.aId, []);
+    if (!adj.has(b.bId)) adj.set(b.bId, []);
+    adj.get(b.aId)!.push(b.bId);
+    adj.get(b.bId)!.push(b.aId);
+  }
+
+  const byId = new Map<number, Atom3D>();
+  for (const a of sim.atoms) byId.set(a.id, a);
+
+  const compByAtomId = new Map<number, number>();
+  const atomsByComp = new Map<number, Atom3D[]>();
+  const chargeByComp = new Map<number, number>();
+  const deficitByComp = new Map<number, number>();
+
+  let compId = 0;
+  for (const a of sim.atoms) {
+    if (compByAtomId.has(a.id)) continue;
+
+    compId++;
+    const stack = [a.id];
+    let charge = 0;
+    let deficit = 0;
+    const compAtoms: Atom3D[] = [];
+
+    while (stack.length) {
+      const curId = stack.pop()!;
+      if (compByAtomId.has(curId)) continue;
+
+      const cur = byId.get(curId);
+      if (!cur) continue;
+
+      compByAtomId.set(curId, compId);
+      compAtoms.push(cur);
+      charge += params.charges[cur.el] ?? 0;
+      deficit += valenceDeficit(cur);
+
+      const n = adj.get(curId) || [];
+      for (const nid of n) {
+        if (!compByAtomId.has(nid)) stack.push(nid);
+      }
+    }
+
+    atomsByComp.set(compId, compAtoms);
+    chargeByComp.set(compId, charge);
+    deficitByComp.set(compId, deficit);
+  }
+
+  return { compByAtomId, atomsByComp, chargeByComp, deficitByComp };
+}
+
 function canBondOrder(a: Atom3D, b: Atom3D, order: BondOrder) {
   const cost = bondValenceCost(order);
   if (a.valenceUsed + cost > a.valenceMax) return false;
@@ -404,10 +466,16 @@ function yukawaForce(
 
 /* --------------------------------- Bonds ---------------------------------- */
 
-function pruneBrokenBonds(sim: Sim3D) {
+function pruneBrokenBonds(sim: Sim3D, params: Params3D) {
   const FULL_SHELL_BREAK_STRETCH = 1.25;
   const PARTIAL_SHELL_BREAK_STRETCH = 1.1;
+  const STABLE_MOLECULE_BREAK_STRETCH = 1.18;
+  const SEMISTABLE_MOLECULE_BREAK_STRETCH = 1.08;
   const BREAK_OUTWARD_VEL_MIN = 0.2;
+  const NEUTRAL_EPS = 0.12;
+  const NEAR_NEUTRAL_EPS = 0.25;
+
+  const mol = buildMoleculeState(sim, params);
 
   const kept: Bond3D[] = [];
   for (const b of sim.bonds) {
@@ -427,7 +495,15 @@ function pruneBrokenBonds(sim: Sim3D) {
       : fullA || fullC
       ? PARTIAL_SHELL_BREAK_STRETCH
       : 1.0;
-    const barrierBreakR = b.breakR * barrierMult;
+    let molBarrierMult = 1.0;
+    const compId = mol.compByAtomId.get(a.id);
+    if (compId !== undefined && compId === mol.compByAtomId.get(c.id)) {
+      const compChargeAbs = Math.abs(mol.chargeByComp.get(compId) ?? 0);
+      const compDeficit = mol.deficitByComp.get(compId) ?? 0;
+      if (compDeficit <= 0 && compChargeAbs <= NEUTRAL_EPS) molBarrierMult = STABLE_MOLECULE_BREAK_STRETCH;
+      else if (compChargeAbs <= NEAR_NEUTRAL_EPS) molBarrierMult = SEMISTABLE_MOLECULE_BREAK_STRETCH;
+    }
+    const barrierBreakR = b.breakR * barrierMult * molBarrierMult;
 
     // Kinetic barrier: stretched bonds only break if also moving apart.
     const invR = r > 1e-8 ? 1 / r : 0;
@@ -462,7 +538,10 @@ function chooseBondOrderWithOctetBias(
   b: Atom3D,
   d: number,
   r0Single: number,
-  allowMultiple: boolean
+  allowMultiple: boolean,
+  neutralityGain = 0,
+  compNeedA = 0,
+  compNeedB = 0
 ): BondOrder | null {
   const baseline = chooseBondOrder(d, r0Single, allowMultiple);
   const maxOrder = allowMultiple ? 3 : 1;
@@ -490,7 +569,15 @@ function chooseBondOrderWithOctetBias(
     const baselinePenalty = Math.abs(order - baseline);
     const desiredPenalty = Math.abs(order - desired);
 
-    const score = octetGain * 5 - strain * 2 - baselinePenalty * 0.5 - desiredPenalty * 0.35;
+    const compNeed = compNeedA + compNeedB;
+    const compNeedBoost = Math.min(3, compNeed) * 0.25;
+    const score =
+      octetGain * 5 +
+      neutralityGain * 2.4 +
+      compNeedBoost -
+      strain * 2 -
+      baselinePenalty * 0.5 -
+      desiredPenalty * 0.35;
     if (score > bestScore) {
       bestScore = score;
       bestOrder = order;
@@ -504,6 +591,9 @@ function tryFormBonds(sim: Sim3D, params: Params3D) {
   const FORM_FACTOR = 1.1;
   const REL_SPEED_MAX = 3.2;
   const MAX_NEW_BONDS_PER_STEP = 10;
+  const STABLE_CHARGE_EPS = 0.12;
+
+  const mol = buildMoleculeState(sim, params);
 
   let made = 0;
 
@@ -538,6 +628,22 @@ function tryFormBonds(sim: Sim3D, params: Params3D) {
 
       const d = Math.sqrt(d2) || 1e-6;
 
+      const compA = mol.compByAtomId.get(ai.id);
+      const compB = mol.compByAtomId.get(aj.id);
+      const chargeA = compA ? (mol.chargeByComp.get(compA) ?? 0) : 0;
+      const chargeB = compB ? (mol.chargeByComp.get(compB) ?? 0) : 0;
+      const defAComp = compA ? (mol.deficitByComp.get(compA) ?? 0) : valenceDeficit(ai);
+      const defBComp = compB ? (mol.deficitByComp.get(compB) ?? 0) : valenceDeficit(aj);
+      const sameComp = compA !== undefined && compA === compB;
+
+      // Avoid fusing already-stable molecules.
+      if (!sameComp && defAComp <= 0 && defBComp <= 0) {
+        if (Math.abs(chargeA) <= STABLE_CHARGE_EPS && Math.abs(chargeB) <= STABLE_CHARGE_EPS) continue;
+      }
+
+      let neutralityGain = 0;
+      if (!sameComp) neutralityGain = Math.abs(chargeA) + Math.abs(chargeB) - Math.abs(chargeA + chargeB);
+
       const rvx = ai.vx - aj.vx;
       const rvy = ai.vy - aj.vy;
       const rvz = ai.vz - aj.vz;
@@ -545,7 +651,16 @@ function tryFormBonds(sim: Sim3D, params: Params3D) {
       const relSpeedMax = REL_SPEED_MAX * (electroBias > 1 ? 1.12 : 1.0);
       if (relSpeed > relSpeedMax) continue;
 
-      const order = chooseBondOrderWithOctetBias(ai, aj, d, r0Single, params.allowMultipleBonds);
+      const order = chooseBondOrderWithOctetBias(
+        ai,
+        aj,
+        d,
+        r0Single,
+        params.allowMultipleBonds,
+        neutralityGain,
+        defAComp,
+        defBComp
+      );
       if (!order) continue;
 
       const kSingle = kLit * K_SCALE * params.bondScale;
@@ -1042,7 +1157,18 @@ function applyDihedralForces(sim: Sim3D, params: Params3D) {
     if (!ok) continue;
 
     const arg = t.n * phi - t.delta;
-    const dUdPhi = -t.k * t.n * Math.sin(arg);
+    let dUdPhi = -t.k * t.n * Math.sin(arg);
+
+    // Electrostatic anti preference for terminal non-H pairs across a dihedral:
+    // U_anti(phi) = kAnti * (1 + cos(phi)) -> minimum at 180 deg.
+    if (params.enableElectrostatics && i.el !== "H" && l.el !== "H") {
+      const qi = params.charges[i.el] ?? 0;
+      const ql = params.charges[l.el] ?? 0;
+      const qMag = Math.min(1, Math.abs(qi * ql) / 0.09);
+      const kAntiBase = Math.max(0, params.electroDihedral180Scale ?? 0.22);
+      const kAnti = kAntiBase * qMag;
+      dUdPhi += -kAnti * Math.sin(phi);
+    }
 
     const f = dihedralForces(i, j, k, l, dUdPhi);
     if (!f.ok) continue;
@@ -1261,7 +1387,7 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
     a.z += a.vz * dt;
   }
 
-  pruneBrokenBonds(sim);
+  pruneBrokenBonds(sim, params);
   recomputeValenceUsage(sim);
   tryFormBonds(sim, params);
   recomputeBondOrders(sim, params);
