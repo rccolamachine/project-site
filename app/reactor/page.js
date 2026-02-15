@@ -33,7 +33,7 @@ const TOOL = {
 };
 
 export default function ReactorPage() {
-  const MAX_ATOMS = 100;
+  const MAX_ATOMS = 120;
 
   // tool state
   const [tool, setTool] = useState(TOOL.PLACE);
