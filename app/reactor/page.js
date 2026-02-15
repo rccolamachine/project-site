@@ -590,21 +590,26 @@ export default function ReactorPage() {
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
-    // seed cluster centered
+    // default seed cluster centered: 20 C, 10 O, 70 H
     const sim = simRef.current;
     clearSim3D(sim);
-    const seed = ["C", "O", "N", "S", "P", "H"];
-    for (let i = 0; i < 16; i++) {
-      const el = seed[i % seed.length];
-      addAtom3D(
-        sim,
-        (Math.random() - 0.5) * 4,
-        (Math.random() - 0.5) * 3,
-        (Math.random() - 0.5) * 3,
-        el,
-        elements,
-        MAX_ATOMS,
-      );
+    const initialCounts = [
+      ["C", 20],
+      ["O", 10],
+      ["H", 70],
+    ];
+    for (const [el, count] of initialCounts) {
+      for (let i = 0; i < count; i++) {
+        addAtom3D(
+          sim,
+          (Math.random() - 0.5) * 4,
+          (Math.random() - 0.5) * 3,
+          (Math.random() - 0.5) * 3,
+          el,
+          elements,
+          MAX_ATOMS,
+        );
+      }
     }
 
     // loop
