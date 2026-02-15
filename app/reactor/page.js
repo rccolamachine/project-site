@@ -63,7 +63,7 @@ export default function ReactorPage() {
   // Kelvin 0..1000
   const [temperatureK, setTemperatureK] = useState(300);
   const [damping, setDamping] = useState(0.985);
-  const [bondScale, setBondScale] = useState(1.0);
+  const [bondScale, setBondScale] = useState(3.0);
 
   // box size (half-size)
   const [boxHalfSize, setBoxHalfSize] = useState(6.0);
@@ -833,7 +833,7 @@ export default function ReactorPage() {
     setPaused(false);
     setTemperatureK(300);
     setDamping(0.985);
-    setBondScale(1.0);
+    setBondScale(3.0);
 
     setBoxHalfSize(6.0);
     setShowBoxEdges(true);
@@ -952,7 +952,7 @@ export default function ReactorPage() {
                 label="Bond strength"
                 value={bondScale}
                 min={0.2}
-                max={3.0}
+                max={4.0}
                 step={0.05}
                 onChange={setBondScale}
               />
