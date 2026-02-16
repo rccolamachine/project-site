@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DesktopBadge from "../components/DesktopBadge";
 
 const sections = [
   {
@@ -12,10 +13,10 @@ const sections = [
         cta: "Start farming",
       },
       {
-        title: "Photobooth",
-        description: "Live camera view in a canvas.",
-        href: "/photobooth",
-        cta: "Launch booth",
+        title: "Pixelbooth",
+        description: "Take and make pixel art from your webcam.",
+        href: "/pixelbooth",
+        cta: "Let's get snapping",
       },
       {
         title: "Reactor",
@@ -46,7 +47,7 @@ const sections = [
         title: "Guestbook",
         description: "Drop a note and see what visitors have been saying.",
         href: "/guestbook",
-        cta: "Sign guestbook",
+        cta: "View guestbook",
       },
       {
         title: "Resume",
@@ -66,16 +67,38 @@ const sections = [
 ];
 
 export default function Home() {
+  const sectionPanelStyle = {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 18,
+    border: "1px solid var(--line)",
+    background:
+      "linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02))",
+    boxShadow: "var(--shadow)",
+  };
+
   return (
     <section className="page">
-      <h1>Hi, I&apos;m Rob.</h1>
-      <p className="lede">
-        Personal site for photos, projects, and whatever I&apos;m building next.
-      </p>
+      <header style={{ marginBottom: 16 }}>
+        <h1>Hi, I&apos;m Rob.</h1>
+        <p className="lede">
+          Personal site for photos, projects, and whatever I&apos;m building next.
+        </p>
+      </header>
 
       {sections.map((section) => (
-        <div key={section.title}>
-          <h2>{section.title}</h2>
+        <div key={section.title} style={sectionPanelStyle}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
+          >
+            <h2 style={{ margin: 0 }}>{section.title}</h2>
+            {section.title === "Play" ? <DesktopBadge small /> : null}
+          </div>
           <div className="cardRow">
             {section.cards.map((card) => (
               <div className="card" key={card.title}>

@@ -48,10 +48,10 @@ export default function SiteHeader() {
             Farm
           </Link>
           <Link
-            className={pathname.startsWith("/photobooth") ? "active" : ""}
-            href="/photobooth"
+            className={pathname.startsWith("/pixelbooth") ? "active" : ""}
+            href="/pixelbooth"
           >
-            Photobooth
+            Pixelbooth
           </Link>
           <Link
             className={pathname.startsWith("/reactor") ? "active" : ""}

@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import DesktopBadge from "../../components/DesktopBadge";
 
 const inputStyle = {
   width: "100%",
@@ -466,20 +473,13 @@ export default function ButtonGamePage() {
 
   return (
     <section className="page">
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <h1 style={{ margin: 0 }}>button</h1>
-        <div style={{ fontSize: 12, opacity: 0.85 }}>
+      <header style={{ marginBottom: 16 }}>
+        <h1>Button</h1>
+        <p className="lede">
           Shared counter for everyone. Batches increments every 5 seconds.
-        </div>
-      </div>
+        </p>
+      </header>
+      <DesktopBadge />
 
       {err ? (
         <div

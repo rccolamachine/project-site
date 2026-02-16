@@ -234,7 +234,7 @@ export async function POST(req) {
     await putJson(metaPath, meta, { token: blobToken });
 
     // 3) email (best effort)
-    const subject = `Photobooth submission: ${name}`;
+    const subject = `Pixelbooth submission: ${name}`;
     const details = [
       `Name: ${name}`,
       `Email: ${email}`,
@@ -251,7 +251,7 @@ export async function POST(req) {
       .join("\n");
 
     const from =
-      process.env.RESEND_FROM || "Photobooth <onboarding@resend.dev>";
+      process.env.RESEND_FROM || "Pixelbooth <onboarding@resend.dev>";
     const toRob = "robert.chapleski@gmail.com";
 
     let emailWarning = null;
@@ -267,7 +267,7 @@ export async function POST(req) {
           await resend.emails.send({
             from,
             to: [email],
-            subject: "Your Photobooth submission",
+            subject: "Your Pixelbooth submission",
             text: `Here’s a copy of what you submitted:\n\n${details}`,
           });
         }

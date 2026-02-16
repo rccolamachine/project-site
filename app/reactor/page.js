@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import DesktopBadge from "../../components/DesktopBadge";
 
 import {
   DEFAULT_ELEMENTS_3D,
@@ -895,6 +896,7 @@ export default function ReactorPage() {
           play.
         </p>
       </header>
+      <DesktopBadge />
 
       <div style={ui.canvasCard}>
         {/* Controls: top-left */}

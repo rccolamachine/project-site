@@ -7,13 +7,13 @@ const PAGE_SIZE = 6;
 const ITEMS = [
   {
     id: "pb-email-fix",
-    title: "Photobooth: fix email field/handling",
-    area: "Photobooth",
+    title: "Pixelbooth: fix email field/handling",
+    area: "Pixelbooth",
     priority: "P1",
     status: "inProgress", // todo | inProgress | done
     notes:
       "Email input/submit isn't correct (validation, formatting, or wiring). Fix UI + API contract and confirm it persists/gets displayed correctly. Progress update: emails are currently being sent to the user when specified, but never to Rob's email.",
-    links: [{ label: "Open Photobooth", href: "/photobooth" }],
+    links: [{ label: "Open Pixelbooth", href: "/pixelbooth" }],
   },
   {
     id: "gb-photo-storage",
@@ -90,7 +90,7 @@ const ITEMS = [
     title: "Standardize page headers",
     area: "General",
     priority: "P2",
-    status: "todo",
+    status: "done",
     notes:
       "Inconsistent header styles across pages. Standardize on a style for H1s and ledes, and update all pages to match for a more cohesive feel.",
   },
@@ -114,23 +114,23 @@ const ITEMS = [
   },
   {
     id: "add-print-postcard-functionality",
-    title: "Add Postcard printing functionality to Photobooth",
-    area: "Photobooth",
+    title: "Add Postcard printing functionality to Pixelbooth",
+    area: "Pixelbooth",
     priority: "P3",
     status: "todo",
     notes:
-      "Add CUPS printing support to the Photobooth app. Users will be able to print their photos as postcards directly from the browser to a thermal printer in Rob's apartment.",
-    links: [{ label: "Open Photobooth", href: "/photobooth" }],
+      "Add CUPS printing support to the Pixelbooth app. Users will be able to print their photos as postcards directly from the browser to a thermal printer in Rob's apartment.",
+    links: [{ label: "Open Pixelbooth", href: "/pixelbooth" }],
   },
   {
-    id: "photobooth-style-upgrade",
-    title: "Photobooth: style upgrade and UI polish",
-    area: "Photobooth",
+    id: "pixelbooth-style-upgrade",
+    title: "Pixelbooth: style upgrade and UI polish",
+    area: "Pixelbooth",
     priority: "P4",
     status: "todo", // todo | inProgress | done
     notes:
-      "Make some design tweaks on the Photobooth page, including the Pixelation slider.",
-    links: [{ label: "Open Photobooth", href: "/photobooth" }],
+      "Make some design tweaks on the Pixelbooth page, including the Pixelation slider.",
+    links: [{ label: "Open Pixelbooth", href: "/pixelbooth" }],
   },
   {
     id: "add-favicon",
@@ -277,26 +277,16 @@ export default function TodoPage() {
 
   return (
     <section className="page">
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <h1 style={{ margin: 0 }}>to-do</h1>
-          <div className="lede" style={{ marginTop: 8 }}>
-            Known issues + planned improvements for rccolamachine.com.
-          </div>
-        </div>
+      <header style={{ marginBottom: 16 }}>
+        <h1>to-do</h1>
+        <p className="lede">
+          Known issues + planned improvements for rccolamachine.com.
+        </p>
+      </header>
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <span style={pillStyle("P2")}>open: {openCount}</span>
-          <span style={pillStyle("P3")}>done: {doneCount}</span>
-        </div>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <span style={pillStyle("P2")}>open: {openCount}</span>
+        <span style={pillStyle("P3")}>done: {doneCount}</span>
       </div>
 
       {/* Controls */}
@@ -508,4 +498,3 @@ export default function TodoPage() {
     </section>
   );
 }
-

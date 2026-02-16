@@ -9,8 +9,10 @@ const photos = [
 export default function Pictures() {
   return (
     <section className="page">
-      <h1>Pictures</h1>
-      <p className="lede">A small gallery. Add more anytime.</p>
+      <header style={{ marginBottom: 16 }}>
+        <h1>Pictures</h1>
+        <p className="lede">A small gallery. Add more anytime.</p>
+      </header>
 
       <div className="grid">
         {photos.map((p) => (

@@ -99,8 +99,8 @@ export default function AboutPage() {
           </ul>
 
           <div className="aboutCTA">
-            <a className="btn" href="/photobooth">
-              Try Photobooth
+            <a className="btn" href="/pixelbooth">
+              Try Pixelbooth
             </a>
             <a className="btn" href="/guestbook">
               Guestbook

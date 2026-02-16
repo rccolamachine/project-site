@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import DesktopBadge from "../../components/DesktopBadge";
 
 import {
   ACTION_TOOLS,
@@ -1321,19 +1322,25 @@ export default function FarmPage() {
   if (!ready) {
     return (
       <section className="page">
-        <h1>farm</h1>
-        <p className="lede">Loading local save...</p>
+        <header style={{ marginBottom: 16 }}>
+          <h1>farm</h1>
+          <p className="lede">Loading local save...</p>
+        </header>
+        <DesktopBadge />
       </section>
     );
   }
 
   return (
     <section className="page">
-      <h1>Farm Idle</h1>
-      <p className="lede">
-        Idle farming sim with lots of unlocks, automation, and levels. Click the
-        field to get started!
-      </p>
+      <header style={{ marginBottom: 16 }}>
+        <h1>Farm Idle</h1>
+        <p className="lede">
+          Idle farming sim with lots of unlocks, automation, and levels. Click
+          the field to get started!
+        </p>
+      </header>
+      <DesktopBadge />
 
       <div
         style={{

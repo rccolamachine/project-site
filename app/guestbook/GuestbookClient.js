@@ -28,6 +28,7 @@ export default function GuestbookClient() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [busyId, setBusyId] = useState(null); // deleting id
+  const [expandedItem, setExpandedItem] = useState(null);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -53,6 +54,19 @@ export default function GuestbookClient() {
     fetchItems();
   }, [fetchItems]);
 
+  const closeExpanded = useCallback(() => {
+    setExpandedItem(null);
+  }, []);
+
+  useEffect(() => {
+    if (!expandedItem) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") closeExpanded();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [expandedItem, closeExpanded]);
+
   const onDelete = useCallback(
     async (id) => {
       if (!id) return;
@@ -71,6 +85,7 @@ export default function GuestbookClient() {
 
         // optimistic update
         setItems((prev) => prev.filter((x) => x.id !== id));
+        setExpandedItem((prev) => (prev?.id === id ? null : prev));
       } catch (e) {
         alert(e?.message || String(e));
       } finally {
@@ -147,19 +162,34 @@ export default function GuestbookClient() {
                 boxShadow: "0 16px 40px rgba(0,0,0,0.35)",
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={it.image_url}
-                alt={`Photobooth by ${it.name || "Guest"}`}
+              <button
+                type="button"
+                onClick={() => setExpandedItem(it)}
                 style={{
-                  width: "100%",
-                  height: 220,
-                  objectFit: "cover",
                   display: "block",
-                  imageRendering: "pixelated",
-                  filter: "grayscale(1)",
+                  width: "100%",
+                  padding: 0,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "zoom-in",
+                  lineHeight: 0,
                 }}
-              />
+                title="Click to view full image"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={it.image_url}
+                  alt={`Pixelbooth by ${it.name || "Guest"}`}
+                  style={{
+                    width: "100%",
+                    height: 220,
+                    objectFit: "cover",
+                    display: "block",
+                    imageRendering: "pixelated",
+                    filter: "grayscale(1)",
+                  }}
+                />
+              </button>
 
               <figcaption style={{ padding: 12, display: "grid", gap: 6 }}>
                 <div
@@ -232,6 +262,82 @@ export default function GuestbookClient() {
           );
         })}
       </div>
+
+      {expandedItem ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeExpanded();
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "grid",
+            placeItems: "center",
+            padding: 16,
+            background: "rgba(0,0,0,0.78)",
+          }}
+        >
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              width: "min(1080px, 96vw)",
+              maxHeight: "92vh",
+              overflow: "auto",
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.16)",
+              background: "#0f1118",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.58)",
+              padding: 12,
+              display: "grid",
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ fontWeight: 700 }}>
+                {expandedItem.name || "Guest"}
+              </div>
+              <div style={{ opacity: 0.82, fontSize: 12 }}>
+                {formatDate(expandedItem.created_at || expandedItem.uploadedAt)}
+              </div>
+              <button onClick={closeExpanded} style={{ marginLeft: "auto" }}>
+                Close
+              </button>
+            </div>
+
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={expandedItem.image_url}
+              alt={`Pixelbooth by ${expandedItem.name || "Guest"}`}
+              style={{
+                width: "100%",
+                height: "auto",
+                maxHeight: "78vh",
+                objectFit: "contain",
+                imageRendering: "pixelated",
+                filter: "grayscale(1)",
+                background: "#000",
+                borderRadius: 8,
+              }}
+            />
+
+            {expandedItem.message ? (
+              <div style={{ whiteSpace: "pre-wrap", opacity: 0.9, fontSize: 13 }}>
+                {expandedItem.message}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

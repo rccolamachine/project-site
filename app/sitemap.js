@@ -15,7 +15,7 @@ export default function sitemap() {
       lastModified: new Date(),
     },
     {
-      url: `${baseUrl}/photobooth`,
+      url: `${baseUrl}/pixelbooth`,
       lastModified: new Date(),
     },
     {

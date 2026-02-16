@@ -6,11 +6,13 @@ export const dynamic = "force-dynamic";
 export default function GuestbookPage() {
   return (
     <section className="page">
-      <h1>Guestbook</h1>
+      <header style={{ marginBottom: 16 }}>
+        <h1>Guestbook</h1>
+        <p className="lede">Saved Pixelbooth snaps + messages.</p>
+      </header>
       <div className="guestbookCtaRow">
-        <p className="lede">Saved photobooth snaps + messages.</p>
-        <a className="btn" href="/photobooth">
-          {`--> Go to Photobooth`}
+        <a className="btn" href="/pixelbooth">
+          {`--> Go to Pixelbooth`}
         </a>
       </div>
 
