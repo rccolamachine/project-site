@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
 , "app/photobooth/page.js", "app/page.js", "app/layout.js"  ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "tmp_*"]
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const inputStyle = {
   width: "100%",
@@ -103,38 +103,41 @@ export default function ButtonGamePage() {
 
   const displayValue = useMemo(() => value + pendingUi, [value, pendingUi]);
 
-  const applyState = (s) => {
+  const applyState = useCallback((s) => {
     setValue(Number(s?.value ?? 0));
     setMax(Number(s?.max ?? 0));
     setMaxAt(String(s?.maxAt ?? ""));
     setLastClickAt(String(s?.lastClickAt ?? ""));
     setShame(normalizeShame(s?.shame));
-  };
+  }, []);
 
-  const syncState = async (opts = {}) => {
-    const { force = false, minGapMs = 2000 } = opts;
-    const now = Date.now();
+  const syncState = useCallback(
+    async (opts = {}) => {
+      const { force = false, minGapMs = 2000 } = opts;
+      const now = Date.now();
 
-    if (!force && now - lastStateAtRef.current < minGapMs) return;
-    if (stateInFlightRef.current) return stateInFlightRef.current;
+      if (!force && now - lastStateAtRef.current < minGapMs) return;
+      if (stateInFlightRef.current) return stateInFlightRef.current;
 
-    stateInFlightRef.current = (async () => {
-      lastStateAtRef.current = Date.now();
-      const s = await fetchState();
-      applyState(s);
-      setErr("");
-      return s;
-    })()
-      .catch((e) => {
-        setErr(e?.message || String(e));
-        throw e;
-      })
-      .finally(() => {
-        stateInFlightRef.current = null;
-      });
+      stateInFlightRef.current = (async () => {
+        lastStateAtRef.current = Date.now();
+        const s = await fetchState();
+        applyState(s);
+        setErr("");
+        return s;
+      })()
+        .catch((e) => {
+          setErr(e?.message || String(e));
+          throw e;
+        })
+        .finally(() => {
+          stateInFlightRef.current = null;
+        });
 
-    return stateInFlightRef.current;
-  };
+      return stateInFlightRef.current;
+    },
+    [applyState],
+  );
 
   // initial load + light polling (deduped + only when visible)
   useEffect(() => {
@@ -166,7 +169,7 @@ export default function ButtonGamePage() {
       clearInterval(t);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, []);
+  }, [syncState]);
 
   // batching flush
   const flushIncrements = async () => {
@@ -241,6 +244,7 @@ export default function ButtonGamePage() {
     if (!showReset) return;
 
     let cancelled = false;
+    let videoEl = null;
 
     const start = async () => {
       try {
@@ -259,6 +263,8 @@ export default function ButtonGamePage() {
         streamRef.current = stream;
 
         const video = videoRef.current;
+        if (!video) throw new Error("Video element unavailable.");
+        videoEl = video;
         video.srcObject = stream;
 
         // iOS sometimes needs this explicit play
@@ -318,11 +324,11 @@ export default function ButtonGamePage() {
         streamRef.current = null;
       }
 
-      if (videoRef.current) {
+      if (videoEl) {
         try {
-          videoRef.current.pause?.();
+          videoEl.pause?.();
         } catch {}
-        videoRef.current.srcObject = null;
+        videoEl.srcObject = null;
       }
     };
   }, [showReset]);

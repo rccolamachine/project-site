@@ -27,6 +27,14 @@ export default function sitemap() {
       lastModified: new Date(),
     },
     {
+      url: `${baseUrl}/reactor`,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/farm`,
+      lastModified: new Date(),
+    },
+    {
       url: `${baseUrl}/todo`,
       lastModified: new Date(),
     },

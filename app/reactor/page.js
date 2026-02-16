@@ -568,14 +568,15 @@ export default function ReactorPage() {
     controls.target.set(0, 0, 0);
     controls.update();
 
-    threeRef.current.renderer = renderer;
-    threeRef.current.scene = scene;
-    threeRef.current.camera = camera;
-    threeRef.current.controls = controls;
-    threeRef.current.raycaster = raycaster;
-    threeRef.current.atomGroup = atomGroup;
-    threeRef.current.bondGroup = bondGroup;
-    threeRef.current.bondMeshes = [];
+    const three = threeRef.current;
+    three.renderer = renderer;
+    three.scene = scene;
+    three.camera = camera;
+    three.controls = controls;
+    three.raycaster = raycaster;
+    three.atomGroup = atomGroup;
+    three.bondGroup = bondGroup;
+    three.bondMeshes = [];
 
     const resize = () => {
       const rect = mount.getBoundingClientRect();
@@ -649,7 +650,7 @@ export default function ReactorPage() {
         acc = 0;
       }
 
-      threeRef.current.controls?.update?.();
+      three.controls?.update?.();
 
       const simNow = simRef.current;
       for (const a of simNow.atoms) {
@@ -675,17 +676,17 @@ export default function ReactorPage() {
       controls.dispose();
       renderer.dispose();
 
-      for (const mat of threeRef.current.spriteMaterials.values()) {
+      for (const mat of three.spriteMaterials.values()) {
         mat.map?.dispose?.();
         mat.dispose?.();
       }
-      threeRef.current.spriteMaterials.clear();
+      three.spriteMaterials.clear();
 
-      for (const mesh of threeRef.current.bondMeshes) {
+      for (const mesh of three.bondMeshes) {
         mesh.geometry?.dispose?.();
         mesh.material?.dispose?.();
       }
-      threeRef.current.bondMeshes = [];
+      three.bondMeshes = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

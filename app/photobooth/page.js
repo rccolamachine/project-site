@@ -167,6 +167,7 @@ export default function Page() {
   useEffect(() => {
     let cancelled = false;
     let detach = null;
+    let videoEl = null;
 
     async function start() {
       try {
@@ -185,6 +186,8 @@ export default function Page() {
         streamRef.current = stream;
 
         const video = videoRef.current;
+        if (!video) throw new Error("Video element unavailable.");
+        videoEl = video;
         video.srcObject = stream;
         await video.play();
 
@@ -697,11 +700,11 @@ export default function Page() {
         streamRef.current = null;
       }
 
-      if (videoRef.current) {
+      if (videoEl) {
         try {
-          videoRef.current.pause?.();
+          videoEl.pause?.();
         } catch {}
-        videoRef.current.srcObject = null;
+        videoEl.srcObject = null;
       }
     };
   }, []);
@@ -1041,7 +1044,7 @@ export default function Page() {
 
               <label style={{ display: "grid", gap: 6 }}>
                 <span style={{ fontSize: 12, opacity: 0.85 }}>
-                  Email (just for Rob's records-- will not appear in Guestbook)
+                  Email (just for Rob&apos;s records-- will not appear in Guestbook)
                 </span>
                 <input
                   value={lead.email}

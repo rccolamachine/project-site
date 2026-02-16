@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 
 const PAGE_SIZE = 6;
 
@@ -12,7 +12,7 @@ const ITEMS = [
     priority: "P1",
     status: "inProgress", // todo | inProgress | done
     notes:
-      "Email input/submit isn’t correct (validation, formatting, or wiring). Fix UI + API contract and confirm it persists/gets displayed correctly. Progress update: emails are currently being sent to the user when specified, but never to Rob's email.",
+      "Email input/submit isn't correct (validation, formatting, or wiring). Fix UI + API contract and confirm it persists/gets displayed correctly. Progress update: emails are currently being sent to the user when specified, but never to Rob's email.",
     links: [{ label: "Open Photobooth", href: "/photobooth" }],
   },
   {
@@ -52,7 +52,7 @@ const ITEMS = [
     priority: "P3",
     status: "todo",
     notes:
-      "Currently the Reactor page is pretty broken on mobile (overflow, controls hard to use). Make it responsive and usable on smaller screens, or disable the page on mobile with a message. It’s a bit of a niche use case but would be nice to have it work decently.",
+      "Currently the Reactor page is pretty broken on mobile (overflow, controls hard to use). Make it responsive and usable on smaller screens, or disable the page on mobile with a message. It's a bit of a niche use case but would be nice to have it work decently.",
     links: [{ label: "Open Reactor", href: "/reactor" }],
   },
   {
@@ -62,7 +62,7 @@ const ITEMS = [
     priority: "P1",
     status: "todo",
     notes:
-      "Add content and stylize About page. Include bio, links, and whatever else seems fun. It’s been a placeholder for too long. Add spotify playlist? Fix Links.",
+      "Add content and stylize About page. Include bio, links, and whatever else seems fun. It's been a placeholder for too long. Add spotify playlist? Fix Links.",
     links: [{ label: "Open About", href: "/about" }],
   },
   {
@@ -74,6 +74,16 @@ const ITEMS = [
     notes:
       "Add albums/content for the Pictures page. Take and add pictures. Add Pixel art gallery? Make it easy to add new photos/albums over time.",
     links: [{ label: "Open Pictures", href: "/pictures" }],
+  },
+  {
+    id: "farm-multiplayer-online",
+    title: "Move farm to api saves and have users play on the same farm",
+    area: "Farm",
+    priority: "P3",
+    status: "todo",
+    notes:
+      "Need to add to backend-- separate endpoint for entire farm and for each user. Currently handling everything with local storage and encrypted JSON.",
+    links: [{ label: "Open Farm", href: "/farm" }],
   },
   {
     id: "standardize-page-headers",
@@ -180,11 +190,6 @@ export default function TodoPage() {
   const [filter, setFilter] = useState("open"); // open | all | done
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1); // 1-based
-
-  // reset to page 1 when search/filter changes
-  useEffect(() => {
-    setPage(1);
-  }, [query, filter]);
 
   const openCount = useMemo(
     () => ITEMS.filter((x) => isOpenStatus(x.status)).length,
@@ -306,14 +311,20 @@ export default function TodoPage() {
         >
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search issues…"
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search issues..."
             style={inputStyle}
           />
 
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setPage(1);
+            }}
             style={selectStyle}
           >
             <option value="open">Open</option>
@@ -480,7 +491,7 @@ export default function TodoPage() {
             </button>
 
             <div style={{ fontSize: 12, opacity: 0.85 }}>
-              {rangeText} • page <strong>{currentPage}</strong> / {totalPages}
+              {rangeText} * page <strong>{currentPage}</strong> / {totalPages}
             </div>
 
             <button
@@ -497,3 +508,4 @@ export default function TodoPage() {
     </section>
   );
 }
+
