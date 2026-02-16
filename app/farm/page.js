@@ -8,10 +8,29 @@ import React, {
   useState,
 } from "react";
 import DesktopBadge from "../../components/DesktopBadge";
+import {
+  decryptSaveJsonPayload,
+  encryptSaveJson,
+} from "./farmSaveCrypto";
+import {
+  countLabel,
+  formatLogClock,
+  formatMoneyAdaptive,
+} from "./farmFormatters";
+import {
+  AnimalSprite,
+  buildTileTitle,
+  harvestValuePreview,
+  seedSellValuePreview,
+  Stat,
+  tileColor,
+  TileSprite,
+  ToolButtonIcon,
+} from "./farmUiHelpers";
+import "./farm.css";
 
 import {
   ACTION_TOOLS,
-  ANIMAL_ANIM_CYCLE,
   ANIMAL_ANIM_INTERVAL_MS,
   ANIMALS,
   BRUSHES,
@@ -19,18 +38,20 @@ import {
   GAME_TICK_MS,
   GRID_SIZE,
   MAX_ANIMALS_PER_TILE,
-  PRESTIGE_GROWTH_SPEED_PER_LEVEL,
-  PRESTIGE_MAX_GROWTH_SPEED,
   PRESTIGE_MILESTONES,
-  RESEARCH_UNLOCK_MARKETING,
-  PRESTIGE_START_MONEY_PER_LEVEL,
   SEEDS,
   SHARD_UPGRADES,
-  STAGES,
   STORAGE_KEY,
   TILE_COUNT,
   TOOLS,
 } from "../../lib/farm/config";
+import {
+  PRESTIGE_GROWTH_SPEED_PER_LEVEL,
+  PRESTIGE_MAX_GROWTH_SPEED,
+  PRESTIGE_START_MONEY_PER_LEVEL,
+  RESEARCH_UNLOCK_MARKETING,
+  STAGES,
+} from "../../lib/farm/curveParams";
 
 import {
   animalById,
@@ -57,7 +78,6 @@ import {
   getBrushById,
   getBrushIndicesWithSize,
   isToolVisible,
-  marketBonusForHarvest,
   marketSeasonRemainingMs,
   normalizeState,
   plantTile,
@@ -70,7 +90,6 @@ import {
   seedEraYieldBonus,
   seedPlantingQuote,
   seedTraitText,
-  shardUpgradeEffects,
   shardUpgradeById,
   shardUpgradeCost,
   shardUpgradeLevel,
@@ -80,15 +99,11 @@ import {
   stageDurationWithTile,
   stageProgressPercent,
   tileAnimalIds,
-  tileAnimalTrait,
   updateDiscoveries,
   waterTile,
   harvestTile,
 } from "../../lib/farm/engine";
 
-const SAVE_EXPORT_FORMAT = "farm-save-encrypted-v1";
-const SAVE_EXPORT_ITERATIONS = 120000;
-const SAVE_EXPORT_SECRET = "farm-idle-local-save-secret-v1";
 const LOG_BATCH_MS = 15000;
 const LOG_MAX_ENTRIES = 50;
 const LOG_FILTERS = [
@@ -112,122 +127,6 @@ const AUTO_LABEL_BY_KEY = {
   autoPlant: "Plant",
   autoHarvest: "Harvest",
 };
-
-function bytesToBase64(bytes) {
-  let binary = "";
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
-
-function base64ToBytes(base64) {
-  const binary = atob(base64);
-  const out = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    out[i] = binary.charCodeAt(i);
-  }
-  return out;
-}
-
-async function deriveSaveCryptoKey(salt, iterations = SAVE_EXPORT_ITERATIONS) {
-  const keyMaterial = await window.crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(SAVE_EXPORT_SECRET),
-    "PBKDF2",
-    false,
-    ["deriveKey"],
-  );
-  return window.crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt,
-      iterations,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"],
-  );
-}
-
-async function encryptSaveJson(rawJson) {
-  if (!window.crypto?.subtle) {
-    throw new Error("Browser crypto API unavailable.");
-  }
-  const salt = window.crypto.getRandomValues(new Uint8Array(16));
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveSaveCryptoKey(salt, SAVE_EXPORT_ITERATIONS);
-  const plaintext = new TextEncoder().encode(rawJson);
-  const encrypted = await window.crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    plaintext,
-  );
-  return JSON.stringify({
-    format: SAVE_EXPORT_FORMAT,
-    v: 1,
-    iter: SAVE_EXPORT_ITERATIONS,
-    salt: bytesToBase64(salt),
-    iv: bytesToBase64(iv),
-    data: bytesToBase64(new Uint8Array(encrypted)),
-  });
-}
-
-async function decryptSaveJsonPayload(payload) {
-  if (!window.crypto?.subtle) {
-    throw new Error("Browser crypto API unavailable.");
-  }
-  const iter = Math.max(1, Number(payload?.iter || SAVE_EXPORT_ITERATIONS));
-  const salt = base64ToBytes(String(payload?.salt || ""));
-  const iv = base64ToBytes(String(payload?.iv || ""));
-  const data = base64ToBytes(String(payload?.data || ""));
-  const key = await deriveSaveCryptoKey(salt, iter);
-  const decrypted = await window.crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
-    key,
-    data,
-  );
-  return new TextDecoder().decode(decrypted);
-}
-
-function countLabel(count, singular, plural = `${singular}s`) {
-  return Number(count) === 1 ? singular : plural;
-}
-
-function formatLogClock(timestamp) {
-  try {
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  } catch {
-    return "--:--:--";
-  }
-}
-
-function formatScientificNumber(value, significantDigits = 2) {
-  const num = Number(value);
-  if (Number.isNaN(num)) return "0";
-  if (!Number.isFinite(num)) return num < 0 ? "-9.9E999" : "9.9E999";
-  if (num === 0) return "0";
-  const sign = num < 0 ? "-" : "";
-  const abs = Math.abs(num);
-  const exp = Math.floor(Math.log10(abs));
-  const mantissa = abs / 10 ** exp;
-  const decimals = Math.max(0, Math.floor(significantDigits) - 1);
-  const compact = mantissa.toFixed(decimals).replace(/\.?0+$/, "");
-  return `${sign}${compact}E${exp}`;
-}
-
-function formatMoneyAdaptive(value, maxChars = 12, significantDigits = 2) {
-  const regular = formatMoney(value);
-  if (regular.length <= maxChars) return regular;
-  return `$${formatScientificNumber(value, significantDigits)}`;
-}
 
 function brushTierUnlocked(brushUnlocks, toolId, brushId) {
   const brush = BRUSHES.find((b) => b.id === brushId);
@@ -1085,6 +984,57 @@ export default function FarmPage() {
       PRESTIGE_MILESTONES.find((m) => !game.milestonesClaimed?.[m.id]) || null,
     [game.milestonesClaimed],
   );
+  const nextMarketingLevel = Math.max(0, Number(game.prestigeLevel || 0)) + 1;
+  const nextMarketingUnlocks = useMemo(() => {
+    const unlocks = [];
+
+    if (
+      game.prestigeLevel < RESEARCH_UNLOCK_MARKETING &&
+      nextMarketingLevel >= RESEARCH_UNLOCK_MARKETING
+    ) {
+      unlocks.push("Research tab");
+    }
+
+    const labsAtNext = SHARD_UPGRADES.filter(
+      (upgrade) =>
+        shardUpgradeMarketingRequirement(upgrade.id) === nextMarketingLevel &&
+        game.prestigeLevel < nextMarketingLevel,
+    );
+    if (labsAtNext.length > 0) {
+      unlocks.push(`Research: ${labsAtNext.map((u) => u.label).join(", ")}`);
+    }
+
+    const farmExpansionsAtNext = FARM_EXPANSIONS.filter(
+      (exp) =>
+        !game.farmSizeUnlocks?.[exp.size] &&
+        exp.reqPrestige === nextMarketingLevel,
+    );
+    for (const exp of farmExpansionsAtNext) {
+      unlocks.push(`Farm: ${exp.size}x${exp.size}`);
+    }
+
+    const animalsAtNext = ANIMALS.filter(
+      (animal) => animalPrestigeRequirement(animal.id) === nextMarketingLevel,
+    );
+    if (animalsAtNext.length > 0) {
+      unlocks.push(`Animals: ${animalsAtNext.map((a) => a.name).join(", ")}`);
+    }
+
+    const milestoneAtNext = PRESTIGE_MILESTONES.find(
+      (m) =>
+        m.reqPrestige === nextMarketingLevel && !game.milestonesClaimed?.[m.id],
+    );
+    if (milestoneAtNext) {
+      unlocks.push(`Milestone: ${milestoneAtNext.title}`);
+    }
+
+    return unlocks;
+  }, [
+    game.farmSizeUnlocks,
+    game.milestonesClaimed,
+    game.prestigeLevel,
+    nextMarketingLevel,
+  ]);
   const nextLockedFarmExpansion =
     FARM_EXPANSIONS.find((exp) => !game.farmSizeUnlocks?.[exp.size]) || null;
   const maxVisibleFarmReq = nextLockedFarmExpansion
@@ -1096,8 +1046,7 @@ export default function FarmPage() {
       exp.reqPrestige <= maxVisibleFarmReq,
   );
   const showShardUpgradesPanel =
-    game.prestigeLevel >= RESEARCH_UNLOCK_MARKETING ||
-    SHARD_UPGRADES.some((u) => shardUpgradeLevel(game, u.id) > 0);
+    game.prestigeLevel >= RESEARCH_UNLOCK_MARKETING;
   const showAutomationPanel =
     ACTION_TOOLS.includes(game.selectedTool) &&
     Boolean(game.discovered?.automation?.[game.selectedTool]);
@@ -1138,7 +1087,7 @@ export default function FarmPage() {
       : game.selectedTool === "expandFarm"
         ? "Use platinum to buy a bigger farm at higher marketing levels."
         : game.selectedTool === "research"
-          ? "Use platinum for starter labs now and advanced labs at M5."
+          ? "Research permanently increases stats of all squares. All labs unlock at M3."
           : "";
   const tileLabelScale = clamp(
     GRID_SIZE / Math.max(1, Number(game.activeFarmSize || GRID_SIZE)),
@@ -1314,12 +1263,11 @@ export default function FarmPage() {
     water: "Click farm tiles to water using your selected brush size.",
     harvest:
       "Click farm tiles to harvest ready crops using your selected brush size.",
-    marketing:
-      "Use Market for Platinum to reset crops/money and gain platinum.",
+    marketing: "Reset crops/money and gain platinum.",
     save: "Export or import your encrypted save file.",
     expandFarm: "Use this panel to unlock and switch farm expansion sizes.",
     animals: "Select an animal, then click a tile to place it.",
-    research: "Spend platinum on starter labs at M2 and advanced labs at M5.",
+    research: "Click buy to purchase research upgrades.",
   };
   const activeToolHint =
     activeToolHintByTool[game.selectedTool] ||
@@ -1332,7 +1280,7 @@ export default function FarmPage() {
   if (!ready) {
     return (
       <section className="page">
-        <header style={{ marginBottom: 16 }}>
+        <header className="farm-header">
           <h1>farm</h1>
           <p className="lede">Loading local save...</p>
         </header>
@@ -1343,7 +1291,7 @@ export default function FarmPage() {
 
   return (
     <section className="page">
-      <header style={{ marginBottom: 16 }}>
+      <header className="farm-header">
         <h1>Farm Idle</h1>
         <p className="lede">
           Idle farming sim with lots of unlocks, automation, and levels. Click
@@ -1352,39 +1300,20 @@ export default function FarmPage() {
       </header>
       <DesktopBadge />
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "flex-start",
-          gap: 14,
-        }}
-      >
-        <div
-          style={{ flex: "1 1 320px", maxWidth: 420, width: "100%", order: 2 }}
-        >
+      <div className="farm-layout">
+        <div className="farm-sidebar">
           <div
-            className="card"
-            style={{
-              display: "grid",
-              gap: 12,
-              marginBottom: 14,
-              background:
-                "linear-gradient(180deg, rgba(65,43,24,0.62), rgba(24,18,12,0.72))",
-              borderColor: "rgba(255, 203, 129, 0.28)",
-            }}
+            className="card farm-tool-card"
           >
-            <h2 style={{ margin: 0 }}>Tools & Upgrades</h2>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <h2 className="farm-title">Tools & Upgrades</h2>
+            <div className="farm-tools-wrap">
               {TOOLS.filter((tool) => isToolVisible(game, tool.id)).map(
                 (tool) => (
                   <button
                     key={tool.id}
                     onClick={() => setTool(tool.id)}
+                    className="farm-tool-button"
                     style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
                       borderColor:
                         game.selectedTool === tool.id
                           ? "rgba(255, 243, 175, 0.9)"
@@ -1405,38 +1334,23 @@ export default function FarmPage() {
               )}
             </div>
 
-            <div style={{ fontSize: 10, opacity: 0.86 }}>
+            <div className="farm-copy-strong">
               Active tool: <strong>{game.selectedTool}</strong>.
               <br />
               {activeToolHint}
             </div>
 
             {game.selectedTool === "save" ? (
-              <div
-                style={{
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: 12,
-                  padding: 10,
-                  background: "rgba(0,0,0,0.24)",
-                  display: "grid",
-                  gap: 8,
-                }}
-              >
-                <div style={{ fontSize: 10, opacity: 0.84 }}>Save Transfer</div>
-                <div style={{ fontSize: 10, opacity: 0.72 }}>
+              <div className="farm-inset-card">
+                <div className="farm-copy-sm">Save Transfer</div>
+                <div className="farm-copy-muted">
                   Export creates an encrypted version of your local save JSON.
                   Import restores from that encrypted save file.
                 </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    opacity: 0.86,
-                    color: "rgba(255, 164, 138, 0.95)",
-                  }}
-                >
+                <div className="farm-copy-alert">
                   Reset is permanent. Export and keep a local save file first.
                 </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div className="farm-row-wrap">
                   <button onClick={exportEncryptedSave} disabled={saveBusy}>
                     Export Save JSON
                   </button>
@@ -1446,10 +1360,7 @@ export default function FarmPage() {
                   <button
                     onClick={resetLocalFarmSave}
                     disabled={saveBusy}
-                    style={{
-                      borderColor: "rgba(255, 164, 138, 0.8)",
-                      background: "rgba(133, 44, 36, 0.38)",
-                    }}
+                    className="farm-danger-button"
                   >
                     Reset Game (Delete Local Save)
                   </button>
@@ -1457,11 +1368,11 @@ export default function FarmPage() {
                     ref={importFileRef}
                     type="file"
                     accept=".json,application/json"
-                    style={{ display: "none" }}
+                    className="farm-hidden-input"
                     onChange={importEncryptedSave}
                   />
                 </div>
-                <div style={{ fontSize: 10, opacity: 0.72 }}>
+                <div className="farm-copy-muted">
                   {saveStatus ||
                     "Tip: store exported files somewhere safe so you can restore on another browser/device."}
                 </div>
@@ -1469,24 +1380,9 @@ export default function FarmPage() {
             ) : null}
 
             {game.selectedTool === "plant" ? (
-              <div
-                style={{
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: 12,
-                  padding: 10,
-                  background: "rgba(0,0,0,0.24)",
-                  display: "grid",
-                  gap: 8,
-                }}
-              >
-                <div style={{ fontSize: 10, opacity: 0.84 }}>Seed types</div>
-                <div
-                  style={{
-                    display: "grid",
-                    gap: 6,
-                    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                  }}
-                >
+              <div className="farm-inset-card">
+                <div className="farm-copy-sm">Seed types</div>
+                <div className="farm-seed-grid">
                   {SEEDS.filter(
                     (seed) => game.discovered?.seeds?.[seed.id],
                   ).map((seed) => {
@@ -1552,37 +1448,19 @@ export default function FarmPage() {
                             );
                           }
                         }}
+                        className="farm-choice-card"
                         style={{
-                          border: "1px solid rgba(255,255,255,0.16)",
-                          borderRadius: 10,
-                          padding: 8,
                           background: selected
                             ? "rgba(124, 255, 182, 0.16)"
                             : "rgba(0,0,0,0.2)",
-                          display: "grid",
-                          gap: 4,
-                          cursor: "pointer",
                         }}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: 8,
-                            alignItems: "center",
-                          }}
-                        >
+                        <div className="farm-row-between">
                           <div>
-                            <strong style={{ fontSize: 11 }}>
+                            <strong className="farm-text-11">
                               {seed.name}
                             </strong>
-                            <div
-                              style={{
-                                fontSize: 9,
-                                opacity: 0.8,
-                                marginTop: 2,
-                              }}
-                            >
+                            <div className="farm-text-9-80 farm-margin-top-2">
                               Cost:{" "}
                               <span
                                 style={
@@ -1600,29 +1478,9 @@ export default function FarmPage() {
                               <span>{costCountLabel}</span>
                             </div>
                           </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: 6,
-                              alignItems: "stretch",
-                            }}
-                          >
+                          <div className="farm-choice-media-row">
                             {isBestValue ? (
-                              <div
-                                style={{
-                                  width: 48,
-                                  height: 48,
-                                  borderRadius: 6,
-                                  border: "1px solid rgba(255, 233, 141, 0.65)",
-                                  background: "rgba(255, 217, 112, 0.2)",
-                                  display: "grid",
-                                  placeItems: "center",
-                                  textAlign: "center",
-                                  fontSize: 9,
-                                  lineHeight: 0.95,
-                                  opacity: 0.95,
-                                }}
-                              >
+                              <div className="farm-best-value-badge">
                                 <span>
                                   <span>Best</span>
                                   <br />
@@ -1630,16 +1488,7 @@ export default function FarmPage() {
                                 </span>
                               </div>
                             ) : null}
-                            <div
-                              style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 6,
-                                overflow: "hidden",
-                                border: "1px solid rgba(255,255,255,0.22)",
-                                position: "relative",
-                              }}
-                            >
+                            <div className="farm-tile-thumb">
                               <TileSprite
                                 tile={{
                                   soil: "plowed",
@@ -1664,25 +1513,25 @@ export default function FarmPage() {
                         </div>
                         {expanded ? (
                           <>
-                            <div style={{ fontSize: 9, opacity: 0.78 }}>
+                            <div className="farm-text-9-78">
                               Mature {formatMoney(matureSellValue)} | Old{" "}
                               {formatMoney(oldSellValue)}
                             </div>
-                            <div style={{ fontSize: 9, opacity: 0.72 }}>
+                            <div className="farm-text-9-72">
                               {seedTraitText(seed)}
                             </div>
-                            <div style={{ fontSize: 9, opacity: 0.68 }}>
+                            <div className="farm-text-9-68">
                               Category: {cropCategory(seed.id)}
                             </div>
                             {seed.cost > 0 ? (
-                              <div style={{ fontSize: 9, opacity: 0.68 }}>
+                              <div className="farm-text-9-68">
                                 Current tile cost:{" "}
                                 {formatMoney(currentTileCost)}
                               </div>
                             ) : null}
                           </>
                         ) : null}
-                        <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
+                        <div className="farm-row-gap-6 farm-margin-top-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1692,13 +1541,7 @@ export default function FarmPage() {
                             {selected ? "Selected" : "Use"}
                           </button>
                           {partialFill ? (
-                            <span
-                              style={{
-                                fontSize: 9,
-                                opacity: 0.75,
-                                paddingTop: 5,
-                              }}
-                            >
+                            <span className="farm-inline-note">
                               {partialFillHint}
                             </span>
                           ) : null}
@@ -1711,36 +1554,18 @@ export default function FarmPage() {
             ) : null}
 
             {game.selectedTool === "animals" ? (
-              <div
-                style={{
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: 12,
-                  padding: 10,
-                  background: "rgba(0,0,0,0.24)",
-                  display: "grid",
-                  gap: 8,
-                }}
-              >
-                <div style={{ fontSize: 10, opacity: 0.84 }}>
+              <div className="farm-inset-card">
+                <div className="farm-text-10-84">
                   Animals apply tile buffs. Select one, then click tiles to
                   place it. Right-click a tile to remove one selected animal, or
                   switch to Clear mode to wipe all animals on clicked tiles.
                   Each tile can hold up to 3 animals.
                 </div>
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.16)",
-                    borderRadius: 12,
-                    padding: 10,
-                    background: "rgba(0,0,0,0.2)",
-                    display: "grid",
-                    gap: 6,
-                  }}
-                >
-                  <div style={{ fontSize: 10, opacity: 0.86 }}>
+                <div className="farm-panel-strong-12">
+                  <div className="farm-text-10-86">
                     Animal Tile Action
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <div className="farm-row-gap-8-wrap">
                     <button
                       onClick={() => {
                         setTool("animals");
@@ -1771,13 +1596,7 @@ export default function FarmPage() {
                     </button>
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gap: 6,
-                    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                  }}
-                >
+                <div className="farm-seed-grid">
                   {ANIMALS.filter(
                     (animal) => game.discovered?.animals?.[animal.id],
                   ).map((animal) => {
@@ -1790,7 +1609,10 @@ export default function FarmPage() {
                       0,
                       Number(game.animalOwned?.[animal.id] || 0),
                     );
-                    const placedCount = countPlacedAnimals(game.tiles, animal.id);
+                    const placedCount = countPlacedAnimals(
+                      game.tiles,
+                      animal.id,
+                    );
                     const ownershipCap = animalMaxOwnedForPrestige(
                       game.prestigeLevel,
                       animal.id,
@@ -1832,75 +1654,46 @@ export default function FarmPage() {
                             );
                           }
                         }}
+                        className="farm-choice-card"
                         style={{
-                          border: "1px solid rgba(255,255,255,0.16)",
-                          borderRadius: 10,
-                          padding: 8,
                           background: selected
                             ? "rgba(124, 255, 182, 0.16)"
                             : "rgba(0,0,0,0.2)",
-                          display: "grid",
-                          gap: 4,
-                          cursor: "pointer",
                         }}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: 8,
-                            alignItems: "center",
-                          }}
-                        >
+                        <div className="farm-row-between">
                           <div>
-                            <strong style={{ fontSize: 11 }}>
+                            <strong className="farm-text-11">
                               {animal.name}
                             </strong>
-                            <div
-                              style={{
-                                fontSize: 9,
-                                opacity: 0.8,
-                                marginTop: 2,
-                              }}
-                            >
+                            <div className="farm-text-9-80 farm-margin-top-2">
                               {formatLargeNumber(animal.unlockShards)} platinum
                             </div>
                           </div>
-                          <div
-                            style={{
-                              width: 48,
-                              height: 48,
-                              borderRadius: 6,
-                              overflow: "hidden",
-                              border: "1px solid rgba(255,255,255,0.22)",
-                              background: "rgba(0,0,0,0.26)",
-                              display: "grid",
-                              placeItems: "center",
-                            }}
-                          >
+                          <div className="farm-animal-thumb">
                             <AnimalSprite animalId={animal.id} size={48} />
                           </div>
                         </div>
-                        <div style={{ fontSize: 9, opacity: 0.72 }}>
+                        <div className="farm-text-9-72">
                           Traits: {traitsText}
                         </div>
                         {expanded ? (
-                          <div style={{ display: "grid", gap: 2 }}>
-                            <div style={{ fontSize: 9, opacity: 0.78 }}>
+                          <div className="farm-grid-gap-2">
+                            <div className="farm-text-9-78">
                               {animal.desc}
                             </div>
-                            <div style={{ fontSize: 9, opacity: 0.7 }}>
+                            <div className="farm-text-9-70">
                               Unlocks at marketing M{reqPrestige}. At M
                               {reqPrestige}, max owned is 1. Unlimited starts at
                               M{reqPrestige + 1}.
                             </div>
-                            <div style={{ fontSize: 9, opacity: 0.7 }}>
+                            <div className="farm-text-9-70">
                               Current cap at M{game.prestigeLevel}: {capLabel}.
                               Owned: {ownedCount}. Placed: {placedCount}.
                             </div>
                           </div>
                         ) : null}
-                        <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
+                        <div className="farm-row-gap-6 farm-margin-top-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1917,7 +1710,7 @@ export default function FarmPage() {
                   {!ANIMALS.some(
                     (animal) => game.discovered?.animals?.[animal.id],
                   ) ? (
-                    <div style={{ fontSize: 10, opacity: 0.72 }}>
+                    <div className="farm-text-10-72">
                       No animals visible yet. Reach 90% of platinum cost at
                       least once and get to the current/next marketing tier to
                       reveal them.
@@ -1929,142 +1722,119 @@ export default function FarmPage() {
 
             {showMarketingUnlocks ? (
               <>
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    borderRadius: 10,
-                    padding: 8,
-                    background: "rgba(0,0,0,0.18)",
-                    display: "grid",
-                    gap: 8,
-                  }}
-                >
-                  <div style={{ fontSize: 10, opacity: 0.88 }}>
+                <div className="farm-panel-muted-8">
+                  <div className="farm-text-10-88">
                     Marketing converts money and plants into platinum. All
                     crops, money, and tool upgrades are reset. Animals and farm
                     expansions are retained.
                   </div>
-                  <div
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.14)",
-                      borderRadius: 10,
-                      padding: 8,
-                      background: "rgba(0,0,0,0.18)",
-                      display: "grid",
-                      gap: 4,
-                    }}
-                  >
-                    <div style={{ fontSize: 10, opacity: 0.82 }}>
-                      Marketing Level: <strong>M{game.prestigeLevel}</strong>
+                  <div className="farm-panel-muted-6">
+                    <div className="farm-panel-soft-4">
+                      <div className="farm-text-10-86">
+                        Current:
+                      </div>
+                      <div className="farm-text-10-82">
+                        Marketing Level: <strong>M{game.prestigeLevel}</strong>
+                      </div>
+                      <div className="farm-text-10-82">
+                        Platinum:{" "}
+                        <strong>
+                          {formatLargeNumber(game.prestigeShards)}
+                        </strong>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 10, opacity: 0.82 }}>
-                      Marketing Platinum:{" "}
-                      <strong>{formatLargeNumber(game.prestigeShards)}</strong>
-                    </div>
-                    <div style={{ fontSize: 10, opacity: 0.72 }}>
-                      Next marketing gain: +
-                      {formatLargeNumber(nextMarketingGain)} platinum
-                    </div>
-                    <div style={{ fontSize: 10, opacity: 0.72 }}>
-                      Money required to M{game.prestigeLevel + 1}:{" "}
-                      {formatMoney(currentPrestigeCost)}
-                    </div>
-                    <div style={{ fontSize: 10, opacity: 0.72 }}>
-                      Marketing perks: +
-                      {formatMoney(PRESTIGE_START_MONEY_PER_LEVEL)} start money
-                      and +{Math.round(PRESTIGE_GROWTH_SPEED_PER_LEVEL * 100)}%
-                      growth speed per marketing level (max{" "}
-                      {Math.round(PRESTIGE_MAX_GROWTH_SPEED * 100)}%).
+                    <div className="farm-panel-soft-4">
+                      <div className="farm-text-10-86">Next:</div>
+                      <div className="farm-text-10-72">
+                        Marketing Level: M{nextMarketingLevel}
+                      </div>
+                      <div className="farm-text-10-72">
+                        Platinum gain: +{formatLargeNumber(nextMarketingGain)}
+                      </div>
+                      <div className="farm-text-10-72">
+                        Money required to M{nextMarketingLevel}:{" "}
+                        {formatMoney(currentPrestigeCost)}
+                      </div>
+                      <div className="farm-panel-soft-3">
+                        <div className="farm-text-10-74">
+                          Unlocks in M{nextMarketingLevel}:
+                        </div>
+                        {nextMarketingUnlocks.length > 0 ? (
+                          nextMarketingUnlocks.map((unlockText) => (
+                            <div
+                              key={`next-unlock-${unlockText}`}
+                              className="farm-text-10-72"
+                            >
+                              {unlockText}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="farm-text-10-72">
+                            None
+                          </div>
+                        )}
+                        <div className="farm-text-10-72">
+                          Marketing perks: +
+                          {formatMoney(PRESTIGE_START_MONEY_PER_LEVEL)} start
+                          money and +
+                          {Math.round(PRESTIGE_GROWTH_SPEED_PER_LEVEL * 100)}%
+                          growth speed per marketing level (max{" "}
+                          {Math.round(PRESTIGE_MAX_GROWTH_SPEED * 100)}%).
+                        </div>
+                      </div>
                     </div>
                     <button onClick={prestigeNow} disabled={!canMarketNow}>
-                      Market for Platinum
+                      Market for Platinum ({formatMoney(currentPrestigeCost)})
                     </button>
                   </div>
                 </div>
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    borderRadius: 10,
-                    padding: 8,
-                    background: "rgba(0,0,0,0.18)",
-                    display: "grid",
-                    gap: 8,
-                  }}
-                >
-                  <div style={{ fontSize: 10, opacity: 0.88 }}>
+                <div className="farm-panel-muted-8">
+                  <div className="farm-text-10-88">
                     Farm milestones award bonus platinum for leveling marketing
                   </div>
-                  <div
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.14)",
-                      borderRadius: 10,
-                      padding: 8,
-                      background: "rgba(0,0,0,0.18)",
-                      display: "grid",
-                      gap: 6,
-                    }}
-                  >
-                    <div style={{ fontSize: 10, opacity: 0.84 }}>
+                  <div className="farm-panel-muted-6">
+                    <div className="farm-text-10-84">
                       Farm Milestones ({milestoneClaimedCount}/
                       {PRESTIGE_MILESTONES.length})
                     </div>
-                    <div style={{ fontSize: 10, opacity: 0.74 }}>
+                    <div className="farm-text-10-74">
                       Claimed platinum rewards:{" "}
                       {formatLargeNumber(totalMilestoneRewardShards)}
                     </div>
-                    <div style={{ fontSize: 10, opacity: 0.8 }}>
+                    <div className="farm-text-10-80">
                       Earned milestones:
                     </div>
                     {earnedMilestones.length > 0 ? (
-                      <ul
-                        style={{
-                          margin: 0,
-                          paddingLeft: 16,
-                          display: "grid",
-                          gap: 5,
-                        }}
-                      >
+                      <ul className="farm-list-grid">
                         {earnedMilestones.map((m) => (
-                          <li
-                            key={`earned-${m.id}`}
-                            style={{
-                              fontSize: 10,
-                              opacity: 0.84,
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                gap: 8,
-                              }}
-                            >
+                            <li key={`earned-${m.id}`} className="farm-text-10-84">
+                              <div className="farm-row-between-top">
                               <span>
                                 M{m.reqPrestige}: {m.title}
                               </span>
-                              <span style={{ opacity: 0.68 }}>Claimed</span>
+                              <span className="farm-opacity-68">Claimed</span>
                             </div>
-                            <div style={{ opacity: 0.68 }}>
+                            <div className="farm-opacity-68">
                               +{formatLargeNumber(m.rewardShards)} platinum
                             </div>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <div style={{ fontSize: 10, opacity: 0.66 }}>
+                      <div className="farm-text-10-66">
                         None yet.
                       </div>
                     )}
-                    <div style={{ fontSize: 10, opacity: 0.8 }}>
+                    <div className="farm-text-10-80">
                       Next milestone:
                     </div>
                     {nextMilestone ? (
-                      <ul style={{ margin: 0, paddingLeft: 16 }}>
-                        <li style={{ fontSize: 10, opacity: 0.82 }}>
+                      <ul className="farm-list-compact">
+                        <li className="farm-text-10-82">
                           <div>
                             M{nextMilestone.reqPrestige}: {nextMilestone.title}
                           </div>
-                          <div style={{ opacity: 0.68 }}>
+                          <div className="farm-opacity-68">
                             Reward: +
                             {formatLargeNumber(nextMilestone.rewardShards)}{" "}
                             platinum
@@ -2072,7 +1842,7 @@ export default function FarmPage() {
                         </li>
                       </ul>
                     ) : (
-                      <div style={{ fontSize: 10, opacity: 0.76 }}>
+                      <div className="farm-text-10-76">
                         All farm milestones claimed.
                       </div>
                     )}
@@ -2082,36 +1852,18 @@ export default function FarmPage() {
             ) : null}
 
             {showActionUnlocks ? (
-              <div
-                style={{
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: 10,
-                  padding: 8,
-                  background: "rgba(0,0,0,0.18)",
-                  display: "grid",
-                  gap: 8,
-                }}
-              >
-                <div style={{ fontSize: 10, opacity: 0.88 }}>
+              <div className="farm-panel-muted-8">
+                <div className="farm-text-10-88">
                   {selectedActionToolLabel} upgrades
                 </div>
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    borderRadius: 10,
-                    padding: 8,
-                    background: "rgba(0,0,0,0.18)",
-                    display: "grid",
-                    gap: 6,
-                  }}
-                >
-                  <div style={{ fontSize: 10, opacity: 0.84 }}>
+                <div className="farm-panel-muted-6">
+                  <div className="farm-text-10-84">
                     Brush upgrades
                   </div>
-                  <div style={{ fontSize: 10, opacity: 0.72 }}>
+                  <div className="farm-text-10-72">
                     {actionBrushDescriptionByTool[game.selectedTool] || ""}
                   </div>
-                  <div style={{ display: "grid", gap: 6 }}>
+                  <div className="farm-grid-gap-6">
                     {BRUSHES.filter(
                       (brush) =>
                         game.discovered?.brushes?.[game.selectedTool]?.[
@@ -2136,14 +1888,9 @@ export default function FarmPage() {
                       return (
                         <div
                           key={`${game.selectedTool}-${brush.id}`}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 8,
-                          }}
+                          className="farm-row-between"
                         >
-                          <span style={{ fontSize: 10 }}>
+                          <span className="farm-text-10">
                             {brush.id}{" "}
                             {brush.cost > 0
                               ? `(${formatMoney(brushCost)})`
@@ -2173,23 +1920,14 @@ export default function FarmPage() {
                     })}
                   </div>
                 </div>
-                <div
-                  style={{
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    borderRadius: 10,
-                    padding: 8,
-                    background: "rgba(0,0,0,0.18)",
-                    display: "grid",
-                    gap: 6,
-                  }}
-                >
-                  <div style={{ fontSize: 10, opacity: 0.84 }}>Automation</div>
-                  <div style={{ fontSize: 10, opacity: 0.72 }}>
+                <div className="farm-panel-muted-6">
+                  <div className="farm-text-10-84">Automation</div>
+                  <div className="farm-text-10-72">
                     {actionAutomationDescriptionByTool[game.selectedTool] || ""}
                   </div>
                   {showAutomationPanel ? (
                     <>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div className="farm-row-gap-8">
                         {(() => {
                           const autoKey = selectedAutoKey;
                           if (!autoKey) return null;
@@ -2241,7 +1979,7 @@ export default function FarmPage() {
                           );
                         })()}
                       </div>
-                      <div style={{ fontSize: 10, opacity: 0.72 }}>
+                      <div className="farm-text-10-72">
                         {pendingAutoMode?.type === "buy"
                           ? selectedAutoKey
                             ? `Click a farm tile to buy this automation for that square (${formatMoney(selectedAutomationUnitCost)}).`
@@ -2256,7 +1994,7 @@ export default function FarmPage() {
                       (canBuyAllSelectedAutomation ||
                         canCancelAllSelectedAutomation) ? (
                         <div
-                          style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+                          className="farm-row-gap-8-wrap"
                         >
                           {canBuyAllSelectedAutomation ? (
                             <button
@@ -2286,7 +2024,7 @@ export default function FarmPage() {
                       ) : null}
                     </>
                   ) : (
-                    <div style={{ fontSize: 10, opacity: 0.68 }}>
+                    <div className="farm-text-10-68">
                       Auto-{selectedAutoLabel.toLowerCase()} unlocks later.
                     </div>
                   )}
@@ -2295,40 +2033,22 @@ export default function FarmPage() {
             ) : null}
 
             {showGenericUnlockCard ? (
-              <div
-                style={{
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: 12,
-                  padding: 10,
-                  background: "rgba(0,0,0,0.24)",
-                  display: "grid",
-                  gap: 8,
-                }}
-              >
+              <div className="farm-inset-card">
                 {toolUnlockText ? (
-                  <div style={{ fontSize: 10, opacity: 0.84 }}>
+                  <div className="farm-text-10-84">
                     {toolUnlockText}
                   </div>
                 ) : null}
 
                 {showFarmUnlocks ? (
-                  <div
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.14)",
-                      borderRadius: 10,
-                      padding: 8,
-                      background: "rgba(0,0,0,0.18)",
-                      display: "grid",
-                      gap: 4,
-                    }}
-                  >
-                    <div style={{ fontSize: 10, opacity: 0.78 }}>
+                  <div className="farm-panel-muted-4">
+                    <div className="farm-text-10-78">
                       Active farm:{" "}
                       <strong>
                         {game.activeFarmSize}x{game.activeFarmSize}
                       </strong>
                     </div>
-                    <div style={{ display: "grid", gap: 6 }}>
+                    <div className="farm-grid-gap-6">
                       {visibleFarmExpansions.map((exp) => {
                         const unlocked = Boolean(
                           game.farmSizeUnlocks?.[exp.size],
@@ -2350,23 +2070,15 @@ export default function FarmPage() {
                           game.prestigeLevel >= exp.reqPrestige &&
                           game.prestigeShards >= exp.unlockShards;
                         return (
-                          <div
-                            key={`farm-exp-${exp.size}`}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 8,
-                            }}
-                          >
-                            <span style={{ fontSize: 10, opacity: 0.8 }}>
+                          <div key={`farm-exp-${exp.size}`} className="farm-row-between">
+                            <span className="farm-text-10-80">
                               {exp.size}x{exp.size}{" "}
                               {exp.size === 3
                                 ? "(starter)"
                                 : `(M${exp.reqPrestige}, ${formatLargeNumber(exp.unlockShards)} platinum)`}
                             </span>
                             {unlocked ? (
-                              <span style={{ fontSize: 10, opacity: 0.78 }}>
+                              <span className="farm-text-10-78">
                                 {game.activeFarmSize >= exp.size
                                   ? "Unlocked"
                                   : "Available"}
@@ -2387,26 +2099,9 @@ export default function FarmPage() {
                 ) : null}
 
                 {showResearchUnlocks ? (
-                  <div
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.14)",
-                      borderRadius: 10,
-                      padding: 8,
-                      background: "rgba(0,0,0,0.18)",
-                      display: "grid",
-                      gap: 6,
-                    }}
-                  >
-                    <div style={{ fontSize: 10, opacity: 0.84 }}>
-                      Platinum Labs (Permanent Sidegrades)
-                    </div>
-                    <div style={{ fontSize: 10, opacity: 0.72 }}>
-                      Starter labs unlock at M{RESEARCH_UNLOCK_MARKETING}.
-                      Advanced labs unlock at M5.
-                    </div>
-
+                  <div className="farm-panel-muted-6">
                     {showShardUpgradesPanel ? (
-                      <div style={{ display: "grid", gap: 4 }}>
+                      <div className="farm-grid-gap-4">
                         {SHARD_UPGRADES.map((upgrade) => {
                           const level = shardUpgradeLevel(game, upgrade.id);
                           const atCap = level >= upgrade.cap;
@@ -2421,24 +2116,9 @@ export default function FarmPage() {
                             !lockedByMarketing &&
                             game.prestigeShards >= cost;
                           return (
-                            <div
-                              key={upgrade.id}
-                              style={{
-                                display: "grid",
-                                gap: 2,
-                                padding: "6px 0",
-                                borderTop: "1px solid rgba(255,255,255,0.08)",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  gap: 8,
-                                }}
-                              >
-                                <span style={{ fontSize: 10 }}>
+                            <div key={upgrade.id} className="farm-grid-gap-2 farm-upgrade-row">
+                              <div className="farm-row-between">
+                                <span className="farm-text-10">
                                   {upgrade.label} Lv {level}/{upgrade.cap}
                                 </span>
                                 <button
@@ -2452,23 +2132,18 @@ export default function FarmPage() {
                                       : `Buy (${formatLargeNumber(cost)})`}
                                 </button>
                               </div>
-                              <div style={{ fontSize: 10, opacity: 0.68 }}>
+                              <div className="farm-text-10-68">
                                 {upgrade.desc}
                               </div>
-                              {lockedByMarketing ? (
-                                <div style={{ fontSize: 10, opacity: 0.62 }}>
-                                  Requires marketing level M{reqMarketing}.
-                                </div>
-                              ) : null}
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div style={{ fontSize: 10, opacity: 0.72 }}>
-                        Labs unlock at marketing level M
-                        {RESEARCH_UNLOCK_MARKETING}. Current level: M
-                        {game.prestigeLevel}.
+                      <div className="farm-text-10-72">
+                        Research appears at marketing level M
+                        {RESEARCH_UNLOCK_MARKETING}. Labs unlock at M3. Current
+                        level: M{game.prestigeLevel}.
                       </div>
                     )}
                   </div>
@@ -2477,28 +2152,11 @@ export default function FarmPage() {
             ) : null}
           </div>
         </div>
-        <div
-          style={{
-            flex: "2 1 680px",
-            minWidth: 0,
-            order: 1,
-            display: "grid",
-            gap: 10,
-          }}
-        >
-          <div
-            className="card"
-            style={{
-              padding: 10,
-              background:
-                "linear-gradient(180deg, rgba(37,30,20,0.75), rgba(20,16,11,0.84))",
-              borderColor: "rgba(255, 208, 140, 0.2)",
-            }}
-          >
+        <div className="farm-main">
+          <div className="card farm-main-card farm-main-card-tight">
             <div
+              className="farm-grid-gap-8"
               style={{
-                display: "grid",
-                gap: 8,
                 gridTemplateColumns:
                   game.prestigeLevel > 0
                     ? "repeat(3, minmax(0, 1fr))"
@@ -2523,20 +2181,11 @@ export default function FarmPage() {
               ) : null}
             </div>
           </div>
-          <div
-            className="card"
-            style={{
-              padding: 12,
-              background:
-                "linear-gradient(180deg, rgba(37,30,20,0.75), rgba(20,16,11,0.84))",
-              borderColor: "rgba(255, 208, 140, 0.2)",
-            }}
-          >
+          <div className="card farm-main-card farm-main-card-roomy">
             <div
+              className="farm-grid-gap-4"
               style={{
-                display: "grid",
                 gridTemplateColumns: `repeat(${game.activeFarmSize}, minmax(0, 1fr))`,
-                gap: 4,
               }}
               onMouseLeave={() => setHoveredTileIndex(null)}
             >
@@ -2623,27 +2272,11 @@ export default function FarmPage() {
                       tileIndex={idx}
                       animTick={animTick}
                     />
-                    <span
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        zIndex: 1,
-                        pointerEvents: "none",
-                      }}
-                    >
+                    <span className="farm-tile-overlay">
                       <span
+                        className="farm-tile-label-top"
                         style={{
-                          position: "absolute",
-                          top: 1,
-                          left: "50%",
-                          transform: "translateX(-50%)",
                           fontSize: topLabelFontSize,
-                          textAlign: "center",
-                          lineHeight: 0.9,
-                          display: "grid",
-                          gap: 0,
-                          textShadow:
-                            "0 0 2px rgba(0,0,0,0.9), 0 1px 0 rgba(0,0,0,0.75)",
                         }}
                       >
                         {seedTagLines.map((line, i) => (
@@ -2651,31 +2284,14 @@ export default function FarmPage() {
                         ))}
                       </span>
                       {showTileValueTags || canHarvest ? (
-                        <span
-                          style={{
-                            position: "absolute",
-                            bottom: 1,
-                            left: 1,
-                            fontSize: progressLabelFontSize,
-                            textShadow:
-                              "0 0 2px rgba(0,0,0,0.9), 0 1px 0 rgba(0,0,0,0.75)",
-                          }}
-                        >
+                        <span className="farm-tile-label-progress" style={{ fontSize: progressLabelFontSize }}>
                           {progressTag}
                         </span>
                       ) : null}
                       <span
+                        className="farm-tile-label-blocker"
                         style={{
-                          position: "absolute",
-                          bottom: 1,
-                          right: 1,
                           fontSize: blockerLabelFontSize,
-                          lineHeight: 0.9,
-                          textAlign: "center",
-                          display: "grid",
-                          gap: 0,
-                          textShadow:
-                            "0 0 2px rgba(0,0,0,0.9), 0 1px 0 rgba(0,0,0,0.75)",
                         }}
                       >
                         {blockerLines.map((line, i) => (
@@ -2687,17 +2303,7 @@ export default function FarmPage() {
                 );
               })}
             </div>
-            <label
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                marginTop: 8,
-                fontSize: 11,
-                opacity: 0.86,
-                userSelect: "none",
-              }}
-            >
+            <label className="farm-toggle-label">
               <input
                 type="checkbox"
                 checked={showTileValueTags}
@@ -2706,71 +2312,43 @@ export default function FarmPage() {
               Show tile %
             </label>
           </div>
-          <div
-            className="card"
-            style={{
-              padding: 10,
-              background:
-                "linear-gradient(180deg, rgba(37,30,20,0.75), rgba(20,16,11,0.84))",
-              borderColor: "rgba(255, 208, 140, 0.2)",
-            }}
-          >
-            <div
-              style={{
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 12,
-                padding: 10,
-                background: "rgba(0,0,0,0.24)",
-                display: "grid",
-                gap: 3,
-              }}
-            >
-              <div style={{ fontSize: 10, opacity: 0.72 }}>
+          <div className="card farm-main-card farm-main-card-tight">
+            <div className="farm-season-card">
+              <div className="farm-text-10-72">
                 Harvest Festival
               </div>
-              <div style={{ fontSize: 12 }}>
+              <div className="farm-text-12">
                 <strong>{currentSeason.label}</strong>
               </div>
-              <div style={{ fontSize: 10, opacity: 0.78 }}>
+              <div className="farm-text-10-78">
                 +{Math.round(currentSeason.baseBonus * 100)}% to{" "}
                 {currentSeason.categories.join(", ")} crops
                 {currentSeason.synergyAnimal
                   ? ` (+${Math.round(currentSeason.synergyBonus * 100)}% with ${animalById(currentSeason.synergyAnimal)?.name || currentSeason.synergyAnimal})`
                   : ""}
               </div>
-              <div style={{ fontSize: 10, opacity: 0.68 }}>
+              <div className="farm-text-10-68">
                 Rotates in {formatDuration(seasonRemainingMs)}
               </div>
             </div>
-            <div
-              style={{
-                marginTop: 8,
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 12,
-                padding: 10,
-                background: "rgba(0,0,0,0.24)",
-                display: "grid",
-                gap: 6,
-              }}
-            >
-              <div style={{ fontSize: 10, opacity: 0.72 }}>
+            <div className="farm-log-card">
+              <div className="farm-text-10-72">
                 Logs
-                <span style={{ opacity: 0.58 }}>
+                <span className="farm-opacity-58">
                   {" "}
                   (earnings + bonuses + spending batched every{" "}
                   {LOG_BATCH_MS / 1000}s)
                 </span>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <div className="farm-row-gap-6-wrap">
                 {LOG_FILTERS.map((filter) => {
                   const selected = logFilter === filter.id;
                   return (
                     <button
                       key={filter.id}
                       onClick={() => setLogFilter(filter.id)}
+                      className="farm-filter-btn"
                       style={{
-                        fontSize: 9,
-                        padding: "3px 7px",
                         borderColor: selected
                           ? "rgba(255, 243, 175, 0.92)"
                           : "rgba(255,255,255,0.2)",
@@ -2785,21 +2363,13 @@ export default function FarmPage() {
                 })}
               </div>
               {visibleLogs.length <= 0 ? (
-                <div style={{ fontSize: 10, opacity: 0.62 }}>
+                <div className="farm-text-10-62">
                   {logs.length <= 0
                     ? "No events yet. Plant and harvest to start the live feed."
                     : `No ${logFilter === "all" ? "matching" : logFilter} events in recent history.`}
                 </div>
               ) : (
-                <div
-                  style={{
-                    maxHeight: 170,
-                    overflowY: "auto",
-                    display: "grid",
-                    gap: 4,
-                    paddingRight: 2,
-                  }}
-                >
+                <div className="farm-log-list">
                   {visibleLogs.map((entry) => {
                     const toneColor =
                       entry.tone === "bonus"
@@ -2812,25 +2382,11 @@ export default function FarmPage() {
                               ? "#9fd1ff"
                               : "#e8ddcb";
                     return (
-                      <div
-                        key={entry.id}
-                        style={{
-                          display: "grid",
-                          gap: 1,
-                          borderTop: "1px solid rgba(255,255,255,0.08)",
-                          paddingTop: 4,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 9,
-                            opacity: 0.62,
-                            color: toneColor,
-                          }}
-                        >
+                      <div key={entry.id} className="farm-log-item">
+                        <span className="farm-log-time" style={{ color: toneColor }}>
                           {formatLogClock(entry.at)}
                         </span>
-                        <span style={{ fontSize: 10, opacity: 0.9 }}>
+                        <span className="farm-text-10-90">
                           {entry.text}
                         </span>
                       </div>
@@ -2844,1044 +2400,4 @@ export default function FarmPage() {
       </div>
     </section>
   );
-}
-
-function ToolButtonIcon({ toolId, size = 14 }) {
-  const rects = getToolIconRects(toolId);
-  if (rects.length <= 0) return null;
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      width={size}
-      height={size}
-      style={{ imageRendering: "pixelated", shapeRendering: "crispEdges" }}
-      aria-hidden="true"
-    >
-      {rects.map((r, i) => (
-        <rect
-          key={`${toolId}-icon-${i}`}
-          x={r.x}
-          y={r.y}
-          width={r.w}
-          height={r.h}
-          fill={r.c}
-        />
-      ))}
-    </svg>
-  );
-}
-
-function getToolIconRects(toolId) {
-  if (toolId === "plow") {
-    return [
-      { x: 8, y: 1, w: 2, h: 10, c: "#9c6b3d" },
-      { x: 6, y: 2, w: 4, h: 1, c: "#c4935e" },
-      { x: 4, y: 10, w: 8, h: 3, c: "#bfc7cc" },
-      { x: 4, y: 12, w: 8, h: 1, c: "#7f8a91" },
-    ];
-  }
-  if (toolId === "plant") {
-    return [
-      { x: 3, y: 4, w: 10, h: 9, c: "#c8a06a" },
-      { x: 4, y: 5, w: 8, h: 7, c: "#ad8656" },
-      { x: 6, y: 2, w: 4, h: 2, c: "#d9b484" },
-      { x: 7, y: 7, w: 2, h: 2, c: "#6f4a2c" },
-      { x: 6, y: 9, w: 1, h: 1, c: "#6f4a2c" },
-      { x: 9, y: 9, w: 1, h: 1, c: "#6f4a2c" },
-    ];
-  }
-  if (toolId === "water") {
-    return [
-      { x: 3, y: 6, w: 8, h: 6, c: "#9aa8b6" },
-      { x: 4, y: 7, w: 6, h: 4, c: "#738392" },
-      { x: 10, y: 7, w: 3, h: 2, c: "#9aa8b6" },
-      { x: 12, y: 8, w: 1, h: 1, c: "#d9e8f7" },
-      { x: 4, y: 4, w: 5, h: 2, c: "#9aa8b6" },
-      { x: 2, y: 7, w: 1, h: 3, c: "#9aa8b6" },
-      { x: 13, y: 10, w: 1, h: 1, c: "#72beff" },
-      { x: 12, y: 11, w: 1, h: 1, c: "#72beff" },
-    ];
-  }
-  if (toolId === "harvest") {
-    return [
-      { x: 8, y: 1, w: 2, h: 11, c: "#9b6d3f" },
-      { x: 4, y: 3, w: 5, h: 2, c: "#bfc7cc" },
-      { x: 2, y: 4, w: 3, h: 1, c: "#bfc7cc" },
-      { x: 1, y: 5, w: 2, h: 1, c: "#8a949b" },
-      { x: 9, y: 12, w: 2, h: 2, c: "#c4935e" },
-    ];
-  }
-  if (toolId === "marketing") {
-    return [
-      { x: 2, y: 8, w: 10, h: 6, c: "#5b4733" },
-      { x: 3, y: 9, w: 8, h: 4, c: "#6c573f" },
-      { x: 4, y: 10, w: 6, h: 2, c: "#7b654a" },
-      { x: 6, y: 5, w: 3, h: 3, c: "#d9c36d" },
-      { x: 7, y: 6, w: 1, h: 1, c: "#8d7b32" },
-      { x: 11, y: 7, w: 3, h: 2, c: "#a08e45" },
-      { x: 12, y: 8, w: 1, h: 1, c: "#d9c36d" },
-    ];
-  }
-  if (toolId === "save") {
-    return [
-      { x: 2, y: 2, w: 12, h: 12, c: "#7d8b9a" },
-      { x: 4, y: 3, w: 8, h: 3, c: "#d7e4ef" },
-      { x: 5, y: 8, w: 6, h: 5, c: "#48596b" },
-      { x: 9, y: 9, w: 1, h: 3, c: "#d7e4ef" },
-      { x: 6, y: 9, w: 2, h: 2, c: "#a7b8c8" },
-    ];
-  }
-  if (toolId === "expandFarm") {
-    return [
-      { x: 1, y: 8, w: 14, h: 6, c: "#5f7a3b" },
-      { x: 1, y: 9, w: 14, h: 1, c: "#45622d" },
-      { x: 5, y: 5, w: 6, h: 6, c: "#b57944" },
-      { x: 6, y: 6, w: 4, h: 4, c: "#c98d58" },
-      { x: 4, y: 4, w: 8, h: 2, c: "#8f4e32" },
-      { x: 7, y: 7, w: 2, h: 3, c: "#3a2a1f" },
-      { x: 2, y: 2, w: 2, h: 2, c: "#7fb65b" },
-      { x: 12, y: 3, w: 2, h: 3, c: "#7fb65b" },
-    ];
-  }
-  if (toolId === "animals") {
-    return [
-      { x: 2, y: 8, w: 10, h: 4, c: "#9e7347" },
-      { x: 3, y: 6, w: 8, h: 3, c: "#b68858" },
-      { x: 10, y: 5, w: 3, h: 3, c: "#9e7347" },
-      { x: 12, y: 4, w: 2, h: 2, c: "#b68858" },
-      { x: 5, y: 12, w: 1, h: 3, c: "#4a3523" },
-      { x: 9, y: 12, w: 1, h: 3, c: "#4a3523" },
-      { x: 12, y: 12, w: 1, h: 3, c: "#4a3523" },
-      { x: 12, y: 5, w: 1, h: 1, c: "#1f1610" },
-      { x: 1, y: 7, w: 2, h: 2, c: "#9e7347" },
-    ];
-  }
-  if (toolId === "research") {
-    return [
-      { x: 6, y: 1, w: 4, h: 2, c: "#dfe8f1" },
-      { x: 5, y: 3, w: 6, h: 1, c: "#b8c7d6" },
-      { x: 4, y: 4, w: 8, h: 1, c: "#8ca0b3" },
-      { x: 5, y: 5, w: 6, h: 6, c: "#6a7f92" },
-      { x: 4, y: 11, w: 8, h: 3, c: "#53bbd6" },
-      { x: 6, y: 12, w: 1, h: 1, c: "#9eff8d" },
-      { x: 8, y: 12, w: 1, h: 1, c: "#ffd572" },
-      { x: 10, y: 12, w: 1, h: 1, c: "#ff8fc2" },
-    ];
-  }
-  return [];
-}
-
-function Stat({ label, value }) {
-  return (
-    <div
-      style={{
-        border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: 12,
-        padding: 10,
-        background: "rgba(0,0,0,0.24)",
-      }}
-    >
-      <div style={{ fontSize: 10, opacity: 0.75 }}>{label}</div>
-      <div style={{ marginTop: 3, fontSize: 12 }}>{value}</div>
-    </div>
-  );
-}
-
-function tileColor(tile) {
-  if (tile.soil !== "plowed") return "#463423";
-  if (!tile.plant) return tile.watered ? "#4d6a84" : "#6f4f33";
-
-  const stage = tile.plant.stageIndex;
-  if (stage === 0) return tile.watered ? "#516f5d" : "#5b5b38";
-  if (stage === 1) return tile.watered ? "#5f8c4b" : "#6c7e43";
-  if (stage === 2) return tile.watered ? "#3f8d3f" : "#5b7d3d";
-  if (stage === 3) return tile.watered ? "#3d9345" : "#6f964a";
-  return tile.watered ? "#5d7d42" : "#807240";
-}
-
-function TileSprite({ tile, seed, tileIndex = 0, animTick = 0 }) {
-  const soil =
-    tile.soil !== "plowed" ? "#5a3e28" : tile.watered ? "#4a6a7a" : "#6f4d32";
-  const seedPalette = getSeedPalette(seed?.id);
-  const stage = tile.plant?.stageIndex ?? -1;
-  const plantXOffset = 1;
-  const animals = tileAnimalIds(tile).slice(0, MAX_ANIMALS_PER_TILE);
-  const animalSlots = [
-    [0, 10],
-    [5, 10],
-    [2, 7],
-  ];
-
-  const stageRects = [];
-  if (stage >= 0) {
-    if (stage === 0) {
-      stageRects.push({ x: 7, y: 11, w: 2, h: 2, c: seedPalette.seed });
-    }
-    if (stage >= 1) {
-      stageRects.push({ x: 7, y: 9, w: 2, h: 4, c: seedPalette.stem });
-      stageRects.push({ x: 6, y: 8, w: 1, h: 2, c: seedPalette.leaf });
-      stageRects.push({ x: 9, y: 8, w: 1, h: 2, c: seedPalette.leaf });
-    }
-    if (stage >= 2) {
-      stageRects.push({ x: 6, y: 6, w: 4, h: 2, c: seedPalette.leaf });
-      stageRects.push({ x: 5, y: 7, w: 1, h: 2, c: seedPalette.leafDark });
-      stageRects.push({ x: 10, y: 7, w: 1, h: 2, c: seedPalette.leafDark });
-      // Stage 3 (index 2) extends stage 2 with a taller canopy.
-      stageRects.push({ x: 7, y: 5, w: 2, h: 1, c: seedPalette.leaf });
-      stageRects.push({ x: 7, y: 4, w: 2, h: 1, c: seedPalette.leafDark });
-    }
-    stageRects.push(...getCropStageRects(seed?.id, stage, seedPalette));
-  }
-  const shiftedStageRects = stageRects.map((r) => ({
-    ...r,
-    x: Math.min(16 - r.w, r.x + plantXOffset),
-  }));
-
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      preserveAspectRatio="none"
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        imageRendering: "pixelated",
-        shapeRendering: "crispEdges",
-      }}
-      aria-hidden="true"
-    >
-      <rect x="0" y="0" width="16" height="16" fill={soil} />
-
-      {tile.soil !== "plowed" ? (
-        <>
-          <rect x="1" y="2" width="3" height="1" fill="#4a2f1e" />
-          <rect x="10" y="5" width="4" height="1" fill="#4a2f1e" />
-          <rect x="3" y="11" width="5" height="1" fill="#4a2f1e" />
-        </>
-      ) : (
-        <>
-          <rect
-            x="0"
-            y="12"
-            width="16"
-            height="4"
-            fill={tile.watered ? "#355a6c" : "#5a3f29"}
-          />
-          {shiftedStageRects.map((r, i) => (
-            <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} fill={r.c} />
-          ))}
-        </>
-      )}
-
-      {tile.autoEverything ? (
-        <rect x="0" y="0" width="3" height="3" fill="#7bffb7" />
-      ) : null}
-      {!tile.autoEverything && tile.autoWater ? (
-        <rect x="0" y="0" width="2" height="2" fill="#72beff" />
-      ) : null}
-      {!tile.autoEverything && tile.autoPlow ? (
-        <rect x="0" y="14" width="2" height="2" fill="#f6c87a" />
-      ) : null}
-      {!tile.autoEverything && tile.autoPlant ? (
-        <rect x="14" y="14" width="2" height="2" fill="#9eff8d" />
-      ) : null}
-      {!tile.autoEverything && tile.autoHarvest ? (
-        <rect x="14" y="0" width="2" height="2" fill="#ffe17d" />
-      ) : null}
-      {animals.map((animalId, slotIdx) => {
-        const cycleIdx =
-          (animTick + tileIndex + slotIdx) % ANIMAL_ANIM_CYCLE.length;
-        const frame = ANIMAL_ANIM_CYCLE[cycleIdx];
-        return getAnimalSpriteRects(
-          animalId,
-          animalSlots[slotIdx]?.[0] ?? 0,
-          animalSlots[slotIdx]?.[1] ?? 10,
-          frame,
-        ).map((r, i) => (
-          <rect
-            key={`animal-${slotIdx}-${i}`}
-            x={r.x}
-            y={r.y}
-            width={r.w}
-            height={r.h}
-            fill={r.c}
-          />
-        ));
-      })}
-    </svg>
-  );
-}
-
-function AnimalSprite({ animalId, size = 16 }) {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      width={size}
-      height={size}
-      style={{ imageRendering: "pixelated", shapeRendering: "crispEdges" }}
-      aria-hidden="true"
-    >
-      <rect x="0" y="0" width="16" height="16" fill="rgba(0,0,0,0.14)" />
-      {getAnimalSpriteRects(animalId, 2, 2).map((r, i) => (
-        <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} fill={r.c} />
-      ))}
-    </svg>
-  );
-}
-
-function getAnimalSpriteRects(animalId, offsetX = 0, offsetY = 10, frame = 0) {
-  const f = Math.max(0, Math.min(2, Number(frame) || 0));
-  const jump = f === 1 ? -1 : f === 2 ? -2 : 0;
-  const sway = f === 0 ? 0 : f === 1 ? 1 : 0;
-  if (animalId === "chicken") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 2 + jump,
-        w: 3,
-        h: 2,
-        c: "#f5f0e8",
-      },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 1 + jump,
-        w: 1,
-        h: 1,
-        c: "#f5f0e8",
-      },
-      {
-        x: offsetX + 3 + sway,
-        y: offsetY + 1 + jump,
-        w: 1,
-        h: 1,
-        c: "#cf3737",
-      },
-      {
-        x: offsetX + 4 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#f0c15a",
-      },
-      ...(f === 2
-        ? [
-            {
-              x: offsetX + 2 + sway,
-              y: offsetY + 4 + jump,
-              w: 1,
-              h: 1,
-              c: "#f0c15a",
-            },
-          ]
-        : []),
-    ];
-  }
-  if (animalId === "cow") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 1 + jump,
-        w: 4,
-        h: 3,
-        c: "#f2f2f2",
-      },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#202020",
-      },
-      {
-        x: offsetX + 4 + sway,
-        y: offsetY + 1 + jump,
-        w: 1,
-        h: 1,
-        c: "#202020",
-      },
-      {
-        x: offsetX + 0 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#f2f2f2",
-      },
-      ...(f === 2
-        ? [
-            {
-              x: offsetX + 1 + sway,
-              y: offsetY + 4 + jump,
-              w: 1,
-              h: 1,
-              c: "#202020",
-            },
-          ]
-        : []),
-    ];
-  }
-  if (animalId === "bee") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 2 + jump,
-        w: 3,
-        h: 2,
-        c: "#f2c83f",
-      },
-      { x: offsetX + 1 + sway, y: offsetY + 2 + jump, w: 1, h: 2, c: "#222" },
-      { x: offsetX + 3 + sway, y: offsetY + 2 + jump, w: 1, h: 2, c: "#222" },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + (f === 1 ? 0 : 1) + jump,
-        w: 2,
-        h: 1,
-        c: "#bfe2ff",
-      },
-    ];
-  }
-  if (animalId === "pig") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 1 + jump,
-        w: 4,
-        h: 3,
-        c: "#f3a6be",
-      },
-      {
-        x: offsetX + 0 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#f3a6be",
-      },
-      {
-        x: offsetX + 4 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#f08fae",
-      },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#d96f90",
-      },
-      ...(f === 2
-        ? [
-            {
-              x: offsetX + 3 + sway,
-              y: offsetY + 4 + jump,
-              w: 1,
-              h: 1,
-              c: "#d96f90",
-            },
-          ]
-        : []),
-    ];
-  }
-  if (animalId === "rabbit") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 1 + jump,
-        w: 3,
-        h: 3,
-        c: "#e9e9e9",
-      },
-      { x: offsetX + 1 + sway, y: offsetY + jump, w: 1, h: 2, c: "#e9e9e9" },
-      { x: offsetX + 3 + sway, y: offsetY + jump, w: 1, h: 2, c: "#e9e9e9" },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#b7b7b7",
-      },
-    ];
-  }
-  if (animalId === "goat") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 1 + jump,
-        w: 4,
-        h: 3,
-        c: "#d9d2be",
-      },
-      { x: offsetX + sway, y: offsetY + 2 + jump, w: 1, h: 1, c: "#d9d2be" },
-      {
-        x: offsetX + 4 + sway,
-        y: offsetY + 1 + jump,
-        w: 1,
-        h: 1,
-        c: "#9b8f72",
-      },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 1 + jump,
-        w: 1,
-        h: 1,
-        c: "#9b8f72",
-      },
-    ];
-  }
-  if (animalId === "duck") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 2 + jump,
-        w: 3,
-        h: 2,
-        c: "#f0efe8",
-      },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 1 + jump,
-        w: 2,
-        h: 1,
-        c: "#f0efe8",
-      },
-      {
-        x: offsetX + 4 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#efb45e",
-      },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 4 + jump,
-        w: 2,
-        h: 1,
-        c: "#efb45e",
-      },
-    ];
-  }
-  if (animalId === "fox") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 2 + jump,
-        w: 4,
-        h: 2,
-        c: "#d77a3b",
-      },
-      {
-        x: offsetX + 3 + sway,
-        y: offsetY + 1 + jump,
-        w: 2,
-        h: 1,
-        c: "#d77a3b",
-      },
-      { x: offsetX + sway, y: offsetY + 3 + jump, w: 1, h: 1, c: "#f2dfc9" },
-      {
-        x: offsetX + 4 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#f2dfc9",
-      },
-    ];
-  }
-  if (animalId === "alpaca") {
-    return [
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 1 + jump,
-        w: 4,
-        h: 3,
-        c: "#efe6d4",
-      },
-      { x: offsetX + 4 + sway, y: offsetY + jump, w: 1, h: 2, c: "#efe6d4" },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#b8aa8f",
-      },
-      { x: offsetX + sway, y: offsetY + 3 + jump, w: 1, h: 1, c: "#efe6d4" },
-    ];
-  }
-  if (animalId === "firefly") {
-    return [
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + 2 + jump,
-        w: 2,
-        h: 2,
-        c: "#f1d94f",
-      },
-      {
-        x: offsetX + 1 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#2a2a2a",
-      },
-      {
-        x: offsetX + 4 + sway,
-        y: offsetY + 2 + jump,
-        w: 1,
-        h: 1,
-        c: "#2a2a2a",
-      },
-      {
-        x: offsetX + 2 + sway,
-        y: offsetY + (f === 2 ? 1 : 0) + jump,
-        w: 2,
-        h: 1,
-        c: "#b9f5a8",
-      },
-    ];
-  }
-  return [];
-}
-
-function getCropStageRects(seedId, stage, palette) {
-  const out = [];
-  if (stage < 2) return out;
-
-  // Stage index 2 (UI stage 3): baby produce markers.
-  // Stage index 3 (UI stage 4): adult produce.
-  // Stage index 4 (UI stage 5): old produce tint.
-  const baby = stage === 2;
-  const old = stage >= 4;
-  const fruitColor = old ? palette.old : palette.fruit;
-  const hiColor = old ? palette.old : palette.fruitHi;
-
-  // Stage 3: baby produce appears on the taller plant.
-  // Stage 4+: mature produce with recognizable silhouettes.
-  if (seedId === "carrot") {
-    if (baby) {
-      out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 9, y: 5, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 6, y: 5, w: 4, h: 5, c: fruitColor });
-      out.push({ x: 7, y: 10, w: 2, h: 3, c: fruitColor });
-      out.push({ x: 6, y: 5, w: 1, h: 4, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "corn") {
-    if (baby) {
-      out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 9, y: 5, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 6, y: 3, w: 3, h: 9, c: fruitColor });
-      out.push({ x: 9, y: 4, w: 3, h: 8, c: fruitColor });
-      out.push({ x: 6, y: 3, w: 1, h: 9, c: hiColor });
-      out.push({ x: 9, y: 4, w: 1, h: 8, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "rose") {
-    if (baby) {
-      out.push({ x: 8, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 7, y: 6, w: 1, h: 1, c: hiColor });
-      out.push({ x: 9, y: 6, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 7, y: 3, w: 3, h: 3, c: fruitColor });
-      out.push({ x: 6, y: 4, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 10, y: 4, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 2, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "tulip") {
-    if (baby) {
-      out.push({ x: 8, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 7, y: 3, w: 3, h: 6, c: fruitColor });
-      out.push({ x: 8, y: 2, w: 1, h: 1, c: hiColor });
-      out.push({ x: 6, y: 4, w: 1, h: 2, c: hiColor });
-      out.push({ x: 10, y: 4, w: 1, h: 2, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "pumpkin") {
-    if (baby) {
-      out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 9, y: 5, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 4, y: 5, w: 8, h: 6, c: fruitColor });
-      out.push({ x: 7, y: 4, w: 2, h: 1, c: hiColor });
-      out.push({ x: 5, y: 5, w: 1, h: 6, c: hiColor });
-      out.push({ x: 10, y: 5, w: 1, h: 6, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "berry") {
-    if (baby) {
-      out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 9, y: 5, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 4, y: 6, w: 4, h: 4, c: fruitColor });
-      out.push({ x: 8, y: 5, w: 4, h: 5, c: fruitColor });
-      out.push({ x: 5, y: 6, w: 1, h: 1, c: hiColor });
-      out.push({ x: 9, y: 6, w: 1, h: 1, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "turnip") {
-    if (baby) {
-      out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 9, y: 5, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 5, y: 6, w: 6, h: 6, c: fruitColor });
-      out.push({ x: 7, y: 5, w: 2, h: 1, c: hiColor });
-      out.push({ x: 8, y: 12, w: 1, h: 1, c: fruitColor });
-    }
-    return out;
-  }
-
-  if (seedId === "lotus") {
-    if (baby) {
-      out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 9, y: 5, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 5, y: 3, w: 6, h: 7, c: fruitColor });
-      out.push({ x: 4, y: 5, w: 1, h: 3, c: fruitColor });
-      out.push({ x: 11, y: 5, w: 1, h: 3, c: fruitColor });
-      out.push({ x: 7, y: 3, w: 2, h: 1, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "lavender") {
-    if (baby) {
-      out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 9, y: 6, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 6, y: 3, w: 1, h: 5, c: fruitColor });
-      out.push({ x: 7, y: 2, w: 1, h: 6, c: fruitColor });
-      out.push({ x: 8, y: 2, w: 1, h: 6, c: fruitColor });
-      out.push({ x: 9, y: 3, w: 1, h: 5, c: fruitColor });
-      out.push({ x: 10, y: 4, w: 1, h: 4, c: fruitColor });
-      out.push({ x: 8, y: 2, w: 1, h: 2, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "sunflower") {
-    if (baby) {
-      out.push({ x: 8, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 7, y: 6, w: 1, h: 1, c: hiColor });
-      out.push({ x: 9, y: 6, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 7, y: 3, w: 4, h: 4, c: fruitColor });
-      out.push({ x: 6, y: 4, w: 1, h: 1, c: hiColor });
-      out.push({ x: 11, y: 4, w: 1, h: 1, c: hiColor });
-      out.push({ x: 8, y: 2, w: 1, h: 1, c: hiColor });
-      out.push({ x: 9, y: 2, w: 1, h: 1, c: hiColor });
-      out.push({ x: 8, y: 7, w: 1, h: 1, c: hiColor });
-      out.push({ x: 9, y: 7, w: 1, h: 1, c: hiColor });
-    }
-    return out;
-  }
-
-  if (seedId === "cacao") {
-    if (baby) {
-      out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 8, y: 6, w: 1, h: 1, c: fruitColor });
-      out.push({ x: 9, y: 5, w: 1, h: 1, c: hiColor });
-    } else {
-      out.push({ x: 5, y: 4, w: 4, h: 7, c: fruitColor });
-      out.push({ x: 9, y: 5, w: 3, h: 6, c: fruitColor });
-      out.push({ x: 6, y: 5, w: 1, h: 5, c: hiColor });
-      out.push({ x: 10, y: 6, w: 1, h: 4, c: hiColor });
-    }
-    return out;
-  }
-
-  // basic grain and fallback
-  if (baby) {
-    out.push({ x: 7, y: 5, w: 1, h: 1, c: fruitColor });
-    out.push({ x: 8, y: 6, w: 1, h: 1, c: fruitColor });
-    out.push({ x: 9, y: 5, w: 1, h: 1, c: hiColor });
-  } else {
-    out.push({ x: 5, y: 4, w: 6, h: 7, c: fruitColor });
-    out.push({ x: 7, y: 3, w: 2, h: 1, c: hiColor });
-  }
-  return out;
-}
-
-function getSeedPalette(seedId) {
-  if (seedId === "carrot") {
-    return {
-      seed: "#f3d9b4",
-      stem: "#74c75f",
-      leaf: "#91dd78",
-      leafDark: "#4b9640",
-      fruit: "#e07c2d",
-      fruitHi: "#f7a24d",
-      old: "#8e663f",
-    };
-  }
-  if (seedId === "corn") {
-    return {
-      seed: "#f1e4a8",
-      stem: "#76c166",
-      leaf: "#95d67a",
-      leafDark: "#4b9240",
-      fruit: "#e8c74d",
-      fruitHi: "#f6df82",
-      old: "#8b7b49",
-    };
-  }
-  if (seedId === "rose") {
-    return {
-      seed: "#f4d3d7",
-      stem: "#66b86b",
-      leaf: "#82d286",
-      leafDark: "#3d8d47",
-      fruit: "#c84357",
-      fruitHi: "#ec6f83",
-      old: "#7d5b4d",
-    };
-  }
-  if (seedId === "tulip") {
-    return {
-      seed: "#f0dac0",
-      stem: "#64b769",
-      leaf: "#81d187",
-      leafDark: "#3f8f49",
-      fruit: "#f09431",
-      fruitHi: "#ffc46f",
-      old: "#876546",
-    };
-  }
-  if (seedId === "lotus") {
-    return {
-      seed: "#efe0b2",
-      stem: "#66b880",
-      leaf: "#7fd49a",
-      leafDark: "#3b8b68",
-      fruit: "#d2a43f",
-      fruitHi: "#f0cd72",
-      old: "#8d6f42",
-    };
-  }
-  if (seedId === "cacao") {
-    return {
-      seed: "#dfc4a1",
-      stem: "#5caf66",
-      leaf: "#74c17a",
-      leafDark: "#3e7f47",
-      fruit: "#7d5131",
-      fruitHi: "#a06a43",
-      old: "#5d4632",
-    };
-  }
-  if (seedId === "lavender") {
-    return {
-      seed: "#e4d8ef",
-      stem: "#62ad72",
-      leaf: "#7bc589",
-      leafDark: "#417d4d",
-      fruit: "#8d67c9",
-      fruitHi: "#b090e6",
-      old: "#6c5a55",
-    };
-  }
-  if (seedId === "sunflower") {
-    return {
-      seed: "#efe0a6",
-      stem: "#66b364",
-      leaf: "#84d17c",
-      leafDark: "#417f42",
-      fruit: "#d8a529",
-      fruitHi: "#f1d16b",
-      old: "#856b42",
-    };
-  }
-  if (seedId === "turnip") {
-    return {
-      seed: "#f5d28e",
-      stem: "#6fc95f",
-      leaf: "#8de07a",
-      leafDark: "#4f9d41",
-      fruit: "#d8d3de",
-      fruitHi: "#f1eef4",
-      old: "#9f958d",
-    };
-  }
-  if (seedId === "berry") {
-    return {
-      seed: "#a8c6ff",
-      stem: "#53b96a",
-      leaf: "#7ae08e",
-      leafDark: "#3a8f4f",
-      fruit: "#7a59d9",
-      fruitHi: "#ac8cff",
-      old: "#6f5c4d",
-    };
-  }
-  if (seedId === "pumpkin") {
-    return {
-      seed: "#eddab1",
-      stem: "#65b75c",
-      leaf: "#80cf73",
-      leafDark: "#3f8440",
-      fruit: "#da7f2b",
-      fruitHi: "#f3a34d",
-      old: "#8c673e",
-    };
-  }
-  return {
-    seed: "#efe8b8",
-    stem: "#6cc35a",
-    leaf: "#8fdc6a",
-    leafDark: "#4a9b3f",
-    fruit: "#d5c96f",
-    fruitHi: "#ebe08a",
-    old: "#8a7c4b",
-  };
-}
-
-function harvestValuePreview(state, tile) {
-  if (!tile?.plant || tile.plant.stageIndex < 3) return 0;
-  const seed = seedById(tile.plant.seedId);
-  if (!seed) return 0;
-
-  const upgrades = shardUpgradeEffects(state);
-  const stage = tile.plant.stageIndex;
-  const isMature = stage === 3;
-  let gain = stage >= 4 ? seed.oldValue : seed.matureValue;
-
-  const seedMatureBonus = Math.max(0, Number(seed?.traits?.matureBonus || 0));
-  const matureBonus =
-    seedMatureBonus +
-    tileAnimalTrait(tile, "matureBonus") +
-    upgrades.matureBonus;
-  if (isMature && matureBonus > 0) gain *= 1 + matureBonus;
-
-  // Use expected jackpot value so the label reflects average harvest return.
-  const seedJackpot = Math.max(0, Number(seed?.traits?.jackpot || 0));
-  const jackpotChance = clamp(
-    seedJackpot + tileAnimalTrait(tile, "jackpot") + upgrades.jackpot,
-    0,
-    0.95,
-  );
-  if (jackpotChance > 0) gain *= 1 + jackpotChance;
-
-  const marketBonus = marketBonusForHarvest(state, tile, seed.id);
-  if (marketBonus > 0) gain *= 1 + marketBonus;
-
-  const eraYieldBonus = seedEraYieldBonus(state, seed.id);
-  if (eraYieldBonus > 0) gain *= 1 + eraYieldBonus;
-
-  gain *= 1 + Math.max(0, Number(state?.prestigeLevel || 0)) * 0.08;
-  return Math.max(1, Math.floor(gain));
-}
-
-function seedSellValuePreview(state, seedId, stageIndex) {
-  return harvestValuePreview(state, {
-    animals: [],
-    plant: {
-      seedId,
-      stageIndex: clamp(Number(stageIndex || 3), 3, 4),
-    },
-  });
-}
-
-function buildTileTitle(
-  tile,
-  seed,
-  stage,
-  remaining,
-  canHarvest,
-  state = null,
-) {
-  const names = tileAnimalIds(tile)
-    .map((id) => animalById(id)?.name)
-    .filter(Boolean);
-  const animalState = names.length > 0 ? `Animals: ${names.join(", ")}` : null;
-  const quick = tileAnimalTrait(tile, "quick");
-  const matureBonus = tileAnimalTrait(tile, "matureBonus");
-  const jackpot = tileAnimalTrait(tile, "jackpot");
-  const drought = tileAnimalTrait(tile, "droughtGuard");
-  const thrift = tileAnimalTrait(tile, "thrift");
-  const regrow = tileAnimalTrait(tile, "regrow");
-  const animalEffects = [];
-  if (quick > 0) animalEffects.push(`Quick +${Math.round(quick * 100)}%`);
-  if (matureBonus > 0)
-    animalEffects.push(`Mature +${Math.round(matureBonus * 100)}%`);
-  if (jackpot > 0) animalEffects.push(`Jackpot +${Math.round(jackpot * 100)}%`);
-  if (drought > 0) animalEffects.push(`Drought +${Math.round(drought * 100)}%`);
-  if (thrift > 0) animalEffects.push(`Thrift +${Math.round(thrift * 100)}%`);
-  if (regrow > 0) animalEffects.push(`Regrow +${Math.round(regrow * 100)}%`);
-  const animalEffectsState =
-    animalEffects.length > 0
-      ? `Animal Effects: ${animalEffects.join(" | ")}`
-      : null;
-  const autoState = tile.autoEverything
-    ? "Auto: everything"
-    : tile.autoPlow || tile.autoWater || tile.autoPlant || tile.autoHarvest
-      ? `Auto: ${tile.autoPlow ? "plow " : ""}${tile.autoWater ? "water " : ""}${tile.autoPlant ? "plant " : ""}${tile.autoHarvest ? "harvest" : ""}`.trim()
-      : null;
-  const seasonalBonus =
-    seed && state ? marketBonusForHarvest(state, tile, seed.id) : 0;
-  const marketState =
-    seasonalBonus > 0 && state
-      ? `${currentMarketSeason(Date.now()).label}: +${Math.round(seasonalBonus * 100)}%`
-      : null;
-  if (tile.soil !== "plowed") {
-    const parts = ["Unplowed soil. Use Plow."];
-    if (animalState) parts.push(animalState);
-    if (animalEffectsState) parts.push(animalEffectsState);
-    if (autoState) parts.push(autoState);
-    if (marketState) parts.push(marketState);
-    return parts.join(" | ");
-  }
-  if (!tile.plant) {
-    const soilState = tile.watered ? "Plowed and watered." : "Plowed and dry.";
-    const parts = [soilState];
-    if (animalState) parts.push(animalState);
-    if (animalEffectsState) parts.push(animalEffectsState);
-    if (autoState) parts.push(autoState);
-    if (marketState) parts.push(marketState);
-    return parts.join(" | ");
-  }
-
-  const waterState = tile.plant.stageWatered
-    ? "Watered for this stage"
-    : "Needs water this stage";
-  const lockedWatering =
-    tile.plant.stageIndex >= 3 ? "Watering disabled at stage 4+" : waterState;
-  const harvestState = canHarvest ? "Harvestable now" : "Not harvestable yet";
-  const nextStageState =
-    tile.plant.stageIndex >= STAGES.length - 1
-      ? "Final stage"
-      : `Next stage in: ${formatDuration(remaining)}`;
-  const parts = [
-    seed.name,
-    stage.label,
-    lockedWatering,
-    harvestState,
-    nextStageState,
-  ];
-  if (animalState) parts.push(animalState);
-  if (animalEffectsState) parts.push(animalEffectsState);
-  if (autoState) parts.push(autoState);
-  if (marketState) parts.push(marketState);
-  return parts.join(" | ");
 }
