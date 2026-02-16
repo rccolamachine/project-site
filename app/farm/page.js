@@ -555,12 +555,12 @@ export default function FarmPage() {
           Number((prev.prestigeShards || 0) + gain),
         ),
         selectedTool: prev.selectedTool || "plow",
-        selectedSeed: prev.selectedSeed || "basic",
+        selectedSeed: "basic",
         brushUnlocks: {
-          plow: { ...(prev.brushUnlocks?.plow || {}) },
-          water: { ...(prev.brushUnlocks?.water || {}) },
-          plant: { ...(prev.brushUnlocks?.plant || {}) },
-          harvest: { ...(prev.brushUnlocks?.harvest || {}) },
+          plow: { "1x1": true },
+          water: { "1x1": true },
+          plant: { "1x1": true },
+          harvest: { "1x1": true },
         },
         selectedBrushes: {
           plow: "1x1",
@@ -569,15 +569,20 @@ export default function FarmPage() {
           harvest: "1x1",
         },
         discovered: {
-          seeds: { ...(prev.discovered?.seeds || {}) },
+          seeds: {},
           tools: { ...(prev.discovered?.tools || {}) },
           animals: { ...(prev.discovered?.animals || {}) },
-          automation: { ...(prev.discovered?.automation || {}) },
+          automation: {
+            plow: false,
+            water: false,
+            plant: false,
+            harvest: false,
+          },
           brushes: {
-            plow: { ...(prev.discovered?.brushes?.plow || {}) },
-            water: { ...(prev.discovered?.brushes?.water || {}) },
-            plant: { ...(prev.discovered?.brushes?.plant || {}) },
-            harvest: { ...(prev.discovered?.brushes?.harvest || {}) },
+            plow: { "1x1": true },
+            water: { "1x1": true },
+            plant: { "1x1": true },
+            harvest: { "1x1": true },
           },
         },
         farmSizeUnlocks: { ...(prev.farmSizeUnlocks || {}) },
@@ -1131,7 +1136,7 @@ export default function FarmPage() {
     game.selectedTool === "marketing"
       ? ""
       : game.selectedTool === "expandFarm"
-        ? "Use platinum to unlock larger farm sizes at higher marketing levels."
+        ? "Use platinum to buy a bigger farm at higher marketing levels."
         : game.selectedTool === "research"
           ? "Use platinum for starter labs now and advanced labs at M5."
           : "";
@@ -1369,7 +1374,7 @@ export default function FarmPage() {
               borderColor: "rgba(255, 203, 129, 0.28)",
             }}
           >
-            <h2 style={{ margin: 0 }}>Tools & Unlocks</h2>
+            <h2 style={{ margin: 0 }}>Tools & Upgrades</h2>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {TOOLS.filter((tool) => isToolVisible(game, tool.id)).map(
                 (tool) => (
@@ -1781,6 +1786,18 @@ export default function FarmPage() {
                     const selected = game.selectedAnimal === animal.id;
                     const canUse = tierUnlocked;
                     const expanded = expandedAnimalId === animal.id;
+                    const ownedCount = Math.max(
+                      0,
+                      Number(game.animalOwned?.[animal.id] || 0),
+                    );
+                    const placedCount = countPlacedAnimals(game.tiles, animal.id);
+                    const ownershipCap = animalMaxOwnedForPrestige(
+                      game.prestigeLevel,
+                      animal.id,
+                    );
+                    const capLabel = Number.isFinite(ownershipCap)
+                      ? String(ownershipCap)
+                      : "Unlimited";
                     const traitsText = Object.entries(animal.traits)
                       .map(
                         ([key, value]) =>
@@ -1868,8 +1885,19 @@ export default function FarmPage() {
                           Traits: {traitsText}
                         </div>
                         {expanded ? (
-                          <div style={{ fontSize: 9, opacity: 0.78 }}>
-                            {animal.desc}
+                          <div style={{ display: "grid", gap: 2 }}>
+                            <div style={{ fontSize: 9, opacity: 0.78 }}>
+                              {animal.desc}
+                            </div>
+                            <div style={{ fontSize: 9, opacity: 0.7 }}>
+                              Unlocks at marketing M{reqPrestige}. At M
+                              {reqPrestige}, max owned is 1. Unlimited starts at
+                              M{reqPrestige + 1}.
+                            </div>
+                            <div style={{ fontSize: 9, opacity: 0.7 }}>
+                              Current cap at M{game.prestigeLevel}: {capLabel}.
+                              Owned: {ownedCount}. Placed: {placedCount}.
+                            </div>
                           </div>
                         ) : null}
                         <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
@@ -1883,11 +1911,6 @@ export default function FarmPage() {
                             {selected ? "Selected" : "Use"}
                           </button>
                         </div>
-                        {!tierUnlocked && expanded ? (
-                          <div style={{ fontSize: 9, opacity: 0.68 }}>
-                            Unlocks at marketing {reqPrestige}.
-                          </div>
-                        ) : null}
                       </div>
                     );
                   })}
@@ -1917,9 +1940,9 @@ export default function FarmPage() {
                   }}
                 >
                   <div style={{ fontSize: 10, opacity: 0.88 }}>
-                    Marketing converts money and plants into platinum. All crops
-                    and money are reset. Animals and farm expansions are
-                    retained.
+                    Marketing converts money and plants into platinum. All
+                    crops, money, and tool upgrades are reset. Animals and farm
+                    expansions are retained.
                   </div>
                   <div
                     style={{
