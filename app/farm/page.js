@@ -562,7 +562,12 @@ export default function FarmPage() {
           plant: { ...(prev.brushUnlocks?.plant || {}) },
           harvest: { ...(prev.brushUnlocks?.harvest || {}) },
         },
-        selectedBrushes: { ...(prev.selectedBrushes || {}) },
+        selectedBrushes: {
+          plow: "1x1",
+          water: "1x1",
+          plant: "1x1",
+          harvest: "1x1",
+        },
         discovered: {
           seeds: { ...(prev.discovered?.seeds || {}) },
           tools: { ...(prev.discovered?.tools || {}) },
