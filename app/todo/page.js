@@ -491,7 +491,7 @@ export default function TodoPage() {
             </button>
 
             <div style={{ fontSize: 12, opacity: 0.85 }}>
-              {rangeText} * page <strong>{currentPage}</strong> / {totalPages}
+              {rangeText} | page <strong>{currentPage}</strong> / {totalPages}
             </div>
 
             <button

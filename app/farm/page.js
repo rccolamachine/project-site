@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   ACTION_TOOLS,
@@ -82,6 +88,29 @@ import {
 const SAVE_EXPORT_FORMAT = "farm-save-encrypted-v1";
 const SAVE_EXPORT_ITERATIONS = 120000;
 const SAVE_EXPORT_SECRET = "farm-idle-local-save-secret-v1";
+const LOG_BATCH_MS = 15000;
+const LOG_MAX_ENTRIES = 50;
+const LOG_FILTERS = [
+  { id: "all", label: "All" },
+  { id: "earning", label: "Earnings" },
+  { id: "bonus", label: "Bonuses" },
+  { id: "spending", label: "Spending" },
+  { id: "upgrade", label: "Upgrades" },
+];
+
+const BONUS_LOG_LABELS = {
+  jackpot: "luck jackpot",
+  regrow: "multi-spawn",
+  thrift_refund: "thrift refund",
+  seasonal: "seasonal boost",
+};
+
+const AUTO_LABEL_BY_KEY = {
+  autoPlow: "Plow",
+  autoWater: "Water",
+  autoPlant: "Plant",
+  autoHarvest: "Harvest",
+};
 
 function bytesToBase64(bytes) {
   let binary = "";
@@ -167,6 +196,38 @@ function countLabel(count, singular, plural = `${singular}s`) {
   return Number(count) === 1 ? singular : plural;
 }
 
+function formatLogClock(timestamp) {
+  try {
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  } catch {
+    return "--:--:--";
+  }
+}
+
+function formatScientificNumber(value, significantDigits = 2) {
+  const num = Number(value);
+  if (Number.isNaN(num)) return "0";
+  if (!Number.isFinite(num)) return num < 0 ? "-9.9E999" : "9.9E999";
+  if (num === 0) return "0";
+  const sign = num < 0 ? "-" : "";
+  const abs = Math.abs(num);
+  const exp = Math.floor(Math.log10(abs));
+  const mantissa = abs / 10 ** exp;
+  const decimals = Math.max(0, Math.floor(significantDigits) - 1);
+  const compact = mantissa.toFixed(decimals).replace(/\.?0+$/, "");
+  return `${sign}${compact}E${exp}`;
+}
+
+function formatMoneyAdaptive(value, maxChars = 12, significantDigits = 2) {
+  const regular = formatMoney(value);
+  if (regular.length <= maxChars) return regular;
+  return `$${formatScientificNumber(value, significantDigits)}`;
+}
+
 function brushTierUnlocked(brushUnlocks, toolId, brushId) {
   const brush = BRUSHES.find((b) => b.id === brushId);
   if (!brush) return false;
@@ -187,6 +248,12 @@ function brushTierUnlocked(brushUnlocks, toolId, brushId) {
 
 export default function FarmPage() {
   const importFileRef = useRef(null);
+  const batchedLogRef = useRef({
+    earnings: 0,
+    harvests: 0,
+    bonuses: {},
+    spending: {},
+  });
   const [ready, setReady] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [animTick, setAnimTick] = useState(0);
@@ -199,6 +266,137 @@ export default function FarmPage() {
   const [showTileValueTags, setShowTileValueTags] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
+  const [logs, setLogs] = useState([]);
+  const [logFilter, setLogFilter] = useState("all");
+
+  const appendLog = useCallback((entry) => {
+    const timestamp = Number(entry?.at || Date.now());
+    setLogs((prev) => {
+      const nextId =
+        prev.reduce(
+          (maxId, item) => Math.max(maxId, Number(item?.id || 0)),
+          0,
+        ) + 1;
+      return [
+        {
+          id: nextId,
+          at: timestamp,
+          tone: entry?.tone || "neutral",
+          category: entry?.category || "system",
+          text: entry?.text || "",
+        },
+        ...prev,
+      ].slice(0, LOG_MAX_ENTRIES);
+    });
+  }, []);
+
+  const queueRuntimeEvent = useCallback((event) => {
+    if (!event || typeof event !== "object") return;
+    if (event.kind === "earning") {
+      const amount = Math.max(0, Math.floor(Number(event.amount || 0)));
+      const count = Math.max(1, Math.floor(Number(event.count || 1)));
+      if (amount <= 0) return;
+      batchedLogRef.current.earnings += amount;
+      batchedLogRef.current.harvests += count;
+      return;
+    }
+    if (event.kind === "bonus") {
+      const source = String(event.source || "bonus");
+      const amount = Math.max(0, Math.floor(Number(event.amount || 0)));
+      const count = Math.max(1, Math.floor(Number(event.count || 1)));
+      const bucket = batchedLogRef.current.bonuses[source] || {
+        amount: 0,
+        count: 0,
+      };
+      bucket.amount += amount;
+      bucket.count += count;
+      batchedLogRef.current.bonuses[source] = bucket;
+      return;
+    }
+    if (event.kind === "spend") {
+      const source = String(event.source || "spend");
+      const amount = Math.max(0, Math.floor(Number(event.amount || 0)));
+      const count = Math.max(1, Math.floor(Number(event.count || 1)));
+      if (amount <= 0) return;
+      const bucket = batchedLogRef.current.spending[source] || {
+        amount: 0,
+        count: 0,
+      };
+      bucket.amount += amount;
+      bucket.count += count;
+      batchedLogRef.current.spending[source] = bucket;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    const id = setInterval(() => {
+      const snapshot = batchedLogRef.current;
+      const earned = Math.max(0, Math.floor(snapshot.earnings || 0));
+      const harvests = Math.max(0, Math.floor(snapshot.harvests || 0));
+      const bonusEntries = Object.entries(snapshot.bonuses || {}).filter(
+        ([, value]) => (value?.count || 0) > 0 || (value?.amount || 0) > 0,
+      );
+      const spendEntries = Object.entries(snapshot.spending || {}).filter(
+        ([, value]) => (value?.count || 0) > 0 || (value?.amount || 0) > 0,
+      );
+      if (earned <= 0 && bonusEntries.length <= 0 && spendEntries.length <= 0) {
+        return;
+      }
+
+      if (earned > 0) {
+        appendLog({
+          at: Date.now(),
+          tone: "earning",
+          category: "earning",
+          text: `+${formatMoney(earned)} earnings from ${formatLargeNumber(harvests)} ${countLabel(harvests, "harvest")}.`,
+        });
+      }
+      if (bonusEntries.length > 0) {
+        const bonusText = bonusEntries
+          .map(([source, value]) => {
+            const label = BONUS_LOG_LABELS[source] || source;
+            const countText = `x${formatLargeNumber(Math.max(1, Math.floor(value.count || 1)))}`;
+            const amount = Math.max(0, Math.floor(value.amount || 0));
+            if (amount > 0)
+              return `${label} ${countText} (+${formatMoney(amount)})`;
+            return `${label} ${countText}`;
+          })
+          .join(", ");
+        appendLog({
+          at: Date.now(),
+          tone: "bonus",
+          category: "bonus",
+          text: `Bonuses: ${bonusText}.`,
+        });
+      }
+      if (spendEntries.length > 0) {
+        const totalSpent = spendEntries.reduce(
+          (sum, [, value]) => sum + Math.max(0, Number(value.amount || 0)),
+          0,
+        );
+        const spendText = spendEntries
+          .map(([source, value]) => {
+            const sourceLabel = source === "seed" ? "seeds" : source;
+            return `${sourceLabel} x${formatLargeNumber(Math.max(1, Math.floor(value.count || 1)))}`;
+          })
+          .join(", ");
+        appendLog({
+          at: Date.now(),
+          tone: "spend",
+          category: "spending",
+          text: `Spent ${formatMoney(totalSpent)} on ${spendText}.`,
+        });
+      }
+      batchedLogRef.current = {
+        earnings: 0,
+        harvests: 0,
+        bonuses: {},
+        spending: {},
+      };
+    }, LOG_BATCH_MS);
+    return () => clearInterval(id);
+  }, [appendLog, ready]);
 
   const hydrateSaveState = (parsedState) => {
     const normalized = normalizeState(parsedState);
@@ -241,6 +439,7 @@ export default function FarmPage() {
       setNow(currentNow);
       setGame((prev) => {
         const next = cloneState(prev);
+        next.__runtimeEventSink = queueRuntimeEvent;
         const progressed = progressState(next, currentNow);
         const automated = runTileAutomation(next, currentNow);
         const discovered = updateDiscoveries(next);
@@ -254,7 +453,7 @@ export default function FarmPage() {
       });
     }, GAME_TICK_MS);
     return () => clearInterval(id);
-  }, [ready]);
+  }, [queueRuntimeEvent, ready]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -267,6 +466,7 @@ export default function FarmPage() {
     setGame((prev) => {
       const next = cloneState(prev);
       const timestamp = Date.now();
+      next.__runtimeEventSink = queueRuntimeEvent;
       progressState(next, timestamp);
       runTileAutomation(next, timestamp);
       updater(next, timestamp);
@@ -308,20 +508,25 @@ export default function FarmPage() {
   };
 
   const unlockFarmExpansion = (size) => {
+    const expansion = farmExpansionBySize(size);
+    if (!expansion || size <= 3) return;
+    if (game.farmSizeUnlocks?.[size]) return;
+    if (game.prestigeLevel < expansion.reqPrestige) return;
+    if (game.prestigeShards < expansion.unlockShards) return;
+    const idx = FARM_EXPANSIONS.findIndex((exp) => exp.size === size);
+    if (idx > 0) {
+      const prevSize = FARM_EXPANSIONS[idx - 1].size;
+      if (!game.farmSizeUnlocks?.[prevSize]) return;
+    }
     mutate((state) => {
-      const expansion = farmExpansionBySize(size);
-      if (!expansion || size <= 3) return;
-      if (state.farmSizeUnlocks?.[size]) return;
-      if (state.prestigeLevel < expansion.reqPrestige) return;
-      if (state.prestigeShards < expansion.unlockShards) return;
-      const idx = FARM_EXPANSIONS.findIndex((exp) => exp.size === size);
-      if (idx > 0) {
-        const prevSize = FARM_EXPANSIONS[idx - 1].size;
-        if (!state.farmSizeUnlocks?.[prevSize]) return;
-      }
       state.prestigeShards -= expansion.unlockShards;
       state.farmSizeUnlocks[size] = true;
       state.activeFarmSize = Math.max(Number(state.activeFarmSize || 3), size);
+    });
+    appendLog({
+      tone: "spend",
+      category: "upgrade",
+      text: `Unlocked farm expansion ${size}x${size} for ${formatLargeNumber(expansion.unlockShards)} platinum.`,
     });
   };
 
@@ -379,6 +584,7 @@ export default function FarmPage() {
         animalOwned: { ...(prev.animalOwned || {}) },
         selectedAnimal: prev.selectedAnimal || ANIMALS[0].id,
       });
+      next.__runtimeEventSink = queueRuntimeEvent;
       // Marketing reset clears farm progress, but keeps animal placements on tiles.
       next.tiles = next.tiles.map((tile, idx) => ({
         ...tile,
@@ -394,6 +600,11 @@ export default function FarmPage() {
       }
       applyPrestigeMilestones(next);
       return next;
+    });
+    appendLog({
+      tone: "upgrade",
+      category: "upgrade",
+      text: `Marketing level up to M${nextLevel} (+${formatLargeNumber(gainPreview)} platinum).`,
     });
   };
 
@@ -416,6 +627,11 @@ export default function FarmPage() {
       link.remove();
       URL.revokeObjectURL(url);
       setSaveStatus(`Exported encrypted save: ${filename}`);
+      appendLog({
+        tone: "neutral",
+        category: "system",
+        text: `Exported encrypted save (${filename}).`,
+      });
     } catch {
       setSaveStatus("Export failed. Please try again.");
     } finally {
@@ -445,7 +661,18 @@ export default function FarmPage() {
       const loaded = hydrateSaveState(parsed);
       setPendingAutoMode(null);
       setGame(loaded);
+      batchedLogRef.current = {
+        earnings: 0,
+        harvests: 0,
+        bonuses: {},
+        spending: {},
+      };
       setSaveStatus(`Imported save: ${file.name}`);
+      appendLog({
+        tone: "neutral",
+        category: "system",
+        text: `Imported save file ${file.name}.`,
+      });
     } catch {
       setSaveStatus("Import failed. Use a valid encrypted save JSON.");
     } finally {
@@ -455,36 +682,46 @@ export default function FarmPage() {
   };
 
   const buyShardUpgrade = (upgradeId) => {
+    const upgrade = shardUpgradeById(upgradeId);
+    if (!upgrade) return;
+    if (!canBuyShardUpgrade(game, upgradeId)) return;
+    const level = shardUpgradeLevel(game, upgradeId);
+    if (level >= upgrade.cap) return;
+    const cost = shardUpgradeCost(upgradeId, level);
+    if (game.prestigeShards < cost) return;
     mutate((state) => {
-      const upgrade = shardUpgradeById(upgradeId);
-      if (!upgrade) return;
-      if (!canBuyShardUpgrade(state, upgradeId)) return;
-      const level = shardUpgradeLevel(state, upgradeId);
-      if (level >= upgrade.cap) return;
-      const cost = shardUpgradeCost(upgradeId, level);
-      if (state.prestigeShards < cost) return;
       state.prestigeShards -= cost;
       state.shardUpgrades[upgradeId] = level + 1;
+    });
+    appendLog({
+      tone: "upgrade",
+      category: "upgrade",
+      text: `Bought ${upgrade.label} Lv ${level + 1}/${upgrade.cap} for ${formatLargeNumber(cost)} platinum.`,
     });
   };
 
   const buyBrushUpgrade = (toolId, brushId) => {
     const brush = getBrushById(brushId);
     if (brush.cost <= 0) return;
+    if (
+      brush.width > game.activeFarmSize ||
+      brush.height > game.activeFarmSize
+    ) {
+      return;
+    }
+    const unlocked = Boolean(game.brushUnlocks?.[toolId]?.[brushId]);
+    const cost = brushCostForState(game, brushId);
+    if (unlocked || game.money < cost) return;
+    if (!brushTierUnlocked(game.brushUnlocks, toolId, brushId)) return;
     mutate((state) => {
-      if (
-        brush.width > state.activeFarmSize ||
-        brush.height > state.activeFarmSize
-      ) {
-        return;
-      }
-      const unlocked = Boolean(state.brushUnlocks?.[toolId]?.[brushId]);
-      const cost = brushCostForState(state, brushId);
-      if (unlocked || state.money < cost) return;
-      if (!brushTierUnlocked(state.brushUnlocks, toolId, brushId)) return;
       state.money -= cost;
       state.brushUnlocks[toolId][brushId] = true;
       state.discovered.brushes[toolId][brushId] = true;
+    });
+    appendLog({
+      tone: "spend",
+      category: "spending",
+      text: `Bought ${toolId} brush ${brush.id} for ${formatMoney(cost)}.`,
     });
   };
 
@@ -504,6 +741,26 @@ export default function FarmPage() {
 
   const buyAllAutomationForKey = (autoKey) => {
     if (!autoKey) return;
+    const unitCostPreview = automationCostForState(game, autoKey);
+    if (!Number.isFinite(unitCostPreview) || unitCostPreview <= 0) return;
+    const activeSizePreview = clamp(
+      Number(game.activeFarmSize || 3),
+      3,
+      GRID_SIZE,
+    );
+    let remainingCount = 0;
+    for (let r = 0; r < activeSizePreview; r += 1) {
+      for (let c = 0; c < activeSizePreview; c += 1) {
+        const idx = r * GRID_SIZE + c;
+        const tile = game.tiles[idx];
+        if (!tile) continue;
+        const hasAutomation = Boolean(tile[autoKey] || tile.autoEverything);
+        if (!hasAutomation) remainingCount += 1;
+      }
+    }
+    if (remainingCount <= 0) return;
+    const totalCostPreview = remainingCount * unitCostPreview;
+    if (game.money < totalCostPreview) return;
     setPendingAutoMode(null);
     mutate((state) => {
       const unitCost = automationCostForState(state, autoKey);
@@ -529,10 +786,32 @@ export default function FarmPage() {
         tile[autoKey] = true;
       }
     });
+    const autoLabel = AUTO_LABEL_BY_KEY[autoKey] || autoKey;
+    appendLog({
+      tone: "spend",
+      category: "spending",
+      text: `Bought Auto-${autoLabel} on ${formatLargeNumber(remainingCount)} ${countLabel(remainingCount, "tile")} for ${formatMoney(totalCostPreview)}.`,
+    });
   };
 
   const cancelAllAutomationForKey = (autoKey, autoLabel) => {
     if (!autoKey) return;
+    const activeSizePreview = clamp(
+      Number(game.activeFarmSize || 3),
+      3,
+      GRID_SIZE,
+    );
+    let coveredCount = 0;
+    for (let r = 0; r < activeSizePreview; r += 1) {
+      for (let c = 0; c < activeSizePreview; c += 1) {
+        const idx = r * GRID_SIZE + c;
+        const tile = game.tiles[idx];
+        if (!tile) continue;
+        const hadAny = Boolean(tile[autoKey] || tile.autoEverything);
+        if (hadAny) coveredCount += 1;
+      }
+    }
+    if (coveredCount <= 0) return;
     const confirmed =
       typeof window === "undefined"
         ? true
@@ -555,9 +834,15 @@ export default function FarmPage() {
         }
       }
     });
+    appendLog({
+      tone: "neutral",
+      category: "system",
+      text: `Canceled Auto-${autoLabel} on ${formatLargeNumber(coveredCount)} ${countLabel(coveredCount, "tile")}.`,
+    });
   };
 
   const tileAction = (tileIndex, opts = {}) => {
+    const actionLogs = [];
     mutate((state, timestamp) => {
       const row = Math.floor(tileIndex / GRID_SIZE);
       const col = tileIndex % GRID_SIZE;
@@ -606,6 +891,11 @@ export default function FarmPage() {
           if (state.prestigeShards < animal.unlockShards) return;
           state.prestigeShards -= animal.unlockShards;
           state.animalOwned[animalId] = owned + 1;
+          actionLogs.push({
+            tone: "upgrade",
+            category: "upgrade",
+            text: `Bought ${animal.name} for ${formatLargeNumber(animal.unlockShards)} platinum.`,
+          });
         }
         tile.animals = [...tileAnimals, animalId].slice(
           0,
@@ -648,6 +938,12 @@ export default function FarmPage() {
             return;
           state.money -= cost;
           tile[key] = true;
+          const autoLabel = AUTO_LABEL_BY_KEY[key] || key;
+          actionLogs.push({
+            tone: "spend",
+            category: "spending",
+            text: `Bought Auto-${autoLabel} on 1 tile for ${formatMoney(cost)}.`,
+          });
           return;
         }
         if (type === "cancel") {
@@ -655,6 +951,12 @@ export default function FarmPage() {
           if (!hadAny) return;
           tile[key] = false;
           if (tile.autoEverything) tile.autoEverything = false;
+          const autoLabel = AUTO_LABEL_BY_KEY[key] || key;
+          actionLogs.push({
+            tone: "neutral",
+            category: "system",
+            text: `Canceled Auto-${autoLabel} on 1 tile.`,
+          });
           return;
         }
       }
@@ -684,6 +986,9 @@ export default function FarmPage() {
         if (state.selectedTool === "harvest") harvestTile(state, cell);
       }
     });
+    if (actionLogs.length > 0) {
+      for (const entry of actionLogs) appendLog(entry);
+    }
   };
 
   const previewIndices = useMemo(() => {
@@ -735,6 +1040,15 @@ export default function FarmPage() {
   const totalMilestoneRewardShards = PRESTIGE_MILESTONES.filter(
     (m) => game.milestonesClaimed?.[m.id],
   ).reduce((sum, m) => sum + m.rewardShards, 0);
+  const earnedMilestones = useMemo(
+    () => PRESTIGE_MILESTONES.filter((m) => game.milestonesClaimed?.[m.id]),
+    [game.milestonesClaimed],
+  );
+  const nextMilestone = useMemo(
+    () =>
+      PRESTIGE_MILESTONES.find((m) => !game.milestonesClaimed?.[m.id]) || null,
+    [game.milestonesClaimed],
+  );
   const nextLockedFarmExpansion =
     FARM_EXPANSIONS.find((exp) => !game.farmSizeUnlocks?.[exp.size]) || null;
   const maxVisibleFarmReq = nextLockedFarmExpansion
@@ -825,9 +1139,12 @@ export default function FarmPage() {
     effectivePlantBrush.width * effectivePlantBrush.height,
   );
   const bestValueSeedId = useMemo(() => {
-    const discoveredSeeds = SEEDS.filter((seed) => game.discovered?.seeds?.[seed.id]);
+    const discoveredSeeds = SEEDS.filter(
+      (seed) => game.discovered?.seeds?.[seed.id],
+    );
     if (!discoveredSeeds.length) return null;
-    const prestigeMult = 1 + Math.max(0, Number(game.prestigeLevel || 0)) * 0.08;
+    const prestigeMult =
+      1 + Math.max(0, Number(game.prestigeLevel || 0)) * 0.08;
     let bestAnyId = null;
     let bestAnyScore = -Infinity;
     let bestAffordableId = null;
@@ -866,7 +1183,10 @@ export default function FarmPage() {
         bestAnyScore = score;
         bestAnyId = seed.id;
       }
-      if (cost <= Math.max(0, Number(game.money || 0)) && score > bestAffordableScore) {
+      if (
+        cost <= Math.max(0, Number(game.money || 0)) &&
+        score > bestAffordableScore
+      ) {
         bestAffordableScore = score;
         bestAffordableId = seed.id;
       }
@@ -941,25 +1261,28 @@ export default function FarmPage() {
   const showFarmUnlocks = game.selectedTool === "expandFarm";
   const showResearchUnlocks = game.selectedTool === "research";
   const showGenericUnlockCard =
-    Boolean(toolUnlockText) ||
-    showFarmUnlocks ||
-    showResearchUnlocks;
+    Boolean(toolUnlockText) || showFarmUnlocks || showResearchUnlocks;
   const activeToolHintByTool = {
     plow: "Click farm tiles to plow using your selected brush size.",
     plant:
       "Click farm tiles to plant your selected seed with your selected brush size.",
     water: "Click farm tiles to water using your selected brush size.",
-    harvest: "Click farm tiles to harvest ready crops using your selected brush size.",
-    marketing: "Use Market for Platinum to reset crops/money and gain platinum.",
+    harvest:
+      "Click farm tiles to harvest ready crops using your selected brush size.",
+    marketing:
+      "Use Market for Platinum to reset crops/money and gain platinum.",
     save: "Export or import your encrypted save file.",
     expandFarm: "Use this panel to unlock and switch farm expansion sizes.",
     animals: "Select an animal, then click a tile to place it.",
-    research:
-      "Spend platinum on starter labs at M2 and advanced labs at M5.",
+    research: "Spend platinum on starter labs at M2 and advanced labs at M5.",
   };
   const activeToolHint =
     activeToolHintByTool[game.selectedTool] ||
     "Use the active panel to continue progression.";
+  const visibleLogs = useMemo(() => {
+    if (logFilter === "all") return logs;
+    return logs.filter((entry) => entry.category === logFilter);
+  }, [logFilter, logs]);
 
   if (!ready) {
     return (
@@ -974,8 +1297,8 @@ export default function FarmPage() {
     <section className="page">
       <h1>Farm Idle</h1>
       <p className="lede">
-        Idle farming sim with lots of unlocks, automation, and levels. Click
-        the field to get started!
+        Idle farming sim with lots of unlocks, automation, and levels. Click the
+        field to get started!
       </p>
 
       <div
@@ -1000,31 +1323,6 @@ export default function FarmPage() {
               borderColor: "rgba(255, 203, 129, 0.28)",
             }}
           >
-            <div
-              style={{
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 12,
-                padding: 10,
-                background: "rgba(0,0,0,0.24)",
-                display: "grid",
-                gap: 3,
-              }}
-            >
-              <div style={{ fontSize: 10, opacity: 0.72 }}>Market Season</div>
-              <div style={{ fontSize: 12 }}>
-                <strong>{currentSeason.label}</strong>
-              </div>
-              <div style={{ fontSize: 10, opacity: 0.78 }}>
-                +{Math.round(currentSeason.baseBonus * 100)}% to{" "}
-                {currentSeason.categories.join(", ")} crops
-                {currentSeason.synergyAnimal
-                  ? ` (+${Math.round(currentSeason.synergyBonus * 100)}% with ${animalById(currentSeason.synergyAnimal)?.name || currentSeason.synergyAnimal})`
-                  : ""}
-              </div>
-              <div style={{ fontSize: 10, opacity: 0.68 }}>
-                Rotates in {formatDuration(seasonRemainingMs)}
-              </div>
-            </div>
             <h2 style={{ margin: 0 }}>Tools & Unlocks</h2>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {TOOLS.filter((tool) => isToolVisible(game, tool.id)).map(
@@ -1073,9 +1371,7 @@ export default function FarmPage() {
                   gap: 8,
                 }}
               >
-                <div style={{ fontSize: 10, opacity: 0.84 }}>
-                  Save Transfer
-                </div>
+                <div style={{ fontSize: 10, opacity: 0.84 }}>Save Transfer</div>
                 <div style={{ fontSize: 10, opacity: 0.72 }}>
                   Export creates an encrypted version of your local save JSON.
                   Import restores from that encrypted save file.
@@ -1140,15 +1436,27 @@ export default function FarmPage() {
                       selectedPlantTileCount,
                       "tile",
                     );
-                    const costLabel = partialFill
-                      ? `${formatMoney(projectedCost)} (${projectedTiles}/${selectedPlantTileCount} ${tileLabel})`
-                      : `${formatMoney(quote.fullCost)} (${selectedPlantTileCount} ${tileLabel})`;
                     const currentTileCost = currentSeedCost(game, seed.id, now);
-                    const matureSellValue = seedSellValuePreview(game, seed.id, 3);
+                    const cannotAffordMinimum =
+                      partialFill && projectedTiles <= 0 && currentTileCost > 0;
+                    const costValueLabel = cannotAffordMinimum
+                      ? formatMoney(currentTileCost)
+                      : partialFill
+                        ? formatMoney(projectedCost)
+                        : formatMoney(quote.fullCost);
+                    const costCountLabel = `(${partialFill ? projectedTiles : selectedPlantTileCount}/${selectedPlantTileCount} ${tileLabel})`;
+                    const partialFillHint = cannotAffordMinimum
+                      ? "Cannot afford 1 tile yet"
+                      : "Not enough money for full brush";
+                    const matureSellValue = seedSellValuePreview(
+                      game,
+                      seed.id,
+                      3,
+                    );
                     const oldSellValue = seedSellValuePreview(game, seed.id, 4);
                     const seedTooltip = [
                       seed.name,
-                      `Cost: ${costLabel}`,
+                      `Cost: ${costValueLabel} ${costCountLabel}${cannotAffordMinimum ? " (insufficient funds)" : ""}`,
                       `Current tile cost: ${formatMoney(currentTileCost)}`,
                       `Brush: ${effectivePlantBrush.id}`,
                       `Mature: ${formatMoney(matureSellValue)} | Old: ${formatMoney(oldSellValue)}`,
@@ -1205,7 +1513,22 @@ export default function FarmPage() {
                                 marginTop: 2,
                               }}
                             >
-                              Cost: {costLabel}
+                              Cost:{" "}
+                              <span
+                                style={
+                                  cannotAffordMinimum
+                                    ? {
+                                        textDecoration: "line-through",
+                                        textDecorationThickness: "1.4px",
+                                        opacity: 0.72,
+                                      }
+                                    : undefined
+                                }
+                              >
+                                {costValueLabel}
+                              </span>
+                              {" "}
+                              <span>{costCountLabel}</span>
                             </div>
                           </div>
                           <div
@@ -1284,7 +1607,8 @@ export default function FarmPage() {
                             </div>
                             {seed.cost > 0 ? (
                               <div style={{ fontSize: 9, opacity: 0.68 }}>
-                                Current tile cost: {formatMoney(currentTileCost)}
+                                Current tile cost:{" "}
+                                {formatMoney(currentTileCost)}
                               </div>
                             ) : null}
                           </>
@@ -1306,7 +1630,7 @@ export default function FarmPage() {
                                 paddingTop: 5,
                               }}
                             >
-                              Not enough money for full brush
+                              {partialFillHint}
                             </span>
                           ) : null}
                         </div>
@@ -1581,7 +1905,7 @@ export default function FarmPage() {
                   }}
                 >
                   <div style={{ fontSize: 10, opacity: 0.88 }}>
-                    Farm milestones award bonus platinum across marketing levels
+                    Farm milestones award bonus platinum for leveling marketing
                   </div>
                   <div
                     style={{
@@ -1601,40 +1925,68 @@ export default function FarmPage() {
                       Claimed platinum rewards:{" "}
                       {formatLargeNumber(totalMilestoneRewardShards)}
                     </div>
-                    <div style={{ display: "grid", gap: 4 }}>
-                      {PRESTIGE_MILESTONES.map((m) => {
-                        const claimed = Boolean(game.milestonesClaimed?.[m.id]);
-                        const reached = game.prestigeLevel >= m.reqPrestige;
-                        return (
-                          <div
-                            key={m.id}
+                    <div style={{ fontSize: 10, opacity: 0.8 }}>
+                      Earned milestones:
+                    </div>
+                    {earnedMilestones.length > 0 ? (
+                      <ul
+                        style={{
+                          margin: 0,
+                          paddingLeft: 16,
+                          display: "grid",
+                          gap: 5,
+                        }}
+                      >
+                        {earnedMilestones.map((m) => (
+                          <li
+                            key={`earned-${m.id}`}
                             style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              gap: 8,
+                              fontSize: 10,
+                              opacity: 0.84,
                             }}
                           >
-                            <span
+                            <div
                               style={{
-                                fontSize: 10,
-                                opacity: claimed ? 0.92 : 0.78,
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: 8,
                               }}
                             >
-                              {m.title} (M{m.reqPrestige}) +
-                              {formatLargeNumber(m.rewardShards)} platinum
-                            </span>
-                            <span style={{ fontSize: 10, opacity: 0.7 }}>
-                              {claimed
-                                ? "Claimed"
-                                : reached
-                                  ? "Ready"
-                                  : "Locked"}
-                            </span>
-                          </div>
-                        );
-                      })}
+                              <span>
+                                M{m.reqPrestige}: {m.title}
+                              </span>
+                              <span style={{ opacity: 0.68 }}>Claimed</span>
+                            </div>
+                            <div style={{ opacity: 0.68 }}>
+                              +{formatLargeNumber(m.rewardShards)} platinum
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div style={{ fontSize: 10, opacity: 0.66 }}>
+                        None yet.
+                      </div>
+                    )}
+                    <div style={{ fontSize: 10, opacity: 0.8 }}>
+                      Next milestone:
                     </div>
+                    {nextMilestone ? (
+                      <ul style={{ margin: 0, paddingLeft: 16 }}>
+                        <li style={{ fontSize: 10, opacity: 0.82 }}>
+                          <div>
+                            M{nextMilestone.reqPrestige}: {nextMilestone.title}
+                          </div>
+                          <div style={{ opacity: 0.68 }}>
+                            Reward: +{formatLargeNumber(nextMilestone.rewardShards)} platinum
+                          </div>
+                        </li>
+                      </ul>
+                    ) : (
+                      <div style={{ fontSize: 10, opacity: 0.76 }}>
+                        All farm milestones claimed.
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
@@ -1812,7 +2164,9 @@ export default function FarmPage() {
                       {selectedAutoKey &&
                       (canBuyAllSelectedAutomation ||
                         canCancelAllSelectedAutomation) ? (
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <div
+                          style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+                        >
                           {canBuyAllSelectedAutomation ? (
                             <button
                               onClick={() =>
@@ -1966,8 +2320,9 @@ export default function FarmPage() {
                           const level = shardUpgradeLevel(game, upgrade.id);
                           const atCap = level >= upgrade.cap;
                           const cost = shardUpgradeCost(upgrade.id, level);
-                          const reqMarketing =
-                            shardUpgradeMarketingRequirement(upgrade.id);
+                          const reqMarketing = shardUpgradeMarketingRequirement(
+                            upgrade.id,
+                          );
                           const lockedByMarketing =
                             game.prestigeLevel < reqMarketing;
                           const canBuy =
@@ -2027,7 +2382,6 @@ export default function FarmPage() {
                     )}
                   </div>
                 ) : null}
-
               </div>
             ) : null}
           </div>
@@ -2060,7 +2414,10 @@ export default function FarmPage() {
                     : "repeat(1, minmax(0, 1fr))",
               }}
             >
-              <Stat label="Money" value={formatMoney(game.money)} />
+              <Stat
+                label="Money"
+                value={formatMoneyAdaptive(game.money, 13, 2)}
+              />
               {game.prestigeLevel > 0 ? (
                 <Stat
                   label="Marketing Level"
@@ -2109,12 +2466,15 @@ export default function FarmPage() {
                   : null;
                 const seedTagLines = stageCropLabelLines(plant, seed);
                 const progressTag = canHarvest
-                  ? formatMoney(harvestPreview || 0)
+                  ? formatMoneyAdaptive(harvestPreview || 0, 7, 1)
                   : plant
                     ? `${stageProgressPercent(plant, seed, now, tile)}%`
                     : "--%";
                 const blockerTag = blockerLabel(tile, seed, now);
-                const blockerLines = splitNeedsLabel(blockerTag);
+                const blockerLines =
+                  blockerTag === "harvest"
+                    ? ["needs", "harvest"]
+                    : splitNeedsLabel(blockerTag);
                 const isPreview = previewIndices.has(idx);
 
                 return (
@@ -2199,7 +2559,7 @@ export default function FarmPage() {
                           <span key={`${idx}-seed-${i}`}>{line}</span>
                         ))}
                       </span>
-                      {showTileValueTags ? (
+                      {showTileValueTags || canHarvest ? (
                         <span
                           style={{
                             position: "absolute",
@@ -2254,6 +2614,138 @@ export default function FarmPage() {
               />
               Show tile % / harvest values
             </label>
+          </div>
+          <div
+            className="card"
+            style={{
+              padding: 10,
+              background:
+                "linear-gradient(180deg, rgba(37,30,20,0.75), rgba(20,16,11,0.84))",
+              borderColor: "rgba(255, 208, 140, 0.2)",
+            }}
+          >
+            <div
+              style={{
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 12,
+                padding: 10,
+                background: "rgba(0,0,0,0.24)",
+                display: "grid",
+                gap: 3,
+              }}
+            >
+              <div style={{ fontSize: 10, opacity: 0.72 }}>Market Season</div>
+              <div style={{ fontSize: 12 }}>
+                <strong>{currentSeason.label}</strong>
+              </div>
+              <div style={{ fontSize: 10, opacity: 0.78 }}>
+                +{Math.round(currentSeason.baseBonus * 100)}% to{" "}
+                {currentSeason.categories.join(", ")} crops
+                {currentSeason.synergyAnimal
+                  ? ` (+${Math.round(currentSeason.synergyBonus * 100)}% with ${animalById(currentSeason.synergyAnimal)?.name || currentSeason.synergyAnimal})`
+                  : ""}
+              </div>
+              <div style={{ fontSize: 10, opacity: 0.68 }}>
+                Rotates in {formatDuration(seasonRemainingMs)}
+              </div>
+            </div>
+            <div
+              style={{
+                marginTop: 8,
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 12,
+                padding: 10,
+                background: "rgba(0,0,0,0.24)",
+                display: "grid",
+                gap: 6,
+              }}
+            >
+              <div style={{ fontSize: 10, opacity: 0.72 }}>
+                Logs
+                <span style={{ opacity: 0.58 }}>
+                  {" "}
+                  (earnings + bonuses + spending batched every{" "}
+                  {LOG_BATCH_MS / 1000}s)
+                </span>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {LOG_FILTERS.map((filter) => {
+                  const selected = logFilter === filter.id;
+                  return (
+                    <button
+                      key={filter.id}
+                      onClick={() => setLogFilter(filter.id)}
+                      style={{
+                        fontSize: 9,
+                        padding: "3px 7px",
+                        borderColor: selected
+                          ? "rgba(255, 243, 175, 0.92)"
+                          : "rgba(255,255,255,0.2)",
+                        background: selected
+                          ? "rgba(255, 230, 142, 0.16)"
+                          : "rgba(0,0,0,0.2)",
+                      }}
+                    >
+                      {filter.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {visibleLogs.length <= 0 ? (
+                <div style={{ fontSize: 10, opacity: 0.62 }}>
+                  {logs.length <= 0
+                    ? "No events yet. Plant and harvest to start the live feed."
+                    : `No ${logFilter === "all" ? "matching" : logFilter} events in recent history.`}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    maxHeight: 170,
+                    overflowY: "auto",
+                    display: "grid",
+                    gap: 4,
+                    paddingRight: 2,
+                  }}
+                >
+                  {visibleLogs.map((entry) => {
+                    const toneColor =
+                      entry.tone === "bonus"
+                        ? "#ffd987"
+                        : entry.tone === "earning"
+                          ? "#a9f1b0"
+                          : entry.tone === "spend"
+                            ? "#ffb394"
+                            : entry.tone === "upgrade"
+                              ? "#9fd1ff"
+                              : "#e8ddcb";
+                    return (
+                      <div
+                        key={entry.id}
+                        style={{
+                          display: "grid",
+                          gap: 1,
+                          borderTop: "1px solid rgba(255,255,255,0.08)",
+                          paddingTop: 4,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 9,
+                            opacity: 0.62,
+                            color: toneColor,
+                          }}
+                        >
+                          {formatLogClock(entry.at)}
+                        </span>
+                        <span style={{ fontSize: 10, opacity: 0.9 }}>
+                          {entry.text}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
