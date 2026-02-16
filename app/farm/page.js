@@ -681,6 +681,31 @@ export default function FarmPage() {
     }
   };
 
+  const resetLocalFarmSave = () => {
+    if (typeof window === "undefined") return;
+    const confirmed = window.confirm(
+      "WARNING: This permanently deletes your Farm Idle local save from this browser and immediately refreshes the page.\n\nExport Save JSON and store it locally before continuing.\n\nDo you want to continue?",
+    );
+    if (!confirmed) return;
+    const finalConfirm = window.confirm(
+      "Final confirmation: proceed with permanent reset now?",
+    );
+    if (!finalConfirm) return;
+
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      batchedLogRef.current = {
+        earnings: 0,
+        harvests: 0,
+        bonuses: {},
+        spending: {},
+      };
+      window.location.reload();
+    } catch {
+      setSaveStatus("Reset failed. Clear browser storage manually and retry.");
+    }
+  };
+
   const buyShardUpgrade = (upgradeId) => {
     const upgrade = shardUpgradeById(upgradeId);
     if (!upgrade) return;
@@ -1247,6 +1272,15 @@ export default function FarmPage() {
   const selectedAutomationUnitCost = selectedAutoKey
     ? automationCostForState(game, selectedAutoKey)
     : 0;
+  const canAffordSelectedAutomationUnit =
+    Boolean(selectedAutoKey) &&
+    Number.isFinite(selectedAutomationUnitCost) &&
+    selectedAutomationUnitCost > 0 &&
+    game.money >= selectedAutomationUnitCost;
+  const canCancelSelectedAutomation =
+    Boolean(selectedAutoKey) &&
+    Boolean(selectedAutoBulk) &&
+    selectedAutoBulk.covered > 0;
   const canBuyAllSelectedAutomation =
     Boolean(selectedAutoKey) &&
     Boolean(selectedAutoBulk) &&
@@ -1376,12 +1410,31 @@ export default function FarmPage() {
                   Export creates an encrypted version of your local save JSON.
                   Import restores from that encrypted save file.
                 </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    opacity: 0.86,
+                    color: "rgba(255, 164, 138, 0.95)",
+                  }}
+                >
+                  Reset is permanent. Export and keep a local save file first.
+                </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button onClick={exportEncryptedSave} disabled={saveBusy}>
                     Export Save JSON
                   </button>
                   <button onClick={triggerSaveImportPicker} disabled={saveBusy}>
                     Import Save JSON
+                  </button>
+                  <button
+                    onClick={resetLocalFarmSave}
+                    disabled={saveBusy}
+                    style={{
+                      borderColor: "rgba(255, 164, 138, 0.8)",
+                      background: "rgba(133, 44, 36, 0.38)",
+                    }}
+                  >
+                    Reset Game (Delete Local Save)
                   </button>
                   <input
                     ref={importFileRef}
@@ -1526,8 +1579,7 @@ export default function FarmPage() {
                                 }
                               >
                                 {costValueLabel}
-                              </span>
-                              {" "}
+                              </span>{" "}
                               <span>{costCountLabel}</span>
                             </div>
                           </div>
@@ -1978,7 +2030,9 @@ export default function FarmPage() {
                             M{nextMilestone.reqPrestige}: {nextMilestone.title}
                           </div>
                           <div style={{ opacity: 0.68 }}>
-                            Reward: +{formatLargeNumber(nextMilestone.rewardShards)} platinum
+                            Reward: +
+                            {formatLargeNumber(nextMilestone.rewardShards)}{" "}
+                            platinum
                           </div>
                         </li>
                       </ul>
@@ -2120,6 +2174,7 @@ export default function FarmPage() {
                                       : { type: "buy", key: autoKey },
                                   )
                                 }
+                                disabled={!canAffordSelectedAutomationUnit}
                                 style={{
                                   borderColor: buySelected
                                     ? "rgba(255,243,175,0.9)"
@@ -2137,6 +2192,7 @@ export default function FarmPage() {
                                       : { type: "cancel", key: autoKey },
                                   )
                                 }
+                                disabled={!canCancelSelectedAutomation}
                                 style={{
                                   borderColor: cancelSelected
                                     ? "rgba(255,243,175,0.9)"
@@ -2612,7 +2668,7 @@ export default function FarmPage() {
                 checked={showTileValueTags}
                 onChange={(e) => setShowTileValueTags(e.target.checked)}
               />
-              Show tile % / harvest values
+              Show tile %
             </label>
           </div>
           <div
@@ -2634,7 +2690,9 @@ export default function FarmPage() {
                 gap: 3,
               }}
             >
-              <div style={{ fontSize: 10, opacity: 0.72 }}>Market Season</div>
+              <div style={{ fontSize: 10, opacity: 0.72 }}>
+                Harvest Festival
+              </div>
               <div style={{ fontSize: 12 }}>
                 <strong>{currentSeason.label}</strong>
               </div>
