@@ -35,7 +35,7 @@ const sections = [
     ],
   },
   {
-    title: "Info",
+    title: "Learn",
     cards: [
       {
         title: "About",
@@ -51,7 +51,7 @@ const sections = [
       },
       {
         title: "Resume",
-        description: "Experience, projects, and the printable version.",
+        description: "Rob's experience, projects, and the printable version.",
         href: "/resume",
         cta: "View resume",
       },
@@ -82,7 +82,8 @@ export default function Home() {
       <header style={{ marginBottom: 16 }}>
         <h1>Hi, I&apos;m Rob.</h1>
         <p className="lede">
-          Personal site for photos, projects, and whatever I&apos;m building next.
+          Personal site for photos, projects, and whatever I&apos;m building
+          next.
         </p>
       </header>
 
