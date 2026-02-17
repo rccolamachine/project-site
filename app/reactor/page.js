@@ -186,7 +186,7 @@ export default function ReactorPage() {
 
   // overlays (controls hidden by default for mobile friendliness)
   const [controlsOpen, setControlsOpen] = useState(false);
-  const [wellsOpen, setWellsOpen] = useState(true);
+  const [wellsOpen, setWellsOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
@@ -2074,7 +2074,7 @@ export default function ReactorPage() {
     setLjElement("C");
 
     // leave controlsOpen as-is (don’t force open on mobile)
-    setWellsOpen(true);
+    setWellsOpen(false);
   }
 
   // LJ sliders edit ljElement
