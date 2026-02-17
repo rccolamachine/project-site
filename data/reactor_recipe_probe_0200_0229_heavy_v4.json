@@ -1,0 +1,2755 @@
+{
+  "summary": {
+    "generatedAt": "2026-02-17T22:01:57.543Z",
+    "seed": 20260217,
+    "totalEvaluated": 30,
+    "foundCount": 13,
+    "coveragePct": 43.33,
+    "options": {
+      "maxAtoms": 200,
+      "searchAtomCap": 200,
+      "quickAttempts": 3,
+      "quickSteps": 900,
+      "rescueCandidates": 8,
+      "rescueAttempts": 3,
+      "rescueSteps": 2200,
+      "refineAttempts": 4,
+      "refineSteps": 2600,
+      "maxCandidates": 24,
+      "scanEvery": 6,
+      "minHitRate": 0
+    }
+  },
+  "results": [
+    {
+      "id": "mol-0201",
+      "name": "C2H5P isomer 3",
+      "formula": "C2H5P",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": true,
+      "recommended": {
+        "temperatureK": 830,
+        "damping": 0.9864,
+        "bondScale": 3.14,
+        "boxHalfSize": 4.72,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 1,
+          "O": 0,
+          "N": 0,
+          "C": 2,
+          "H": 5
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T830|D0.9864|B3.140|X4.72|exact-x1",
+        "hitRate": 0.1,
+        "avgHitSeconds": 0.1,
+        "attempts": 10,
+        "hits": 1
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T830|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 830,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 0,
+            "N": 0,
+            "C": 2,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.1,
+          "avgHitSeconds": 0.1,
+          "attempts": 10,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T650|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 650,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 0,
+            "N": 0,
+            "C": 2,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T500|D0.9924|B3.890|X5.97|exact-x1",
+          "temperatureK": 500,
+          "damping": 0.9924,
+          "bondScale": 3.89,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 0,
+            "N": 0,
+            "C": 2,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0202",
+      "name": "C3H2O2S",
+      "formula": "C3H2O2S",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 644,
+        "damping": 0.9899,
+        "bondScale": 3.39,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 0,
+          "O": 2,
+          "N": 0,
+          "C": 3,
+          "H": 2
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T644|D0.9899|B3.390|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T644|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 644,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 2,
+            "N": 0,
+            "C": 3,
+            "H": 2
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T824|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 824,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 2,
+            "N": 0,
+            "C": 3,
+            "H": 2
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T494|D0.9924|B3.890|X5.97|exact-x1",
+          "temperatureK": 494,
+          "damping": 0.9924,
+          "bondScale": 3.89,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 2,
+            "N": 0,
+            "C": 3,
+            "H": 2
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0203",
+      "name": "C3H4O isomer 2",
+      "formula": "C3H4O",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": true,
+      "recommended": {
+        "temperatureK": 498,
+        "damping": 0.9924,
+        "bondScale": 3.89,
+        "boxHalfSize": 5.97,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 1,
+          "N": 0,
+          "C": 3,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T498|D0.9924|B3.890|X5.97|exact-x1",
+        "hitRate": 0.3,
+        "avgHitSeconds": 0.1,
+        "attempts": 10,
+        "hits": 3
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T498|D0.9924|B3.890|X5.97|exact-x1",
+          "temperatureK": 498,
+          "damping": 0.9924,
+          "bondScale": 3.89,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.3,
+          "avgHitSeconds": 0.1,
+          "attempts": 10,
+          "hits": 3
+        },
+        {
+          "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 648,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T828|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 828,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0204",
+      "name": "C3H4S isomer 1",
+      "formula": "C3H4S",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": true,
+      "recommended": {
+        "temperatureK": 498,
+        "damping": 0.9924,
+        "bondScale": 3.89,
+        "boxHalfSize": 5.97,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 0,
+          "O": 0,
+          "N": 0,
+          "C": 3,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T498|D0.9924|B3.890|X5.97|exact-x1",
+        "hitRate": 0.2,
+        "avgHitSeconds": 0.1,
+        "attempts": 10,
+        "hits": 2
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T498|D0.9924|B3.890|X5.97|exact-x1",
+          "temperatureK": 498,
+          "damping": 0.9924,
+          "bondScale": 3.89,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.2,
+          "avgHitSeconds": 0.1,
+          "attempts": 10,
+          "hits": 2
+        },
+        {
+          "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 648,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T828|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 828,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0205",
+      "name": "C3H4S isomer 2",
+      "formula": "C3H4S",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": true,
+      "recommended": {
+        "temperatureK": 420,
+        "damping": 0.992,
+        "bondScale": 3.2,
+        "boxHalfSize": 6.2,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 0,
+          "O": 0,
+          "N": 0,
+          "C": 3,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T420|D0.9920|B3.200|X6.20|exact-x1",
+        "hitRate": 0.1,
+        "avgHitSeconds": 0.1,
+        "attempts": 10,
+        "hits": 1
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T420|D0.9920|B3.200|X6.20|exact-x1",
+          "temperatureK": 420,
+          "damping": 0.992,
+          "bondScale": 3.2,
+          "boxHalfSize": 6.2,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.1,
+          "avgHitSeconds": 0.1,
+          "attempts": 10,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 648,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T828|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 828,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0206",
+      "name": "C4H4 isomer 2",
+      "formula": "C4H4",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": true,
+      "recommended": {
+        "temperatureK": 908,
+        "damping": 0.9844,
+        "bondScale": 2.79,
+        "boxHalfSize": 4.82,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 0,
+          "N": 0,
+          "C": 20,
+          "H": 20
+        },
+        "totalSpawnAtoms": 40,
+        "recipeLabel": "T908|D0.9844|B2.790|X4.82->A0.42->T528|D0.9944|B4.390|X6.42|exact-x5",
+        "hitRate": 0.1,
+        "avgHitSeconds": 0.1,
+        "attempts": 10,
+        "hits": 1
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T908|D0.9844|B2.790|X4.82->A0.42->T528|D0.9944|B4.390|X6.42|exact-x5",
+          "temperatureK": 908,
+          "damping": 0.9844,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.82,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 20,
+            "H": 20
+          },
+          "totalSpawnAtoms": 40,
+          "hitRate": 0.1,
+          "avgHitSeconds": 0.1,
+          "attempts": 10,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 648,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 4,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T828|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 828,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 4,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0207",
+      "name": "CH3N3S isomer 1",
+      "formula": "CH3N3S",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": true,
+      "recommended": {
+        "temperatureK": 426,
+        "damping": 0.9939,
+        "bondScale": 4.19,
+        "boxHalfSize": 5.02,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 0,
+          "O": 0,
+          "N": 3,
+          "C": 1,
+          "H": 3
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T426|D0.9939|B4.190|X5.02|exact-x1",
+        "hitRate": 0.1,
+        "avgHitSeconds": 0.1,
+        "attempts": 10,
+        "hits": 1
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T426|D0.9939|B4.190|X5.02|exact-x1",
+          "temperatureK": 426,
+          "damping": 0.9939,
+          "bondScale": 4.19,
+          "boxHalfSize": 5.02,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 3,
+            "C": 1,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.1,
+          "avgHitSeconds": 0.1,
+          "attempts": 10,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T646|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 646,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 3,
+            "C": 1,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T826|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 826,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 3,
+            "C": 1,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0208",
+      "name": "CH3O3P",
+      "formula": "CH3O3P",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": true,
+      "recommended": {
+        "temperatureK": 826,
+        "damping": 0.9864,
+        "bondScale": 3.14,
+        "boxHalfSize": 4.72,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 5,
+          "O": 15,
+          "N": 0,
+          "C": 5,
+          "H": 15
+        },
+        "totalSpawnAtoms": 40,
+        "recipeLabel": "T826|D0.9864|B3.140|X4.72|exact-x5",
+        "hitRate": 0.167,
+        "avgHitSeconds": 0.1,
+        "attempts": 6,
+        "hits": 1
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T826|D0.9864|B3.140|X4.72|exact-x5",
+          "temperatureK": 826,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 5,
+            "O": 15,
+            "N": 0,
+            "C": 5,
+            "H": 15
+          },
+          "totalSpawnAtoms": 40,
+          "hitRate": 0.167,
+          "avgHitSeconds": 0.1,
+          "attempts": 6,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T646|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 646,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 3,
+            "N": 0,
+            "C": 1,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.1,
+          "avgHitSeconds": 0.1,
+          "attempts": 10,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T826|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 826,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 3,
+            "N": 0,
+            "C": 1,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0209",
+      "name": "CH4N2S isomer 1",
+      "formula": "CH4N2S",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 648,
+        "damping": 0.9899,
+        "bondScale": 3.39,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 0,
+          "O": 0,
+          "N": 2,
+          "C": 1,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 648,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T828|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 828,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T498|D0.9924|B3.890|X5.97|exact-x1",
+          "temperatureK": 498,
+          "damping": 0.9924,
+          "bondScale": 3.89,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0210",
+      "name": "CH4N2S isomer 2",
+      "formula": "CH4N2S",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 648,
+        "damping": 0.9899,
+        "bondScale": 3.39,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 0,
+          "O": 0,
+          "N": 2,
+          "C": 1,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 648,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T828|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 828,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T498|D0.9924|B3.890|X5.97|exact-x1",
+          "temperatureK": 498,
+          "damping": 0.9924,
+          "bondScale": 3.89,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0211",
+      "name": "CH4NPS isomer 1",
+      "formula": "CH4NPS",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 648,
+        "damping": 0.9899,
+        "bondScale": 3.39,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 1,
+          "O": 0,
+          "N": 1,
+          "C": 1,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 648,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T828|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 828,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T498|D0.9924|B3.890|X5.97|exact-x1",
+          "temperatureK": 498,
+          "damping": 0.9924,
+          "bondScale": 3.89,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0212",
+      "name": "CH4NPS isomer 2",
+      "formula": "CH4NPS",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 648,
+        "damping": 0.9899,
+        "bondScale": 3.39,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 1,
+          "O": 0,
+          "N": 1,
+          "C": 1,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T648|D0.9899|B3.390|X5.42|exact-x1",
+          "temperatureK": 648,
+          "damping": 0.9899,
+          "bondScale": 3.39,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T828|D0.9864|B3.140|X4.72|exact-x1",
+          "temperatureK": 828,
+          "damping": 0.9864,
+          "bondScale": 3.14,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T498|D0.9924|B3.890|X5.97|exact-x1",
+          "temperatureK": 498,
+          "damping": 0.9924,
+          "bondScale": 3.89,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0213",
+      "name": "Ethane",
+      "formula": "C2H6",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": true,
+      "recommended": {
+        "temperatureK": 792,
+        "damping": 0.9841,
+        "bondScale": 2.44,
+        "boxHalfSize": 4.82,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 0,
+          "N": 0,
+          "C": 10,
+          "H": 30
+        },
+        "totalSpawnAtoms": 40,
+        "recipeLabel": "T792|D0.9841|B2.440|X4.82->A0.42->T412|D0.9941|B4.040|X6.42|exact-x5",
+        "hitRate": 0.3,
+        "avgHitSeconds": 15.3,
+        "attempts": 10,
+        "hits": 3
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T792|D0.9841|B2.440|X4.82->A0.42->T412|D0.9941|B4.040|X6.42|exact-x5",
+          "temperatureK": 792,
+          "damping": 0.9841,
+          "bondScale": 2.44,
+          "boxHalfSize": 4.82,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 10,
+            "H": 30
+          },
+          "totalSpawnAtoms": 40,
+          "hitRate": 0.3,
+          "avgHitSeconds": 15.3,
+          "attempts": 10,
+          "hits": 3
+        },
+        {
+          "recipeLabel": "T312|D0.9936|B3.840|X5.02|exact-x1",
+          "temperatureK": 312,
+          "damping": 0.9936,
+          "bondScale": 3.84,
+          "boxHalfSize": 5.02,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 2,
+            "H": 6
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.167,
+          "avgHitSeconds": 0.1,
+          "attempts": 6,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T312|D0.9936|B3.840|X5.02|exact-x5",
+          "temperatureK": 312,
+          "damping": 0.9936,
+          "bondScale": 3.84,
+          "boxHalfSize": 5.02,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 0,
+            "C": 10,
+            "H": 30
+          },
+          "totalSpawnAtoms": 40,
+          "hitRate": 0.167,
+          "avgHitSeconds": 1.1,
+          "attempts": 6,
+          "hits": 1
+        }
+      ]
+    },
+    {
+      "id": "mol-0214",
+      "name": "CH4OS2 isomer 1",
+      "formula": "CH4OS2",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": false,
+      "recommended": {
+        "temperatureK": 528,
+        "damping": 0.9896,
+        "bondScale": 3.04,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 2,
+          "P": 0,
+          "O": 1,
+          "N": 0,
+          "C": 1,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T528|D0.9896|B3.040|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T528|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 528,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T708|D0.9861|B2.790|X4.72|exact-x1",
+          "temperatureK": 708,
+          "damping": 0.9861,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T378|D0.9921|B3.540|X5.97|exact-x1",
+          "temperatureK": 378,
+          "damping": 0.9921,
+          "bondScale": 3.54,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0215",
+      "name": "CH4OS2 isomer 2",
+      "formula": "CH4OS2",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": false,
+      "recommended": {
+        "temperatureK": 528,
+        "damping": 0.9896,
+        "bondScale": 3.04,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 2,
+          "P": 0,
+          "O": 1,
+          "N": 0,
+          "C": 1,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T528|D0.9896|B3.040|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T528|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 528,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T708|D0.9861|B2.790|X4.72|exact-x1",
+          "temperatureK": 708,
+          "damping": 0.9861,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T378|D0.9921|B3.540|X5.97|exact-x1",
+          "temperatureK": 378,
+          "damping": 0.9921,
+          "bondScale": 3.54,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0216",
+      "name": "CH4OS2 isomer 3",
+      "formula": "CH4OS2",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": true,
+      "recommended": {
+        "temperatureK": 788,
+        "damping": 0.9841,
+        "bondScale": 2.44,
+        "boxHalfSize": 4.82,
+        "feedstockCounts": {
+          "S": 2,
+          "P": 0,
+          "O": 1,
+          "N": 0,
+          "C": 1,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T788|D0.9841|B2.440|X4.82->A0.42->T408|D0.9941|B4.040|X6.42|exact-x1",
+        "hitRate": 0.167,
+        "avgHitSeconds": 1.9,
+        "attempts": 6,
+        "hits": 1
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T788|D0.9841|B2.440|X4.82->A0.42->T408|D0.9941|B4.040|X6.42|exact-x1",
+          "temperatureK": 788,
+          "damping": 0.9841,
+          "bondScale": 2.44,
+          "boxHalfSize": 4.82,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.167,
+          "avgHitSeconds": 1.9,
+          "attempts": 6,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T528|D0.9896|B3.040|X5.42->A0.30->T348|D0.9951|B3.890|X6.12|exact-x1",
+          "temperatureK": 528,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.1,
+          "avgHitSeconds": 0.1,
+          "attempts": 10,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T528|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 528,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 2,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0217",
+      "name": "CH5NO isomer 1",
+      "formula": "CH5NO",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": true,
+      "recommended": {
+        "temperatureK": 790,
+        "damping": 0.9846,
+        "bondScale": 2.54,
+        "boxHalfSize": 6.12,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 1,
+          "N": 1,
+          "C": 1,
+          "H": 5
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T790|D0.9846|B2.540|X6.12|exact-x1",
+        "hitRate": 0.2,
+        "avgHitSeconds": 2.45,
+        "attempts": 10,
+        "hits": 2
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T790|D0.9846|B2.540|X6.12|exact-x1",
+          "temperatureK": 790,
+          "damping": 0.9846,
+          "bondScale": 2.54,
+          "boxHalfSize": 6.12,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.2,
+          "avgHitSeconds": 2.45,
+          "attempts": 10,
+          "hits": 2
+        },
+        {
+          "recipeLabel": "T380|D0.9921|B3.540|X5.97|exact-x1",
+          "temperatureK": 380,
+          "damping": 0.9921,
+          "bondScale": 3.54,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.167,
+          "avgHitSeconds": 7.5,
+          "attempts": 6,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 530,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.167,
+          "avgHitSeconds": 8.5,
+          "attempts": 6,
+          "hits": 1
+        }
+      ]
+    },
+    {
+      "id": "mol-0218",
+      "name": "CH5NO isomer 2",
+      "formula": "CH5NO",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": false,
+      "recommended": {
+        "temperatureK": 530,
+        "damping": 0.9896,
+        "bondScale": 3.04,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 1,
+          "N": 1,
+          "C": 1,
+          "H": 5
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 530,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T710|D0.9861|B2.790|X4.72|exact-x1",
+          "temperatureK": 710,
+          "damping": 0.9861,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T380|D0.9921|B3.540|X5.97|exact-x1",
+          "temperatureK": 380,
+          "damping": 0.9921,
+          "bondScale": 3.54,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0219",
+      "name": "CH5NS",
+      "formula": "CH5NS",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": false,
+      "recommended": {
+        "temperatureK": 530,
+        "damping": 0.9896,
+        "bondScale": 3.04,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 0,
+          "O": 0,
+          "N": 1,
+          "C": 1,
+          "H": 5
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 530,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T710|D0.9861|B2.790|X4.72|exact-x1",
+          "temperatureK": 710,
+          "damping": 0.9861,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T380|D0.9921|B3.540|X5.97|exact-x1",
+          "temperatureK": 380,
+          "damping": 0.9921,
+          "bondScale": 3.54,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0220",
+      "name": "CH5OP isomer 1",
+      "formula": "CH5OP",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": false,
+      "recommended": {
+        "temperatureK": 530,
+        "damping": 0.9896,
+        "bondScale": 3.04,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 1,
+          "O": 1,
+          "N": 0,
+          "C": 1,
+          "H": 5
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 530,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T710|D0.9861|B2.790|X4.72|exact-x1",
+          "temperatureK": 710,
+          "damping": 0.9861,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T380|D0.9921|B3.540|X5.97|exact-x1",
+          "temperatureK": 380,
+          "damping": 0.9921,
+          "bondScale": 3.54,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0221",
+      "name": "CH5OP isomer 2",
+      "formula": "CH5OP",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": true,
+      "recommended": {
+        "temperatureK": 380,
+        "damping": 0.9921,
+        "bondScale": 3.54,
+        "boxHalfSize": 5.97,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 1,
+          "O": 1,
+          "N": 0,
+          "C": 1,
+          "H": 5
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T380|D0.9921|B3.540|X5.97|exact-x1",
+        "hitRate": 0.4,
+        "avgHitSeconds": 17.3,
+        "attempts": 10,
+        "hits": 4
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T380|D0.9921|B3.540|X5.97|exact-x1",
+          "temperatureK": 380,
+          "damping": 0.9921,
+          "bondScale": 3.54,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.4,
+          "avgHitSeconds": 17.3,
+          "attempts": 10,
+          "hits": 4
+        },
+        {
+          "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 530,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T710|D0.9861|B2.790|X4.72|exact-x1",
+          "temperatureK": 710,
+          "damping": 0.9861,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0222",
+      "name": "CH5PS",
+      "formula": "CH5PS",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": true,
+      "recommended": {
+        "temperatureK": 310,
+        "damping": 0.9936,
+        "bondScale": 3.84,
+        "boxHalfSize": 5.02,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 1,
+          "O": 0,
+          "N": 0,
+          "C": 1,
+          "H": 5
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T310|D0.9936|B3.840|X5.02|exact-x1",
+        "hitRate": 0.1,
+        "avgHitSeconds": 0.2,
+        "attempts": 10,
+        "hits": 1
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T310|D0.9936|B3.840|X5.02|exact-x1",
+          "temperatureK": 310,
+          "damping": 0.9936,
+          "bondScale": 3.84,
+          "boxHalfSize": 5.02,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.1,
+          "avgHitSeconds": 0.2,
+          "attempts": 10,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T530|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 530,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T710|D0.9861|B2.790|X4.72|exact-x1",
+          "temperatureK": 710,
+          "damping": 0.9861,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 0,
+            "N": 0,
+            "C": 1,
+            "H": 5
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0223",
+      "name": "H4N2O2",
+      "formula": "H4N2O2",
+      "atomCount": 8,
+      "ringCount": 0,
+      "maxBondOrder": 1,
+      "found": false,
+      "recommended": {
+        "temperatureK": 528,
+        "damping": 0.9896,
+        "bondScale": 3.04,
+        "boxHalfSize": 5.42,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 2,
+          "N": 2,
+          "C": 0,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T528|D0.9896|B3.040|X5.42|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T528|D0.9896|B3.040|X5.42|exact-x1",
+          "temperatureK": 528,
+          "damping": 0.9896,
+          "bondScale": 3.04,
+          "boxHalfSize": 5.42,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 2,
+            "N": 2,
+            "C": 0,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T708|D0.9861|B2.790|X4.72|exact-x1",
+          "temperatureK": 708,
+          "damping": 0.9861,
+          "bondScale": 2.79,
+          "boxHalfSize": 4.72,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 2,
+            "N": 2,
+            "C": 0,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T378|D0.9921|B3.540|X5.97|exact-x1",
+          "temperatureK": 378,
+          "damping": 0.9921,
+          "bondScale": 3.54,
+          "boxHalfSize": 5.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 2,
+            "N": 2,
+            "C": 0,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0224",
+      "name": "C4H3N isomer 2",
+      "formula": "C4H3N",
+      "atomCount": 8,
+      "ringCount": 1,
+      "maxBondOrder": 3,
+      "found": false,
+      "recommended": {
+        "temperatureK": 886,
+        "damping": 0.9923,
+        "bondScale": 4.29,
+        "boxHalfSize": 5.67,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 0,
+          "N": 1,
+          "C": 4,
+          "H": 3
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T886|D0.9923|B4.290|X5.67|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T886|D0.9923|B4.290|X5.67|exact-x1",
+          "temperatureK": 886,
+          "damping": 0.9923,
+          "bondScale": 4.29,
+          "boxHalfSize": 5.67,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 4,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T1066|D0.9888|B4.040|X4.97|exact-x1",
+          "temperatureK": 1066,
+          "damping": 0.9888,
+          "bondScale": 4.04,
+          "boxHalfSize": 4.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 4,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T736|D0.9948|B4.790|X6.22|exact-x1",
+          "temperatureK": 736,
+          "damping": 0.9948,
+          "bondScale": 4.79,
+          "boxHalfSize": 6.22,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 4,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0225",
+      "name": "C2H3OPS",
+      "formula": "C2H3OPS",
+      "atomCount": 8,
+      "ringCount": 1,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 766,
+        "damping": 0.992,
+        "bondScale": 3.94,
+        "boxHalfSize": 5.67,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 1,
+          "O": 1,
+          "N": 0,
+          "C": 2,
+          "H": 3
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T766|D0.9920|B3.940|X5.67|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T766|D0.9920|B3.940|X5.67|exact-x1",
+          "temperatureK": 766,
+          "damping": 0.992,
+          "bondScale": 3.94,
+          "boxHalfSize": 5.67,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 2,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T946|D0.9885|B3.690|X4.97|exact-x1",
+          "temperatureK": 946,
+          "damping": 0.9885,
+          "bondScale": 3.69,
+          "boxHalfSize": 4.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 2,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T616|D0.9945|B4.440|X6.22|exact-x1",
+          "temperatureK": 616,
+          "damping": 0.9945,
+          "bondScale": 4.44,
+          "boxHalfSize": 6.22,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 1,
+            "O": 1,
+            "N": 0,
+            "C": 2,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0226",
+      "name": "C2H4N2 isomer 2",
+      "formula": "C2H4N2",
+      "atomCount": 8,
+      "ringCount": 1,
+      "maxBondOrder": 2,
+      "found": true,
+      "recommended": {
+        "temperatureK": 548,
+        "damping": 0.996,
+        "bondScale": 4.74,
+        "boxHalfSize": 5.27,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 0,
+          "N": 2,
+          "C": 2,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T548|D0.9960|B4.740|X5.27|exact-x1",
+        "hitRate": 0.1,
+        "avgHitSeconds": 36.3,
+        "attempts": 10,
+        "hits": 1
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T548|D0.9960|B4.740|X5.27|exact-x1",
+          "temperatureK": 548,
+          "damping": 0.996,
+          "bondScale": 4.74,
+          "boxHalfSize": 5.27,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0.1,
+          "avgHitSeconds": 36.3,
+          "attempts": 10,
+          "hits": 1
+        },
+        {
+          "recipeLabel": "T768|D0.9920|B3.940|X5.67|exact-x1",
+          "temperatureK": 768,
+          "damping": 0.992,
+          "bondScale": 3.94,
+          "boxHalfSize": 5.67,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T948|D0.9885|B3.690|X4.97|exact-x1",
+          "temperatureK": 948,
+          "damping": 0.9885,
+          "bondScale": 3.69,
+          "boxHalfSize": 4.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0227",
+      "name": "C2H4N2 isomer 3",
+      "formula": "C2H4N2",
+      "atomCount": 8,
+      "ringCount": 1,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 768,
+        "damping": 0.992,
+        "bondScale": 3.94,
+        "boxHalfSize": 5.67,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 0,
+          "N": 2,
+          "C": 2,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T768|D0.9920|B3.940|X5.67|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T768|D0.9920|B3.940|X5.67|exact-x1",
+          "temperatureK": 768,
+          "damping": 0.992,
+          "bondScale": 3.94,
+          "boxHalfSize": 5.67,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T948|D0.9885|B3.690|X4.97|exact-x1",
+          "temperatureK": 948,
+          "damping": 0.9885,
+          "bondScale": 3.69,
+          "boxHalfSize": 4.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T618|D0.9945|B4.440|X6.22|exact-x1",
+          "temperatureK": 618,
+          "damping": 0.9945,
+          "bondScale": 4.44,
+          "boxHalfSize": 6.22,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 0,
+            "N": 2,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0228",
+      "name": "C2H4NP isomer 2",
+      "formula": "C2H4NP",
+      "atomCount": 8,
+      "ringCount": 1,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 768,
+        "damping": 0.992,
+        "bondScale": 3.94,
+        "boxHalfSize": 5.67,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 1,
+          "O": 0,
+          "N": 1,
+          "C": 2,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T768|D0.9920|B3.940|X5.67|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T768|D0.9920|B3.940|X5.67|exact-x1",
+          "temperatureK": 768,
+          "damping": 0.992,
+          "bondScale": 3.94,
+          "boxHalfSize": 5.67,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T948|D0.9885|B3.690|X4.97|exact-x1",
+          "temperatureK": 948,
+          "damping": 0.9885,
+          "bondScale": 3.69,
+          "boxHalfSize": 4.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T618|D0.9945|B4.440|X6.22|exact-x1",
+          "temperatureK": 618,
+          "damping": 0.9945,
+          "bondScale": 4.44,
+          "boxHalfSize": 6.22,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 1,
+            "O": 0,
+            "N": 1,
+            "C": 2,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0229",
+      "name": "C3H3NS",
+      "formula": "C3H3NS",
+      "atomCount": 8,
+      "ringCount": 1,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 766,
+        "damping": 0.992,
+        "bondScale": 3.94,
+        "boxHalfSize": 5.67,
+        "feedstockCounts": {
+          "S": 1,
+          "P": 0,
+          "O": 0,
+          "N": 1,
+          "C": 3,
+          "H": 3
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T766|D0.9920|B3.940|X5.67|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T766|D0.9920|B3.940|X5.67|exact-x1",
+          "temperatureK": 766,
+          "damping": 0.992,
+          "bondScale": 3.94,
+          "boxHalfSize": 5.67,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 3,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T946|D0.9885|B3.690|X4.97|exact-x1",
+          "temperatureK": 946,
+          "damping": 0.9885,
+          "bondScale": 3.69,
+          "boxHalfSize": 4.97,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 3,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T616|D0.9945|B4.440|X6.22|exact-x1",
+          "temperatureK": 616,
+          "damping": 0.9945,
+          "bondScale": 4.44,
+          "boxHalfSize": 6.22,
+          "feedstockCounts": {
+            "S": 1,
+            "P": 0,
+            "O": 0,
+            "N": 1,
+            "C": 3,
+            "H": 3
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    },
+    {
+      "id": "mol-0230",
+      "name": "C3H4O isomer 3",
+      "formula": "C3H4O",
+      "atomCount": 8,
+      "ringCount": 1,
+      "maxBondOrder": 2,
+      "found": false,
+      "recommended": {
+        "temperatureK": 768,
+        "damping": 0.992,
+        "bondScale": 3.94,
+        "boxHalfSize": 5.67,
+        "feedstockCounts": {
+          "S": 0,
+          "P": 0,
+          "O": 1,
+          "N": 0,
+          "C": 3,
+          "H": 4
+        },
+        "totalSpawnAtoms": 8,
+        "recipeLabel": "T768|D0.9920|B3.940|X5.67|exact-x1",
+        "hitRate": 0,
+        "avgHitSeconds": null,
+        "attempts": 6,
+        "hits": 0
+      },
+      "topCandidates": [
+        {
+          "recipeLabel": "T768|D0.9920|B3.940|X5.67|exact-x1",
+          "temperatureK": 768,
+          "damping": 0.992,
+          "bondScale": 3.94,
+          "boxHalfSize": 5.67,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T948|D0.9885|B3.690|X4.97|exact-x1",
+          "temperatureK": 948,
+          "damping": 0.9885,
+          "bondScale": 3.69,
+          "boxHalfSize": 4.97,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        },
+        {
+          "recipeLabel": "T618|D0.9945|B4.440|X6.22|exact-x1",
+          "temperatureK": 618,
+          "damping": 0.9945,
+          "bondScale": 4.44,
+          "boxHalfSize": 6.22,
+          "feedstockCounts": {
+            "S": 0,
+            "P": 0,
+            "O": 1,
+            "N": 0,
+            "C": 3,
+            "H": 4
+          },
+          "totalSpawnAtoms": 8,
+          "hitRate": 0,
+          "avgHitSeconds": null,
+          "attempts": 6,
+          "hits": 0
+        }
+      ]
+    }
+  ]
+}

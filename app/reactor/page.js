@@ -2295,69 +2295,66 @@ export default function ReactorPage() {
             </div>
 
             <div style={ui.section}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 10,
-                }}
-              >
+              <div style={ui.row}>
                 <div
-                  style={{ fontSize: 11, fontWeight: 950, color: "#0f172a" }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    minWidth: 0,
+                  }}
                 >
-                  Nonbonded (LJ) for
-                </div>
-                <select
-                  value={ljElement}
-                  onChange={(e) => setLjElement(e.target.value)}
-                  style={ui.select}
-                >
-                  {ELEMENTS.map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <MiniSlider
-                label="σ (distance)"
-                value={selectedSigma}
-                min={0.6}
-                max={2.3}
-                step={0.02}
-                onChange={(v) => updateSelectedLJ("sigma", v)}
-              />
-              <MiniSlider
-                label="ε (stickiness)"
-                value={selectedEpsilon}
-                min={0.0}
-                max={2.4}
-                step={0.05}
-                onChange={(v) => updateSelectedLJ("epsilon", v)}
-              />
-
-              <div style={{ marginTop: 6 }}>
-                <div style={ui.row}>
                   <div
                     style={{ fontSize: 11, fontWeight: 950, color: "#0f172a" }}
                   >
-                    Energy wells
+                    {wellsOpen ? "Nonbonded (LJ) for" : "Nonbonded (LJ)"}
                   </div>
-                  <button
-                    onClick={() => setWellsOpen((s) => !s)}
-                    style={ui.btnLight}
-                  >
-                    {wellsOpen ? "Hide" : "Show"}
-                  </button>
+                  {wellsOpen ? (
+                    <select
+                      value={ljElement}
+                      onChange={(e) => setLjElement(e.target.value)}
+                      style={ui.select}
+                    >
+                      {ELEMENTS.map((k) => (
+                        <option key={k} value={k}>
+                          {k}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
                 </div>
-                {wellsOpen ? (
+                <button
+                  onClick={() => setWellsOpen((s) => !s)}
+                  style={ui.btnLight}
+                >
+                  {wellsOpen ? "Hide" : "Show"}
+                </button>
+              </div>
+
+              {wellsOpen ? (
+                <>
+                  <MiniSlider
+                    label="σ (distance)"
+                    value={selectedSigma}
+                    min={0.6}
+                    max={2.3}
+                    step={0.02}
+                    onChange={(v) => updateSelectedLJ("sigma", v)}
+                  />
+                  <MiniSlider
+                    label="ε (stickiness)"
+                    value={selectedEpsilon}
+                    min={0.0}
+                    max={2.4}
+                    step={0.05}
+                    onChange={(v) => updateSelectedLJ("epsilon", v)}
+                  />
+
                   <div style={{ marginTop: 8 }}>
                     <CombinedEnergyWells lj={lj} cutoff={FIXED_CUTOFF} />
                   </div>
-                ) : null}
-              </div>
+                </>
+              ) : null}
             </div>
           </div>
         ) : (
