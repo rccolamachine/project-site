@@ -702,15 +702,28 @@ function writeMarkdown(filePath, results, summary, options) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
+  let ids = null;
+  if (typeof args.ids === "string" && args.ids.trim().length > 0) {
+    ids = args.ids.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  if (typeof args.idsFile === "string" && args.idsFile.trim().length > 0) {
+    const raw = fs.readFileSync(path.resolve(args.idsFile), "utf8");
+    const fromFile = raw
+      .split(/[\s,]+/g)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (fromFile.length > 0) {
+      const merged = new Set([...(ids || []), ...fromFile]);
+      ids = [...merged];
+    }
+  }
+
   const options = {
     out: args.out || "data/reactor_recipe_guide.json",
     mdOut: args.mdOut || "data/reactor_recipe_guide.md",
     limit: readIntArg(args, "limit", MOLECULE_CATALOG.length),
     offset: readIntArg(args, "offset", 0),
-    ids:
-      typeof args.ids === "string" && args.ids.trim().length > 0
-        ? args.ids.split(",").map((s) => s.trim()).filter(Boolean)
-        : null,
+    ids,
     maxAtoms: readIntArg(args, "maxAtoms", 200),
     searchAtomCap: readIntArg(args, "searchAtomCap", 72),
     quickAttempts: readIntArg(args, "quickAttempts", 1),

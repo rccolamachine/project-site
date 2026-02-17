@@ -2135,7 +2135,7 @@ export default function ReactorPage() {
   const instructionText = useMemo(() => {
     if (tool === TOOL.ROTATE) {
       return {
-        title: "Rotate mode",
+        title: "View mode",
         lines: [
           "Drag: rotate view",
           "Scroll / pinch: zoom",
@@ -2155,19 +2155,36 @@ export default function ReactorPage() {
     return {
       title: "Place/Select mode",
       lines: [
-        "Click empty space: place atom",
-        "Click+drag atom: move it",
+        `Click empty space: place ${placeElement} atom`,
+        "Drag existing atom: move it",
         "Click live molecule: select/deselect it",
       ],
     };
-  }, [tool]);
+  }, [tool, placeElement]);
 
   const hiddenModeSummary = useMemo(() => {
     if (tool === TOOL.PLACE) return `Place ${placeElement} / Select`;
     if (tool === TOOL.DELETE) return "Delete";
-    if (tool === TOOL.ROTATE) return "Rotate";
+    if (tool === TOOL.ROTATE) return "View";
     if (tool === TOOL.SAVE) return "Save";
     return "Mode";
+  }, [tool, placeElement]);
+
+  const hiddenModeMouseLines = useMemo(() => {
+    if (tool === TOOL.SAVE) return ["mouse has no effect"];
+    if (tool === TOOL.ROTATE) {
+      return [
+        "Drag: rotate view",
+        "Scroll / pinch: zoom",
+        "Right-drag / two-finger drag: pan",
+      ];
+    }
+    if (tool === TOOL.DELETE) return ["Click atom: delete it"];
+    return [
+      `Click empty space: place ${placeElement} atom`,
+      "Drag existing atom: move it",
+      "Click live molecule: select/deselect it",
+    ];
   }, [tool, placeElement]);
 
   return (
@@ -2424,7 +2441,7 @@ export default function ReactorPage() {
                   style={ui.pillBtn(tool === TOOL.ROTATE)}
                   onClick={() => setTool(TOOL.ROTATE)}
                 >
-                  Rotate
+                  View
                 </button>
                 <button
                   style={ui.pillBtn(tool === TOOL.SAVE)}
@@ -2577,6 +2594,22 @@ export default function ReactorPage() {
               }}
             >
               {`Current mode: ${hiddenModeSummary}`}
+            </div>
+            <div
+              style={{
+                marginTop: 4,
+                fontSize: 10,
+                fontWeight: 700,
+                color: REACTOR_OVERLAY_LIGHT_TEXT,
+                textAlign: "right",
+                lineHeight: 1.35,
+                pointerEvents: "none",
+                opacity: 0.94,
+              }}
+            >
+              {hiddenModeMouseLines.map((line, idx) => (
+                <div key={`hidden-mode-line-${idx}`}>{line}</div>
+              ))}
             </div>
           </div>
         )}
