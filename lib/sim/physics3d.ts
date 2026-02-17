@@ -803,11 +803,11 @@ function yukawaForce(
 /* --------------------------------- Bonds ---------------------------------- */
 
 function pruneBrokenBonds(sim: Sim3D, params: Params3D, dt: number) {
-  const FULL_SHELL_BREAK_STRETCH = 1.25;
-  const PARTIAL_SHELL_BREAK_STRETCH = 1.1;
-  const STABLE_MOLECULE_BREAK_STRETCH = 1.18;
-  const SEMISTABLE_MOLECULE_BREAK_STRETCH = 1.08;
-  const BREAK_OUTWARD_VEL_MIN = 0.2;
+  const FULL_SHELL_BREAK_STRETCH = 1.34;
+  const PARTIAL_SHELL_BREAK_STRETCH = 1.16;
+  const STABLE_MOLECULE_BREAK_STRETCH = 1.24;
+  const SEMISTABLE_MOLECULE_BREAK_STRETCH = 1.12;
+  const BREAK_OUTWARD_VEL_MIN = 0.24;
   const NEUTRAL_EPS = 0.12;
   const NEAR_NEUTRAL_EPS = 0.25;
   const usePeriodic = Boolean(params.usePeriodicBoundary);
@@ -850,8 +850,11 @@ function pruneBrokenBonds(sim: Sim3D, params: Params3D, dt: number) {
     if (compId !== undefined && compId === mol.compByAtomId.get(c.id)) {
       const compChargeAbs = Math.abs(mol.chargeByComp.get(compId) ?? 0);
       const compDeficit = mol.deficitByComp.get(compId) ?? 0;
+      const compSize = (mol.atomsByComp.get(compId) || []).length;
       if (compDeficit <= 0 && compChargeAbs <= NEUTRAL_EPS) molBarrierMult = STABLE_MOLECULE_BREAK_STRETCH;
       else if (compChargeAbs <= NEAR_NEUTRAL_EPS) molBarrierMult = SEMISTABLE_MOLECULE_BREAK_STRETCH;
+      if (compSize >= 10) molBarrierMult *= 1.08;
+      else if (compSize >= 6) molBarrierMult *= 1.04;
     }
     const barrierBreakR = b.breakR * barrierMult * molBarrierMult;
 
@@ -885,8 +888,8 @@ function pruneBrokenBonds(sim: Sim3D, params: Params3D, dt: number) {
 
 function chooseBondOrder(d: number, r0Single: number, allowMultiple: boolean): BondOrder {
   if (!allowMultiple) return 1;
-  if (d < r0Single * 0.86) return 3;
-  if (d < r0Single * 0.93) return 2;
+  if (d < r0Single * 0.8) return 3;
+  if (d < r0Single * 0.9) return 2;
   return 1;
 }
 
@@ -925,6 +928,8 @@ function chooseBondOrderWithOctetBias(
     const strain = Math.abs(d - r0) / Math.max(1e-6, r0Single);
     const baselinePenalty = Math.abs(order - baseline);
     const desiredPenalty = Math.abs(order - desired);
+    const multiBondPenalty =
+      (order - 1) * (0.85 + Math.max(0, deficitNow - 2) * 0.2);
 
     const compNeed = compNeedA + compNeedB;
     const compNeedBoost = Math.min(3, compNeed) * 0.25;
@@ -933,6 +938,7 @@ function chooseBondOrderWithOctetBias(
       neutralityGain * 2.4 +
       compNeedBoost -
       strain * 2 -
+      multiBondPenalty -
       baselinePenalty * 0.5 -
       desiredPenalty * 0.35;
     if (score > bestScore) {
@@ -945,11 +951,17 @@ function chooseBondOrderWithOctetBias(
 }
 
 function tryFormBonds(sim: Sim3D, params: Params3D, dt: number) {
-  const FORM_FACTOR = 1.1;
-  const REL_SPEED_MAX = 3.2;
-  const MAX_NEW_BONDS_PER_STEP = Math.max(
+  const FORM_FACTOR = 1.24;
+  const REL_SPEED_MAX = 4.4;
+  const baseEventCap = Math.max(
     1,
     Math.floor(params.maxReactionEventsPerStep ?? 10),
+  );
+  const atomCount = sim.atoms.length;
+  const crowdBoost = atomCount >= 180 ? 2.0 : atomCount >= 140 ? 1.7 : atomCount >= 90 ? 1.4 : 1.0;
+  const MAX_NEW_BONDS_PER_STEP = Math.max(
+    1,
+    Math.floor(baseEventCap * crowdBoost),
   );
   const STABLE_CHARGE_EPS = 0.12;
   const usePeriodic = Boolean(params.usePeriodicBoundary);
@@ -1025,12 +1037,19 @@ function tryFormBonds(sim: Sim3D, params: Params3D, dt: number) {
     const rvy = ai.vy - aj.vy;
     const rvz = ai.vz - aj.vz;
     const relSpeed = Math.sqrt(rvx * rvx + rvy * rvy + rvz * rvz);
-    const relSpeedMax = REL_SPEED_MAX * (electroBias > 1 ? 1.12 : 1.0);
+    const tempSpeedBoost = 1 + Math.min(0.9, Math.sqrt(temp) * 0.24);
+    const relSpeedMax = REL_SPEED_MAX * tempSpeedBoost * (electroBias > 1 ? 1.12 : 1.0);
     if (relSpeed > relSpeedMax) continue;
 
     const barriers = getPairReactionBarrier(ai.el, aj.el);
     const arrhenius = Math.exp(-(barriers.form * barrierScale) / temp);
-    const pForm = clamp(1 - Math.exp(-attemptRate * arrhenius * dt * 60), 0, 1);
+    const deficitBoost = 1 + Math.min(1.2, 0.14 * (defAComp + defBComp));
+    const neutralityBoost = 1 + Math.min(0.8, Math.max(0, neutralityGain) * 0.55);
+    const pForm = clamp(
+      1 - Math.exp(-attemptRate * arrhenius * deficitBoost * neutralityBoost * dt * 60),
+      0,
+      1,
+    );
     if (Math.random() > pForm) continue;
 
     const order = chooseBondOrderWithOctetBias(
@@ -1182,10 +1201,14 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
     } else {
       if (b.order === 1) {
         const gain2 = Math.min(valenceDeficit(a), valenceDeficit(c)) >= 2;
-        if (d < r0Single * UP_1_TO_2 || gain2) target = 2;
+        const compressed = d < r0Single * UP_1_TO_2;
+        const mildCompressedWithNeed = gain2 && d < r0Single * 0.98;
+        if (compressed || mildCompressedWithNeed) target = 2;
       } else if (b.order === 2) {
         const gain3 = Math.min(valenceDeficit(a), valenceDeficit(c)) >= 3;
-        if (d < r0Single * UP_2_TO_3 || gain3) target = 3;
+        const stronglyCompressed = d < r0Single * UP_2_TO_3;
+        const compressedWithNeed = gain3 && d < r0Single * 0.9;
+        if (stronglyCompressed || compressedWithNeed) target = 3;
         else if (d > r0Single * DOWN_2_TO_1) target = 1;
       } else if (b.order === 3) {
         if (d > r0Single * DOWN_3_TO_2) target = 2;
@@ -1996,8 +2019,8 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
     }
   }
 
-  // Trim chemistry work at high atom counts; keeps 200+ atoms responsive.
-  const reactionInterval = atoms.length >= 160 ? 2 : 1;
+  // Keep chemistry updates at full cadence so large systems still react.
+  const reactionInterval = 1;
   if (sim.stepCount % reactionInterval === 0) {
     pruneBrokenBonds(sim, params, safeDt);
     recomputeValenceUsage(sim);

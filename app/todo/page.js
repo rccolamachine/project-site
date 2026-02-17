@@ -46,6 +46,16 @@ const ITEMS = [
     links: [{ label: "Open Pictures", href: "/pictures" }],
   },
   {
+    id: "reactor-page-make-all-molecules",
+    title: "Ensure all molecules in catalogue can be made in Reactor",
+    area: "Reactor",
+    priority: "P1",
+    status: "inProgress",
+    notes:
+      "Currently running simulations to ensure all molecules in the catalogue can be made in Reactor. Compile recipes from results to add to catalogue.",
+    links: [{ label: "Open Reactor", href: "/reactor" }],
+  },
+  {
     id: "reactor-page-in-mobile",
     title: "Fix Reactor page on mobile",
     area: "Reactor",

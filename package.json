@@ -6,7 +6,9 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "reactor:generate-molecules": "node scripts/generate_reactor_molecules.mjs",
+    "reactor:recipe-search": "node scripts/reactor_recipe_search.mjs"
   },
   "dependencies": {
     "@upstash/redis": "^1.36.2",
