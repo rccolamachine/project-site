@@ -112,6 +112,35 @@ const TOOL = {
   SAVE: "save",
 };
 
+const CATALOG_ID_SET = new Set(MOLECULE_CATALOG.map((entry) => entry.id));
+
+function readSavedCatalogueIdsFromStorage() {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw =
+      window.localStorage.getItem(CATALOGUE_STORAGE_KEY) ||
+      window.localStorage.getItem(LEGACY_COLLECTION_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    const idsRaw = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.collectedIds)
+        ? parsed.collectedIds
+        : [];
+    const seen = new Set();
+    const valid = [];
+    for (const id of idsRaw) {
+      if (typeof id !== "string") continue;
+      if (!CATALOG_ID_SET.has(id) || seen.has(id)) continue;
+      seen.add(id);
+      valid.push(id);
+    }
+    return valid;
+  } catch {
+    return [];
+  }
+}
+
 export default function ReactorPage() {
   const MAX_ATOMS = 240;
 
@@ -159,7 +188,7 @@ export default function ReactorPage() {
   const [controlsOpen, setControlsOpen] = useState(false);
   const [wellsOpen, setWellsOpen] = useState(true);
   const [modeOpen, setModeOpen] = useState(false);
-  const [tutorialOpen, setTutorialOpen] = useState(true);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [collectionFilter, setCollectionFilter] = useState("all");
   const [collectionSort, setCollectionSort] = useState("number");
@@ -194,6 +223,7 @@ export default function ReactorPage() {
   const liveHighlightKeyRef = useRef("");
   const discoveryGlowUntilRef = useRef(new Map());
   const liveAtomToCatalogIdRef = useRef(new Map());
+  const hasLocalSaveOnLoadRef = useRef(false);
   const resetInProgressRef = useRef(false);
   const selectedLiveIdsRef = useRef(new Set());
   const selectedLiveIndexByIdRef = useRef(new Map());
@@ -367,29 +397,21 @@ export default function ReactorPage() {
   }, [activeCollectionPage, sortedCollection]);
 
   useEffect(() => {
-    try {
-      const raw =
-        localStorage.getItem(CATALOGUE_STORAGE_KEY) ||
-        localStorage.getItem(LEGACY_COLLECTION_STORAGE_KEY);
-      if (!raw) {
-        setCatalogueHydrated(true);
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) {
-        setCatalogueHydrated(true);
-        return;
-      }
-
-      const valid = parsed.filter((id) => catalogById.has(id));
-      setCollectedIds(Array.from(new Set(valid)));
-      setLastCataloguedId(valid.length > 0 ? valid[valid.length - 1] : null);
-    } catch {
-      // no-op: fall back to empty collection
-    } finally {
-      setCatalogueHydrated(true);
+    const valid = readSavedCatalogueIdsFromStorage();
+    hasLocalSaveOnLoadRef.current = valid.length > 0;
+    setCollectedIds(valid);
+    setLastCataloguedId(valid.length > 0 ? valid[valid.length - 1] : null);
+    if (valid.length > 0) {
+      setTutorialOpen(false);
+      setCatalogueOpen(true);
+      setCollectionFilter("live");
+    } else {
+      setTutorialOpen(true);
+      setCatalogueOpen(false);
+      setCollectionFilter("all");
     }
-  }, [catalogById]);
+    setCatalogueHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!catalogueHydrated || resetInProgressRef.current) return;
@@ -1620,19 +1642,22 @@ export default function ReactorPage() {
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
-    // default seed cluster starts in the lower half so tutorial doesn't cover it
+    // default seed cluster starts lower for tutorial-first users; upper when catalogue opens from save
     const sim = simRef.current;
     clearSim3D(sim);
     const initialCounts = [
       ["O", 4],
       ["H", 8],
     ];
+    const spawnInTopHalf = hasLocalSaveOnLoadRef.current;
     for (const [el, count] of initialCounts) {
       for (let i = 0; i < count; i++) {
         addAtom3D(
           sim,
           (Math.random() - 0.5) * 4,
-          -1.8 + (Math.random() - 0.5) * 2.0,
+          spawnInTopHalf
+            ? 1.8 + (Math.random() - 0.5) * 2.0
+            : -1.8 + (Math.random() - 0.5) * 2.0,
           (Math.random() - 0.5) * 3,
           el,
           elements,
@@ -2150,10 +2175,10 @@ export default function ReactorPage() {
       <header style={{ marginBottom: 16 }}>
         <h1>Reactor</h1>
         <p className="lede">
-          Toy chemistry sandbox: drop atoms, tweak force fields and
-          environmental conditions, and watch matter change. Not necessarily the
-          most accurate, but close enough for fun and educational molecular
-          play.
+          Toy chemistry sandbox: drop atoms, change conditions like temperature
+          and volume, and watch matter change. Try to synthesize molecules that
+          are in the catalogue. Not necessarily the most scientifically
+          accurate, but close enough for fun and educational molecular play.
         </p>
       </header>
       <DesktopBadge />

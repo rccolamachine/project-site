@@ -21,7 +21,7 @@ const sections = [
       {
         title: "Reactor",
         description:
-          "Fun little molecular modeling sandbox: throw some atoms into a box, change the conditions and the physics, and watch matter change.",
+          "Fun little molecular modeling sandbox: throw some atoms into a box, change the conditions and the physics, and watch matter change. New: can you synthesize the molecules in the catalogue?",
         href: "/reactor",
         cta: "Do computational chemistry",
       },
@@ -66,6 +66,34 @@ const sections = [
   },
 ];
 
+const newBadgeStyle = {
+  display: "inline-block",
+  margin: "0 6px 0 2px",
+  padding: "1px 7px",
+  borderRadius: 999,
+  border: "1px solid rgba(250,204,21,0.45)",
+  background: "rgba(250,204,21,0.16)",
+  color: "#fef08a",
+  fontSize: 11,
+  fontWeight: 900,
+  letterSpacing: 0.3,
+  lineHeight: 1.25,
+  verticalAlign: "baseline",
+};
+
+function renderDescriptionWithNewBadge(description) {
+  const marker = "New:";
+  const idx = description.indexOf(marker);
+  if (idx < 0) return description;
+  const before = description.slice(0, idx).trimEnd();
+  const after = description.slice(idx + marker.length).trimStart();
+  return (
+    <>
+      {before} <span style={newBadgeStyle}>NEW</span> {after}
+    </>
+  );
+}
+
 export default function Home() {
   const sectionPanelStyle = {
     marginTop: 16,
@@ -104,7 +132,7 @@ export default function Home() {
             {section.cards.map((card) => (
               <div className="card" key={card.title}>
                 <h2>{card.title}</h2>
-                <p>{card.description}</p>
+                <p>{renderDescriptionWithNewBadge(card.description)}</p>
                 <Link className="btn" href={card.href}>
                   {card.cta}
                 </Link>
