@@ -1,7 +1,7 @@
 // app/reactor/page.js
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import DesktopBadge from "../../components/DesktopBadge";
@@ -15,7 +15,6 @@ import {
   ljPotential,
   mixLorentzBerthelot,
   nudgeAll,
-  recomputeBondOrders,
   removeAtom3D,
   setGrab,
   setGrabTarget,
@@ -25,7 +24,11 @@ import {
 
 const ELEMENTS = ["S", "P", "O", "N", "C", "H"];
 const ROOM_TEMP_K = 300;
-const FIXED_CUTOFF = 4.8;
+const FIXED_CUTOFF = 4.2;
+const DEFAULT_TEMPERATURE_K = 420;
+const DEFAULT_DAMPING = 0.992;
+const DEFAULT_BOND_SCALE = 3.2;
+const DEFAULT_BOX_HALF_SIZE = 6.2;
 
 const TOOL = {
   PLACE: "place",
@@ -34,7 +37,7 @@ const TOOL = {
 };
 
 export default function ReactorPage() {
-  const MAX_ATOMS = 120;
+  const MAX_ATOMS = 240;
 
   // tool state
   const [tool, setTool] = useState(TOOL.PLACE);
@@ -62,12 +65,12 @@ export default function ReactorPage() {
   useEffect(() => void (pausedRef.current = paused), [paused]);
 
   // Kelvin 0..1000
-  const [temperatureK, setTemperatureK] = useState(400);
-  const [damping, setDamping] = useState(0.975);
-  const [bondScale, setBondScale] = useState(3.5);
+  const [temperatureK, setTemperatureK] = useState(DEFAULT_TEMPERATURE_K);
+  const [damping, setDamping] = useState(DEFAULT_DAMPING);
+  const [bondScale, setBondScale] = useState(DEFAULT_BOND_SCALE);
 
   // box size (half-size)
-  const [boxHalfSize, setBoxHalfSize] = useState(6.0);
+  const [boxHalfSize, setBoxHalfSize] = useState(DEFAULT_BOX_HALF_SIZE);
   const [showBoxEdges, setShowBoxEdges] = useState(true);
 
   // per-element LJ
@@ -105,6 +108,7 @@ export default function ReactorPage() {
   const simRef = useRef(createSim3D());
   const atomSpritesRef = useRef(new Map());
   const paramsRef = useRef(null);
+  const prevBoxHalfSizeRef = useRef(DEFAULT_BOX_HALF_SIZE);
 
   const elements = useMemo(() => ({ ...DEFAULT_ELEMENTS_3D }), []);
 
@@ -115,19 +119,38 @@ export default function ReactorPage() {
     paramsRef.current = {
       lj,
       cutoff: FIXED_CUTOFF,
+      cutoffSwitchRatio: 0.85,
+      reactionCutoff: 2.25,
       minR: 0.35,
-      maxPairForce: 30,
+      maxPairForce: 28,
+      nonbonded12LJScale: 0,
+      nonbonded12ElectroScale: 0,
+      nonbonded13LJScale: 0,
+      nonbonded13ElectroScale: 0,
+      nonbonded14LJScale: 0.5,
+      nonbonded14ElectroScale: 0.8333,
 
       bondScale,
       allowMultipleBonds,
 
+      temperatureK,
+      kBoltzmannReduced: 1 / ROOM_TEMP_K,
       temperature: tempFactor,
       damping,
-      tempVelKick: 6.8,
+      tempVelKick: 4.2,
+      useLangevin: true,
+      langevinGamma: 2.4,
 
       boxHalfSize,
       wallPadding: 0.25,
       wallK: 18,
+      usePeriodicBoundary: true,
+
+      reactionBarrierScale: 1.0,
+      reactionAttemptRate: 2.0,
+      maxReactionEventsPerStep: 12,
+      valencePenaltyK: 8,
+      valencePenaltyForceCap: 18,
 
       grabK: 80,
       grabMaxForce: 140,
@@ -140,10 +163,34 @@ export default function ReactorPage() {
 
       enableElectrostatics: true,
       charges: { ...DEFAULT_CHARGES },
-      ke: 0.6,
+      ke: 0.55,
       screeningLength: 4.0,
+      electroRepulsionScale: 2.1,
+      electroAttractionScale: 2.0,
+      electroBondBiasStrength: 0.75,
+      electroDihedral180Scale: 0.2,
     };
   }, [lj, temperatureK, damping, bondScale, allowMultipleBonds, boxHalfSize]);
+
+  // Approximate volume change by scaling coordinates with box size.
+  useEffect(() => {
+    const prev = prevBoxHalfSizeRef.current;
+    if (!prev || Math.abs(prev - boxHalfSize) < 1e-6) return;
+
+    const sim = simRef.current;
+    const scale = boxHalfSize / prev;
+    const velScale = clamp(Math.pow(scale, -0.2), 0.86, 1.16);
+
+    for (const a of sim.atoms) {
+      a.x *= scale;
+      a.y *= scale;
+      a.z *= scale;
+      a.vx *= velScale;
+      a.vy *= velScale;
+      a.vz *= velScale;
+    }
+    prevBoxHalfSizeRef.current = boxHalfSize;
+  }, [boxHalfSize]);
 
   // OrbitControls enabled only in Rotate tool
   useEffect(() => {
@@ -163,8 +210,7 @@ export default function ReactorPage() {
     t.controls.update();
   }
 
-  // update box visuals when size or edges-toggle changes
-  useEffect(() => {
+  const refreshBoxVisuals = useCallback(() => {
     const t = threeRef.current;
     if (!t.scene) return;
 
@@ -205,6 +251,11 @@ export default function ReactorPage() {
     t.scene.add(grid2);
     t.grid2 = grid2;
   }, [boxHalfSize, showBoxEdges]);
+
+  // update box visuals when size or edges-toggle changes
+  useEffect(() => {
+    refreshBoxVisuals();
+  }, [refreshBoxVisuals]);
 
   const ui = useMemo(
     () => ({
@@ -448,6 +499,10 @@ export default function ReactorPage() {
   function syncBondCylinders() {
     const t = threeRef.current;
     const sim = simRef.current;
+    const params = paramsRef.current;
+    const usePeriodic = Boolean(params?.usePeriodicBoundary);
+    const halfBox = params?.boxHalfSize ?? boxHalfSize;
+    const boxSize = halfBox * 2;
 
     if (!showBondsRef.current) {
       for (const m of t.bondMeshes) m.visible = false;
@@ -474,11 +529,12 @@ export default function ReactorPage() {
     t.camera.getWorldDirection(cameraDir);
 
     const yAxis = new THREE.Vector3(0, 1, 0);
+    const atomById = new Map(sim.atoms.map((a) => [a.id, a]));
 
     for (let bi = 0; bi < sim.bonds.length; bi++) {
       const bond = sim.bonds[bi];
-      const a = sim.atoms.find((x) => x.id === bond.aId);
-      const b = sim.atoms.find((x) => x.id === bond.bId);
+      const a = atomById.get(bond.aId);
+      const b = atomById.get(bond.bId);
       const baseIdx = bi * 3;
 
       if (!a || !b) {
@@ -488,8 +544,30 @@ export default function ReactorPage() {
 
       const drawOrder = allowMultipleBondsRef.current ? bond.order : 1;
 
+      let dx = b.x - a.x;
+      let dy = b.y - a.y;
+      let dz = b.z - a.z;
+      if (usePeriodic) {
+        if (dx > halfBox) dx -= boxSize;
+        if (dx < -halfBox) dx += boxSize;
+        if (dy > halfBox) dy -= boxSize;
+        if (dy < -halfBox) dy += boxSize;
+        if (dz > halfBox) dz -= boxSize;
+        if (dz < -halfBox) dz += boxSize;
+      }
+
+      const crossesBoundary =
+        usePeriodic &&
+        (Math.abs(b.x - a.x - dx) > 1e-5 ||
+          Math.abs(b.y - a.y - dy) > 1e-5 ||
+          Math.abs(b.z - a.z - dz) > 1e-5);
+      if (crossesBoundary) {
+        for (let k = 0; k < 3; k++) t.bondMeshes[baseIdx + k].visible = false;
+        continue;
+      }
+
       const start = new THREE.Vector3(a.x, a.y, a.z);
-      const end = new THREE.Vector3(b.x, b.y, b.z);
+      const end = new THREE.Vector3(a.x + dx, a.y + dy, a.z + dz);
 
       const dir = end.clone().sub(start);
       const len = Math.max(0.001, dir.length());
@@ -578,6 +656,7 @@ export default function ReactorPage() {
     three.atomGroup = atomGroup;
     three.bondGroup = bondGroup;
     three.bondMeshes = [];
+    refreshBoxVisuals();
 
     const resize = () => {
       const rect = mount.getBoundingClientRect();
@@ -620,9 +699,6 @@ export default function ReactorPage() {
     const FIXED_DT = 1 / 60;
     const MAX_SUBSTEPS = 6;
 
-    let bondOrderTimer = 0;
-    const BOND_ORDER_PERIOD = 0.25;
-
     const tick = (now) => {
       rafRef.current = requestAnimationFrame(tick);
 
@@ -637,12 +713,6 @@ export default function ReactorPage() {
         let steps = 0;
         while (acc >= FIXED_DT && steps < MAX_SUBSTEPS) {
           stepSim3D(simRef.current, params, FIXED_DT);
-
-          bondOrderTimer += FIXED_DT;
-          if (bondOrderTimer >= BOND_ORDER_PERIOD) {
-            bondOrderTimer = 0;
-            recomputeBondOrders(simRef.current, params);
-          }
 
           acc -= FIXED_DT;
           steps++;
@@ -833,11 +903,11 @@ export default function ReactorPage() {
   // Reset ALL controls EXCEPT the currently-selected tool mode
   function resetAllControls() {
     setPaused(false);
-    setTemperatureK(400);
-    setDamping(0.975);
-    setBondScale(3.5);
+    setTemperatureK(DEFAULT_TEMPERATURE_K);
+    setDamping(DEFAULT_DAMPING);
+    setBondScale(DEFAULT_BOND_SCALE);
 
-    setBoxHalfSize(6.0);
+    setBoxHalfSize(DEFAULT_BOX_HALF_SIZE);
     setShowBoxEdges(true);
 
     setShowBonds(true);
@@ -939,15 +1009,15 @@ export default function ReactorPage() {
                 label="Temp (K)"
                 value={temperatureK}
                 min={0}
-                max={1000}
+                max={1400}
                 step={10}
                 onChange={setTemperatureK}
               />
               <MiniSlider
                 label="Damping"
                 value={damping}
-                min={0.94}
-                max={0.999}
+                min={0.97}
+                max={0.9995}
                 step={0.001}
                 onChange={setDamping}
               />
@@ -962,8 +1032,8 @@ export default function ReactorPage() {
               <MiniSlider
                 label="Volume (box size)"
                 value={boxHalfSize}
-                min={0.6}
-                max={10}
+                min={2.5}
+                max={12}
                 step={0.1}
                 onChange={setBoxHalfSize}
               />
@@ -1144,10 +1214,10 @@ export default function ReactorPage() {
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button onClick={spawnSelected} style={ui.btnLight}>
-                    Spawn ten {placeElement}
+                    Spawn 10 {placeElement}
                   </button>
                   <button onClick={spawnRandom} style={ui.btnLight}>
-                    Spawn ten Random
+                    Spawn 10 Random
                   </button>
                 </div>
               </>

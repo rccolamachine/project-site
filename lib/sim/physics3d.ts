@@ -86,8 +86,16 @@ export type Params3D = {
   // nonbonded LJ
   lj: LJPerElement;
   cutoff: number;
+  cutoffSwitchRatio?: number;
+  reactionCutoff?: number;
   minR: number;
   maxPairForce: number;
+  nonbonded12LJScale?: number;
+  nonbonded12ElectroScale?: number;
+  nonbonded13LJScale?: number;
+  nonbonded13ElectroScale?: number;
+  nonbonded14LJScale?: number;
+  nonbonded14ElectroScale?: number;
 
   // electrostatics (toy)
   enableElectrostatics: boolean;
@@ -113,17 +121,29 @@ export type Params3D = {
   dihedralForceCap: number;
 
   // dynamics
+  temperatureK?: number;
+  kBoltzmannReduced?: number;
   temperature: number;
   damping: number;
   tempVelKick: number;
+  useLangevin?: boolean;
+  langevinGamma?: number;
   thermostatInterval?: number; // steps between velocity rescaling
   thermostatStrength?: number; // 0..1 blend toward target kinetic energy
   thermostatClamp?: number; // max fractional rescale per application
 
   // container
   boxHalfSize: number;
+  usePeriodicBoundary?: boolean;
   wallPadding: number;
   wallK: number;
+
+  // reactive gating (toy Arrhenius-style)
+  reactionBarrierScale?: number;
+  reactionAttemptRate?: number;
+  maxReactionEventsPerStep?: number;
+  valencePenaltyK?: number;
+  valencePenaltyForceCap?: number;
 
   // grabbing
   grabK: number;
@@ -208,6 +228,34 @@ const PAIR_FORMATION_BIAS: Partial<Record<PairKey, number>> = {
   "O-O": 0.92,
 };
 
+type PairReactionBarrier = { form: number; break: number };
+
+// Dimensionless barriers for Arrhenius-style reaction gating.
+// Lower = easier channel activation.
+const PAIR_REACTION_BARRIERS: Partial<Record<PairKey, PairReactionBarrier>> = {
+  "H-H": { form: 0.34, break: 1.2 },
+  "H-C": { form: 0.36, break: 1.25 },
+  "H-N": { form: 0.34, break: 1.28 },
+  "H-O": { form: 0.32, break: 1.35 },
+  "H-P": { form: 0.5, break: 1.15 },
+  "H-S": { form: 0.5, break: 1.12 },
+  "C-C": { form: 0.52, break: 1.55 },
+  "C-N": { form: 0.5, break: 1.52 },
+  "C-O": { form: 0.48, break: 1.5 },
+  "C-S": { form: 0.62, break: 1.34 },
+  "C-P": { form: 0.68, break: 1.3 },
+  "N-N": { form: 0.62, break: 1.38 },
+  "N-O": { form: 0.58, break: 1.35 },
+  "N-S": { form: 0.66, break: 1.22 },
+  "N-P": { form: 0.72, break: 1.2 },
+  "O-O": { form: 0.86, break: 1.24 },
+  "O-S": { form: 0.74, break: 1.24 },
+  "O-P": { form: 0.64, break: 1.3 },
+  "S-S": { form: 0.72, break: 1.22 },
+  "P-S": { form: 0.82, break: 1.12 },
+  "P-P": { form: 0.95, break: 1.08 },
+};
+
 function pairKey(a: ElementKey, b: ElementKey): PairKey {
   return (a <= b ? `${a}-${b}` : `${b}-${a}`) as PairKey;
 }
@@ -220,6 +268,10 @@ function getPairBondParam(a: ElementKey, b: ElementKey): PairBondParam {
 
 function getPairFormationBias(a: ElementKey, b: ElementKey) {
   return PAIR_FORMATION_BIAS[pairKey(a, b)] ?? 1.0;
+}
+
+function getPairReactionBarrier(a: ElementKey, b: ElementKey): PairReactionBarrier {
+  return PAIR_REACTION_BARRIERS[pairKey(a, b)] ?? { form: 0.68, break: 1.2 };
 }
 
 function orderAdjustedR0(r0Single: number, order: BondOrder) {
@@ -245,6 +297,292 @@ export function createSim3D(): Sim3D {
 
 export function clamp(v: number, a: number, b: number) {
   return Math.max(a, Math.min(b, v));
+}
+
+type PairNonbondScale = {
+  lj: number;
+  electro: number;
+};
+
+function pairIdKey(aId: number, bId: number) {
+  return aId <= bId ? `${aId}:${bId}` : `${bId}:${aId}`;
+}
+
+function getReducedTemperature(params: Params3D) {
+  if (
+    typeof params.temperatureK === "number" &&
+    Number.isFinite(params.temperatureK)
+  ) {
+    const kB = Math.max(1e-6, params.kBoltzmannReduced ?? (1 / 300));
+    return Math.max(0, params.temperatureK * kB);
+  }
+  return Math.max(0, params.temperature);
+}
+
+function smoothCutoffWeight(r: number, cutoff: number, switchStart: number) {
+  if (r >= cutoff) return 0;
+  if (r <= switchStart) return 1;
+  const denom = Math.max(1e-6, cutoff - switchStart);
+  const t = clamp((r - switchStart) / denom, 0, 1);
+  // Quintic smoothstep, inverted so weight=1 at switchStart and 0 at cutoff.
+  const s = t * t * t * (t * (t * 6 - 15) + 10);
+  return 1 - s;
+}
+
+function buildBondedPairScales(sim: Sim3D, params: Params3D) {
+  const scale12: PairNonbondScale = {
+    lj: clamp(params.nonbonded12LJScale ?? 0, 0, 1),
+    electro: clamp(params.nonbonded12ElectroScale ?? 0, 0, 1),
+  };
+  const scale13: PairNonbondScale = {
+    lj: clamp(params.nonbonded13LJScale ?? 0, 0, 1),
+    electro: clamp(params.nonbonded13ElectroScale ?? 0, 0, 1),
+  };
+  const scale14: PairNonbondScale = {
+    lj: clamp(params.nonbonded14LJScale ?? 0.5, 0, 1),
+    electro: clamp(params.nonbonded14ElectroScale ?? 0.833333, 0, 1),
+  };
+
+  const adjacency = new Map<number, number[]>();
+  for (const a of sim.atoms) adjacency.set(a.id, []);
+  for (const b of sim.bonds) {
+    if (!adjacency.has(b.aId)) adjacency.set(b.aId, []);
+    if (!adjacency.has(b.bId)) adjacency.set(b.bId, []);
+    adjacency.get(b.aId)!.push(b.bId);
+    adjacency.get(b.bId)!.push(b.aId);
+  }
+
+  type Entry = { dist: number; scale: PairNonbondScale };
+  const map = new Map<string, Entry>();
+  const setIfShorter = (aId: number, bId: number, dist: number, scale: PairNonbondScale) => {
+    const key = pairIdKey(aId, bId);
+    const existing = map.get(key);
+    if (!existing || dist < existing.dist) map.set(key, { dist, scale });
+  };
+
+  // 1-2 direct bonded pairs.
+  for (const b of sim.bonds) setIfShorter(b.aId, b.bId, 1, scale12);
+
+  // 1-3 pairs through one intermediate atom.
+  for (const neigh of adjacency.values()) {
+    if (neigh.length < 2) continue;
+    for (let i = 0; i < neigh.length - 1; i += 1) {
+      for (let j = i + 1; j < neigh.length; j += 1) {
+        setIfShorter(neigh[i], neigh[j], 2, scale13);
+      }
+    }
+  }
+
+  // 1-4 pairs through two intermediate atoms (dihedral-like paths).
+  for (const b of sim.bonds) {
+    const j = b.aId;
+    const k = b.bId;
+    const jN = (adjacency.get(j) || []).filter((id) => id !== k);
+    const kN = (adjacency.get(k) || []).filter((id) => id !== j);
+    for (const iId of jN) {
+      for (const lId of kN) {
+        if (iId === lId) continue;
+        setIfShorter(iId, lId, 3, scale14);
+      }
+    }
+  }
+
+  const scales = new Map<string, PairNonbondScale>();
+  for (const [key, entry] of map.entries()) scales.set(key, entry.scale);
+  return scales;
+}
+
+type PairCandidate = {
+  i: number;
+  j: number;
+  dx: number;
+  dy: number;
+  dz: number;
+  r2: number;
+  r: number;
+};
+
+function randomNormal() {
+  // Box-Muller transform.
+  let u = 0;
+  let v = 0;
+  while (u <= 1e-9) u = Math.random();
+  while (v <= 1e-9) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function wrapPeriodicCoordinate(value: number, halfBox: number) {
+  const L = Math.max(1e-6, halfBox * 2);
+  const shifted = value + halfBox;
+  return ((((shifted % L) + L) % L) - halfBox);
+}
+
+function minimumImage(value: number, halfBox: number) {
+  const L = Math.max(1e-6, halfBox * 2);
+  if (value > halfBox) return value - L;
+  if (value < -halfBox) return value + L;
+  return value;
+}
+
+function displacement(
+  ax: number,
+  ay: number,
+  az: number,
+  bx: number,
+  by: number,
+  bz: number,
+  halfBox: number,
+  usePeriodic: boolean,
+) {
+  let dx = bx - ax;
+  let dy = by - ay;
+  let dz = bz - az;
+  if (usePeriodic) {
+    dx = minimumImage(dx, halfBox);
+    dy = minimumImage(dy, halfBox);
+    dz = minimumImage(dz, halfBox);
+  }
+  return { dx, dy, dz };
+}
+
+function toCellCoordinate(value: number, halfBox: number, cellSize: number, nCells: number) {
+  const L = Math.max(1e-6, halfBox * 2);
+  const shifted = ((value + halfBox) % L + L) % L;
+  const idx = Math.floor(shifted / cellSize);
+  return clamp(idx, 0, Math.max(0, nCells - 1));
+}
+
+function buildNeighborPairs(
+  atoms: Atom3D[],
+  cutoff: number,
+  minR: number,
+  halfBox: number,
+  usePeriodic: boolean,
+) {
+  const pairs: PairCandidate[] = [];
+  if (atoms.length < 2) return pairs;
+
+  const safeCutoff = Math.max(1e-6, cutoff);
+  const cutoff2 = safeCutoff * safeCutoff;
+  const L = Math.max(1e-6, halfBox * 2);
+  const cellSize = safeCutoff;
+  const nCells = Math.max(1, Math.floor(L / cellSize));
+
+  if (nCells <= 1) {
+    for (let i = 0; i < atoms.length; i += 1) {
+      const ai = atoms[i];
+      for (let j = i + 1; j < atoms.length; j += 1) {
+        const aj = atoms[j];
+        const d = displacement(
+          ai.x,
+          ai.y,
+          ai.z,
+          aj.x,
+          aj.y,
+          aj.z,
+          halfBox,
+          usePeriodic,
+        );
+        const r2 = d.dx * d.dx + d.dy * d.dy + d.dz * d.dz;
+        if (r2 > cutoff2) continue;
+        const r = Math.max(Math.sqrt(r2) || 1e-6, minR);
+        pairs.push({ i, j, dx: d.dx, dy: d.dy, dz: d.dz, r2, r });
+      }
+    }
+    return pairs;
+  }
+
+  const cellMap = new Map<number, number[]>();
+  const pairSeen = new Set<number>();
+  const keyOf = (cx: number, cy: number, cz: number) =>
+    ((cx * nCells) + cy) * nCells + cz;
+
+  for (let i = 0; i < atoms.length; i += 1) {
+    const a = atoms[i];
+    const cx = toCellCoordinate(a.x, halfBox, cellSize, nCells);
+    const cy = toCellCoordinate(a.y, halfBox, cellSize, nCells);
+    const cz = toCellCoordinate(a.z, halfBox, cellSize, nCells);
+    const key = keyOf(cx, cy, cz);
+    const arr = cellMap.get(key);
+    if (arr) arr.push(i);
+    else cellMap.set(key, [i]);
+  }
+
+  const offsets: Array<[number, number, number]> = [];
+  for (let ox = -1; ox <= 1; ox += 1) {
+    for (let oy = -1; oy <= 1; oy += 1) {
+      for (let oz = -1; oz <= 1; oz += 1) {
+        if (ox < 0) continue;
+        if (ox === 0 && oy < 0) continue;
+        if (ox === 0 && oy === 0 && oz < 0) continue;
+        offsets.push([ox, oy, oz]);
+      }
+    }
+  }
+
+  const wrapCell = (c: number) => {
+    if (!usePeriodic) return c;
+    return ((c % nCells) + nCells) % nCells;
+  };
+
+  for (const [baseKey, inCell] of cellMap.entries()) {
+    const cx = Math.floor(baseKey / (nCells * nCells));
+    const rem = baseKey - cx * nCells * nCells;
+    const cy = Math.floor(rem / nCells);
+    const cz = rem - cy * nCells;
+    const neighborCellKeys = new Set<number>();
+
+    for (const [ox, oy, oz] of offsets) {
+      let nx = cx + ox;
+      let ny = cy + oy;
+      let nz = cz + oz;
+
+      if (usePeriodic) {
+        nx = wrapCell(nx);
+        ny = wrapCell(ny);
+        nz = wrapCell(nz);
+      } else if (nx < 0 || ny < 0 || nz < 0 || nx >= nCells || ny >= nCells || nz >= nCells) {
+        continue;
+      }
+
+      const neighborKey = keyOf(nx, ny, nz);
+      if (neighborCellKeys.has(neighborKey)) continue;
+      neighborCellKeys.add(neighborKey);
+      const neigh = cellMap.get(neighborKey);
+      if (!neigh || neigh.length <= 0) continue;
+
+      const sameCell = nx === cx && ny === cy && nz === cz;
+      for (let aIdx = 0; aIdx < inCell.length; aIdx += 1) {
+        const i = inCell[aIdx];
+        const ai = atoms[i];
+        const startB = sameCell ? aIdx + 1 : 0;
+        for (let bIdx = startB; bIdx < neigh.length; bIdx += 1) {
+          const j = neigh[bIdx];
+          if (j <= i) continue;
+          const aj = atoms[j];
+          const d = displacement(
+            ai.x,
+            ai.y,
+            ai.z,
+            aj.x,
+            aj.y,
+            aj.z,
+            halfBox,
+            usePeriodic,
+          );
+          const r2 = d.dx * d.dx + d.dy * d.dy + d.dz * d.dz;
+          if (r2 > cutoff2) continue;
+          const pairKey = i * atoms.length + j;
+          if (pairSeen.has(pairKey)) continue;
+          pairSeen.add(pairKey);
+          const r = Math.max(Math.sqrt(r2) || 1e-6, minR);
+          pairs.push({ i, j, dx: d.dx, dy: d.dy, dz: d.dz, r2, r });
+        }
+      }
+    }
+  }
+
+  return pairs;
 }
 
 function degToRad(d: number) {
@@ -297,12 +635,6 @@ export function addAtom3D(
   });
 }
 
-function bondExists(sim: Sim3D, aId: number, bId: number) {
-  return sim.bonds.some(
-    (b) => (b.aId === aId && b.bId === bId) || (b.aId === bId && b.bId === aId)
-  );
-}
-
 function bondValenceCost(order: BondOrder) {
   return order;
 }
@@ -326,13 +658,17 @@ function recomputeValenceUsage(sim: Sim3D) {
     if (!a || !c) continue;
 
     const cost = bondValenceCost(b.order);
-    a.valenceUsed = clamp(a.valenceUsed + cost, 0, a.valenceMax);
-    c.valenceUsed = clamp(c.valenceUsed + cost, 0, c.valenceMax);
+    a.valenceUsed += cost;
+    c.valenceUsed += cost;
   }
 }
 
 function valenceDeficit(atom: Atom3D) {
   return Math.max(0, targetValenceForOctet(atom) - atom.valenceUsed);
+}
+
+function valenceOverflow(atom: Atom3D) {
+  return Math.max(0, atom.valenceUsed - atom.valenceMax);
 }
 
 function hasFullShell(atom: Atom3D) {
@@ -466,7 +802,7 @@ function yukawaForce(
 
 /* --------------------------------- Bonds ---------------------------------- */
 
-function pruneBrokenBonds(sim: Sim3D, params: Params3D) {
+function pruneBrokenBonds(sim: Sim3D, params: Params3D, dt: number) {
   const FULL_SHELL_BREAK_STRETCH = 1.25;
   const PARTIAL_SHELL_BREAK_STRETCH = 1.1;
   const STABLE_MOLECULE_BREAK_STRETCH = 1.18;
@@ -474,18 +810,32 @@ function pruneBrokenBonds(sim: Sim3D, params: Params3D) {
   const BREAK_OUTWARD_VEL_MIN = 0.2;
   const NEUTRAL_EPS = 0.12;
   const NEAR_NEUTRAL_EPS = 0.25;
+  const usePeriodic = Boolean(params.usePeriodicBoundary);
+  const barrierScale = Math.max(0.2, params.reactionBarrierScale ?? 1.0);
+  const attemptRate = Math.max(0, params.reactionAttemptRate ?? 1.0);
+  const temp = Math.max(0.03, getReducedTemperature(params));
+  const byId = new Map<number, Atom3D>();
+  for (const atom of sim.atoms) byId.set(atom.id, atom);
 
   const mol = buildMoleculeState(sim, params);
 
   const kept: Bond3D[] = [];
   for (const b of sim.bonds) {
-    const a = getAtom(sim, b.aId);
-    const c = getAtom(sim, b.bId);
+    const a = byId.get(b.aId);
+    const c = byId.get(b.bId);
     if (!a || !c) continue;
 
-    const dx = c.x - a.x;
-    const dy = c.y - a.y;
-    const dz = c.z - a.z;
+    const delta = displacement(
+      a.x,
+      a.y,
+      a.z,
+      c.x,
+      c.y,
+      c.z,
+      params.boxHalfSize,
+      usePeriodic,
+    );
+    const { dx, dy, dz } = delta;
     const r = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0;
 
     const fullA = hasFullShell(a);
@@ -516,6 +866,13 @@ function pruneBrokenBonds(sim: Sim3D, params: Params3D) {
     const outwardSpeed = rvx * ux + rvy * uy + rvz * uz;
 
     if (r > barrierBreakR && outwardSpeed > BREAK_OUTWARD_VEL_MIN) {
+      const barriers = getPairReactionBarrier(a.el, c.el);
+      const arrhenius = Math.exp(-(barriers.break * barrierScale) / temp);
+      const pBreak = clamp(1 - Math.exp(-attemptRate * arrhenius * dt * 60), 0, 1);
+      if (Math.random() > pBreak) {
+        kept.push(b);
+        continue;
+      }
       const cost = bondValenceCost(b.order);
       a.valenceUsed = Math.max(0, a.valenceUsed - cost);
       c.valenceUsed = Math.max(0, c.valenceUsed - cost);
@@ -587,103 +944,129 @@ function chooseBondOrderWithOctetBias(
   return bestOrder;
 }
 
-function tryFormBonds(sim: Sim3D, params: Params3D) {
+function tryFormBonds(sim: Sim3D, params: Params3D, dt: number) {
   const FORM_FACTOR = 1.1;
   const REL_SPEED_MAX = 3.2;
-  const MAX_NEW_BONDS_PER_STEP = 10;
+  const MAX_NEW_BONDS_PER_STEP = Math.max(
+    1,
+    Math.floor(params.maxReactionEventsPerStep ?? 10),
+  );
   const STABLE_CHARGE_EPS = 0.12;
+  const usePeriodic = Boolean(params.usePeriodicBoundary);
+  const barrierScale = Math.max(0.2, params.reactionBarrierScale ?? 1.0);
+  const attemptRate = Math.max(0, params.reactionAttemptRate ?? 1.0);
+  const temp = Math.max(0.03, getReducedTemperature(params));
 
   const mol = buildMoleculeState(sim, params);
+  const reactionCutoff = Math.max(
+    params.reactionCutoff ?? params.cutoff,
+    Math.min(params.cutoff, 2.2),
+  );
+  const pairCandidates = buildNeighborPairs(
+    sim.atoms,
+    reactionCutoff,
+    params.minR,
+    params.boxHalfSize,
+    usePeriodic,
+  );
+  const bondSet = new Set<string>();
+  for (const b of sim.bonds) {
+    const lo = Math.min(b.aId, b.bId);
+    const hi = Math.max(b.aId, b.bId);
+    bondSet.add(`${lo}:${hi}`);
+  }
 
   let made = 0;
 
-  for (let i = 0; i < sim.atoms.length; i++) {
-    const ai = sim.atoms[i];
+  for (const pair of pairCandidates) {
+    const ai = sim.atoms[pair.i];
+    const aj = sim.atoms[pair.j];
+    if (!ai || !aj) continue;
     if (ai.valenceUsed >= ai.valenceMax) continue;
+    if (aj.valenceUsed >= aj.valenceMax) continue;
+    const lo = Math.min(ai.id, aj.id);
+    const hi = Math.max(ai.id, aj.id);
+    if (bondSet.has(`${lo}:${hi}`)) continue;
 
-    for (let j = i + 1; j < sim.atoms.length; j++) {
-      const aj = sim.atoms[j];
-      if (aj.valenceUsed >= aj.valenceMax) continue;
-      if (bondExists(sim, ai.id, aj.id)) continue;
-
-      const dx = aj.x - ai.x;
-      const dy = aj.y - ai.y;
-      const dz = aj.z - ai.z;
-      const d2 = dx * dx + dy * dy + dz * dz;
-
-      const { r0: r0Single, kLit } = getPairBondParam(ai.el, aj.el);
-      let electroBias = 1.0;
-      if (params.enableElectrostatics) {
-        const qi = params.charges[ai.el] ?? 0;
-        const qj = params.charges[aj.el] ?? 0;
-        const qq = qi * qj;
-        const biasStrength = clamp(params.electroBondBiasStrength ?? 0.7, 0, 2);
-        const mag = Math.min(1, Math.abs(qq) / 0.08);
-        if (qq < 0) electroBias = 1 + 0.5 * biasStrength * mag;
-        else if (qq > 0) electroBias = 1 - 0.35 * biasStrength * mag;
-      }
-
-      const formR = r0Single * FORM_FACTOR * getPairFormationBias(ai.el, aj.el) * electroBias;
-      if (d2 > formR * formR) continue;
-
-      const d = Math.sqrt(d2) || 1e-6;
-
-      const compA = mol.compByAtomId.get(ai.id);
-      const compB = mol.compByAtomId.get(aj.id);
-      const chargeA = compA ? (mol.chargeByComp.get(compA) ?? 0) : 0;
-      const chargeB = compB ? (mol.chargeByComp.get(compB) ?? 0) : 0;
-      const defAComp = compA ? (mol.deficitByComp.get(compA) ?? 0) : valenceDeficit(ai);
-      const defBComp = compB ? (mol.deficitByComp.get(compB) ?? 0) : valenceDeficit(aj);
-      const sameComp = compA !== undefined && compA === compB;
-
-      // Avoid fusing already-stable molecules.
-      if (!sameComp && defAComp <= 0 && defBComp <= 0) {
-        if (Math.abs(chargeA) <= STABLE_CHARGE_EPS && Math.abs(chargeB) <= STABLE_CHARGE_EPS) continue;
-      }
-
-      let neutralityGain = 0;
-      if (!sameComp) neutralityGain = Math.abs(chargeA) + Math.abs(chargeB) - Math.abs(chargeA + chargeB);
-
-      const rvx = ai.vx - aj.vx;
-      const rvy = ai.vy - aj.vy;
-      const rvz = ai.vz - aj.vz;
-      const relSpeed = Math.sqrt(rvx * rvx + rvy * rvy + rvz * rvz);
-      const relSpeedMax = REL_SPEED_MAX * (electroBias > 1 ? 1.12 : 1.0);
-      if (relSpeed > relSpeedMax) continue;
-
-      const order = chooseBondOrderWithOctetBias(
-        ai,
-        aj,
-        d,
-        r0Single,
-        params.allowMultipleBonds,
-        neutralityGain,
-        defAComp,
-        defBComp
-      );
-      if (!order) continue;
-
-      const kSingle = kLit * K_SCALE * params.bondScale;
-      const r0 = orderAdjustedR0(r0Single, order);
-      const k = orderAdjustedK(kSingle, order);
-
-      const BREAK_FACTOR = 1.75;
-      const breakR = r0 * BREAK_FACTOR;
-
-      sim.bonds.push({ aId: ai.id, bId: aj.id, order, r0, k, breakR });
-
-      const cost = bondValenceCost(order);
-      ai.valenceUsed += cost;
-      aj.valenceUsed += cost;
-
-      made++;
-      if (made >= MAX_NEW_BONDS_PER_STEP) return;
+    const { r0: r0Single, kLit } = getPairBondParam(ai.el, aj.el);
+    let electroBias = 1.0;
+    if (params.enableElectrostatics) {
+      const qi = params.charges[ai.el] ?? 0;
+      const qj = params.charges[aj.el] ?? 0;
+      const qq = qi * qj;
+      const biasStrength = clamp(params.electroBondBiasStrength ?? 0.7, 0, 2);
+      const mag = Math.min(1, Math.abs(qq) / 0.08);
+      if (qq < 0) electroBias = 1 + 0.5 * biasStrength * mag;
+      else if (qq > 0) electroBias = 1 - 0.35 * biasStrength * mag;
     }
+
+    const formR = r0Single * FORM_FACTOR * getPairFormationBias(ai.el, aj.el) * electroBias;
+    if (pair.r2 > formR * formR) continue;
+
+    const d = pair.r;
+
+    const compA = mol.compByAtomId.get(ai.id);
+    const compB = mol.compByAtomId.get(aj.id);
+    const chargeA = compA ? (mol.chargeByComp.get(compA) ?? 0) : 0;
+    const chargeB = compB ? (mol.chargeByComp.get(compB) ?? 0) : 0;
+    const defAComp = compA ? (mol.deficitByComp.get(compA) ?? 0) : valenceDeficit(ai);
+    const defBComp = compB ? (mol.deficitByComp.get(compB) ?? 0) : valenceDeficit(aj);
+    const sameComp = compA !== undefined && compA === compB;
+
+    // Avoid fusing already-stable molecules.
+    if (!sameComp && defAComp <= 0 && defBComp <= 0) {
+      if (Math.abs(chargeA) <= STABLE_CHARGE_EPS && Math.abs(chargeB) <= STABLE_CHARGE_EPS) continue;
+    }
+
+    let neutralityGain = 0;
+    if (!sameComp) neutralityGain = Math.abs(chargeA) + Math.abs(chargeB) - Math.abs(chargeA + chargeB);
+
+    const rvx = ai.vx - aj.vx;
+    const rvy = ai.vy - aj.vy;
+    const rvz = ai.vz - aj.vz;
+    const relSpeed = Math.sqrt(rvx * rvx + rvy * rvy + rvz * rvz);
+    const relSpeedMax = REL_SPEED_MAX * (electroBias > 1 ? 1.12 : 1.0);
+    if (relSpeed > relSpeedMax) continue;
+
+    const barriers = getPairReactionBarrier(ai.el, aj.el);
+    const arrhenius = Math.exp(-(barriers.form * barrierScale) / temp);
+    const pForm = clamp(1 - Math.exp(-attemptRate * arrhenius * dt * 60), 0, 1);
+    if (Math.random() > pForm) continue;
+
+    const order = chooseBondOrderWithOctetBias(
+      ai,
+      aj,
+      d,
+      r0Single,
+      params.allowMultipleBonds,
+      neutralityGain,
+      defAComp,
+      defBComp
+    );
+    if (!order) continue;
+
+    const kSingle = kLit * K_SCALE * params.bondScale;
+    const r0 = orderAdjustedR0(r0Single, order);
+    const k = orderAdjustedK(kSingle, order);
+
+    const BREAK_FACTOR = 1.75;
+    const breakR = r0 * BREAK_FACTOR;
+
+    sim.bonds.push({ aId: ai.id, bId: aj.id, order, r0, k, breakR });
+    bondSet.add(`${lo}:${hi}`);
+
+    const cost = bondValenceCost(order);
+    ai.valenceUsed += cost;
+    aj.valenceUsed += cost;
+
+    made++;
+    if (made >= MAX_NEW_BONDS_PER_STEP) return;
   }
 }
 
 function applyTemperatureEquilibration(sim: Sim3D, params: Params3D) {
-  if (params.temperature <= 0) return;
+  const targetReducedTemp = getReducedTemperature(params);
+  if (targetReducedTemp <= 0) return;
   if (sim.atoms.length === 0) return;
 
   const interval = Math.max(1, Math.floor(params.thermostatInterval ?? 20));
@@ -699,7 +1082,7 @@ function applyTemperatureEquilibration(sim: Sim3D, params: Params3D) {
   }
 
   const currentPerAtom = kinetic / Math.max(1, sim.atoms.length);
-  const targetPerAtom = Math.max(1e-6, params.temperature);
+  const targetPerAtom = Math.max(1e-6, targetReducedTemp);
   if (currentPerAtom <= 1e-12) return;
 
   const idealScale = Math.sqrt(targetPerAtom / currentPerAtom);
@@ -758,6 +1141,8 @@ export function setGrabTarget(sim: Sim3D, x: number, y: number, z: number) {
 
 export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
   recomputeValenceUsage(sim);
+  const byId = new Map<number, Atom3D>();
+  for (const atom of sim.atoms) byId.set(atom.id, atom);
 
   const allow = params.allowMultipleBonds;
 
@@ -770,14 +1155,23 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
   const BREAK_FACTOR = 1.75;
 
   for (const b of sim.bonds) {
-    const a = getAtom(sim, b.aId);
-    const c = getAtom(sim, b.bId);
+    const a = byId.get(b.aId);
+    const c = byId.get(b.bId);
     if (!a || !c) continue;
 
-    const dx = c.x - a.x;
-    const dy = c.y - a.y;
-    const dz = c.z - a.z;
-    const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-6;
+    const delta = displacement(
+      a.x,
+      a.y,
+      a.z,
+      c.x,
+      c.y,
+      c.z,
+      params.boxHalfSize,
+      Boolean(params.usePeriodicBoundary),
+    );
+    const d = Math.sqrt(
+      delta.dx * delta.dx + delta.dy * delta.dy + delta.dz * delta.dz,
+    ) || 1e-6;
 
     const { r0: r0Single, kLit } = getPairBondParam(a.el, c.el);
 
@@ -814,8 +1208,8 @@ export function recomputeBondOrders(sim: Sim3D, params: Params3D) {
     if (target !== b.order) {
       const old = b.order;
       const delta = target - old;
-      a.valenceUsed = clamp(a.valenceUsed + delta, 0, a.valenceMax);
-      c.valenceUsed = clamp(c.valenceUsed + delta, 0, c.valenceMax);
+      a.valenceUsed = Math.max(0, a.valenceUsed + delta);
+      c.valenceUsed = Math.max(0, c.valenceUsed + delta);
       b.order = target;
     }
 
@@ -902,9 +1296,19 @@ function applyAngleForces(sim: Sim3D, params: Params3D) {
       const i = byId.get(neigh[aIdx].id);
       if (!i) continue;
 
-      const r1x = i.x - j.x;
-      const r1y = i.y - j.y;
-      const r1z = i.z - j.z;
+      const d1 = displacement(
+        j.x,
+        j.y,
+        j.z,
+        i.x,
+        i.y,
+        i.z,
+        params.boxHalfSize,
+        Boolean(params.usePeriodicBoundary),
+      );
+      const r1x = d1.dx;
+      const r1y = d1.dy;
+      const r1z = d1.dz;
       const r1sq = r1x * r1x + r1y * r1y + r1z * r1z;
       const r1 = Math.sqrt(r1sq) + eps;
 
@@ -912,9 +1316,19 @@ function applyAngleForces(sim: Sim3D, params: Params3D) {
         const k = byId.get(neigh[bIdx].id);
         if (!k) continue;
 
-        const r2x = k.x - j.x;
-        const r2y = k.y - j.y;
-        const r2z = k.z - j.z;
+        const d2 = displacement(
+          j.x,
+          j.y,
+          j.z,
+          k.x,
+          k.y,
+          k.z,
+          params.boxHalfSize,
+          Boolean(params.usePeriodicBoundary),
+        );
+        const r2x = d2.dx;
+        const r2y = d2.dy;
+        const r2z = d2.dz;
         const r2sq = r2x * r2x + r2y * r2y + r2z * r2z;
         const r2 = Math.sqrt(r2sq) + eps;
 
@@ -1000,10 +1414,46 @@ function norm(x: number, y: number, z: number) {
   return Math.sqrt(x * x + y * y + z * z);
 }
 
-function computeDihedralPhi(i: Atom3D, j: Atom3D, k: Atom3D, l: Atom3D): { phi: number; ok: boolean } {
-  const r12x = i.x - j.x, r12y = i.y - j.y, r12z = i.z - j.z;
-  const r23x = j.x - k.x, r23y = j.y - k.y, r23z = j.z - k.z;
-  const r34x = k.x - l.x, r34y = k.y - l.y, r34z = k.z - l.z;
+function computeDihedralPhi(
+  i: Atom3D,
+  j: Atom3D,
+  k: Atom3D,
+  l: Atom3D,
+  params: Params3D,
+): { phi: number; ok: boolean } {
+  const d12 = displacement(
+    j.x,
+    j.y,
+    j.z,
+    i.x,
+    i.y,
+    i.z,
+    params.boxHalfSize,
+    Boolean(params.usePeriodicBoundary),
+  );
+  const d23 = displacement(
+    k.x,
+    k.y,
+    k.z,
+    j.x,
+    j.y,
+    j.z,
+    params.boxHalfSize,
+    Boolean(params.usePeriodicBoundary),
+  );
+  const d34 = displacement(
+    l.x,
+    l.y,
+    l.z,
+    k.x,
+    k.y,
+    k.z,
+    params.boxHalfSize,
+    Boolean(params.usePeriodicBoundary),
+  );
+  const r12x = d12.dx, r12y = d12.dy, r12z = d12.dz;
+  const r23x = d23.dx, r23y = d23.dy, r23z = d23.dz;
+  const r34x = d34.dx, r34y = d34.dy, r34z = d34.dz;
 
   const A = cross(r12x, r12y, r12z, r23x, r23y, r23z);
   const B = cross(r34x, r34y, r34z, r23x, r23y, r23z);
@@ -1018,10 +1468,47 @@ function computeDihedralPhi(i: Atom3D, j: Atom3D, k: Atom3D, l: Atom3D): { phi: 
   return { phi: Math.atan2(y, x), ok: true };
 }
 
-function dihedralForces(i: Atom3D, j: Atom3D, k: Atom3D, l: Atom3D, dUdPhi: number) {
-  const r12x = i.x - j.x, r12y = i.y - j.y, r12z = i.z - j.z;
-  const r23x = j.x - k.x, r23y = j.y - k.y, r23z = j.z - k.z;
-  const r34x = k.x - l.x, r34y = k.y - l.y, r34z = k.z - l.z;
+function dihedralForces(
+  i: Atom3D,
+  j: Atom3D,
+  k: Atom3D,
+  l: Atom3D,
+  dUdPhi: number,
+  params: Params3D,
+) {
+  const d12 = displacement(
+    j.x,
+    j.y,
+    j.z,
+    i.x,
+    i.y,
+    i.z,
+    params.boxHalfSize,
+    Boolean(params.usePeriodicBoundary),
+  );
+  const d23 = displacement(
+    k.x,
+    k.y,
+    k.z,
+    j.x,
+    j.y,
+    j.z,
+    params.boxHalfSize,
+    Boolean(params.usePeriodicBoundary),
+  );
+  const d34 = displacement(
+    l.x,
+    l.y,
+    l.z,
+    k.x,
+    k.y,
+    k.z,
+    params.boxHalfSize,
+    Boolean(params.usePeriodicBoundary),
+  );
+  const r12x = d12.dx, r12y = d12.dy, r12z = d12.dz;
+  const r23x = d23.dx, r23y = d23.dy, r23z = d23.dz;
+  const r34x = d34.dx, r34y = d34.dy, r34z = d34.dz;
 
   const A = cross(r12x, r12y, r12z, r23x, r23y, r23z);
   const B = cross(r34x, r34y, r34z, r23x, r23y, r23z);
@@ -1153,7 +1640,7 @@ function applyDihedralForces(sim: Sim3D, params: Params3D) {
     if (!i || !j || !k || !l) continue;
     if (t.k <= 1e-9) continue;
 
-    const { phi, ok } = computeDihedralPhi(i, j, k, l);
+    const { phi, ok } = computeDihedralPhi(i, j, k, l, params);
     if (!ok) continue;
 
     const arg = t.n * phi - t.delta;
@@ -1170,7 +1657,7 @@ function applyDihedralForces(sim: Sim3D, params: Params3D) {
       dUdPhi += -kAnti * Math.sin(phi);
     }
 
-    const f = dihedralForces(i, j, k, l, dUdPhi);
+    const f = dihedralForces(i, j, k, l, dUdPhi, params);
     if (!f.ok) continue;
 
     const fi = capVec(f.fi.x, f.fi.y, f.fi.z);
@@ -1185,169 +1672,285 @@ function applyDihedralForces(sim: Sim3D, params: Params3D) {
   }
 }
 
+function applyValencePenaltyForces(
+  sim: Sim3D,
+  params: Params3D,
+  byId: Map<number, Atom3D>,
+  halfBox: number,
+  usePeriodic: boolean,
+) {
+  const kValence = Math.max(0, params.valencePenaltyK ?? 8);
+  if (kValence <= 1e-9) return;
+  const cap = Math.max(0.2, params.valencePenaltyForceCap ?? (params.maxPairForce * 0.8));
+
+  for (const b of sim.bonds) {
+    const a = byId.get(b.aId);
+    const c = byId.get(b.bId);
+    if (!a || !c) continue;
+
+    const overA = valenceOverflow(a);
+    const overC = valenceOverflow(c);
+    const over = overA + overC;
+    if (over <= 1e-9) continue;
+
+    const d = displacement(
+      a.x,
+      a.y,
+      a.z,
+      c.x,
+      c.y,
+      c.z,
+      halfBox,
+      usePeriodic,
+    );
+    const r = Math.sqrt(d.dx * d.dx + d.dy * d.dy + d.dz * d.dz) || 1e-6;
+    const invR = 1 / r;
+    const fmag = clamp(kValence * over, 0, cap);
+    const fx = fmag * d.dx * invR;
+    const fy = fmag * d.dy * invR;
+    const fz = fmag * d.dz * invR;
+
+    // Repulsive split to unwind over-coordinated local environments.
+    a.fx -= fx; a.fy -= fy; a.fz -= fz;
+    c.fx += fx; c.fy += fy; c.fz += fz;
+  }
+}
+
 /* ----------------------------------- Step ---------------------------------- */
 
 export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
   const atoms = sim.atoms;
   sim.stepCount += 1;
+  if (atoms.length === 0) return;
   recomputeValenceUsage(sim);
 
-  for (const a of atoms) {
-    a.fx = 0;
-    a.fy = 0;
-    a.fz = 0;
-  }
+  const safeDt = Math.max(1e-6, dt);
+  const usePeriodic = Boolean(params.usePeriodicBoundary);
+  const halfBox = Math.max(0.5, params.boxHalfSize);
+  const useLangevin = Boolean(params.useLangevin);
+  const reducedTemp = getReducedTemperature(params);
+  const switchStart = Math.max(
+    params.minR,
+    params.cutoff * clamp(params.cutoffSwitchRatio ?? 0.85, 0.5, 0.98),
+  );
+  const bondedPairScales = buildBondedPairScales(sim, params);
+  const atomById = new Map<number, Atom3D>();
+  for (const atom of atoms) atomById.set(atom.id, atom);
 
-  const cut2 = params.cutoff * params.cutoff;
+  const applyForces = () => {
+    for (const a of atoms) {
+      a.fx = 0;
+      a.fy = 0;
+      a.fz = 0;
+    }
 
-  for (let i = 0; i < atoms.length; i++) {
-    const ai = atoms[i];
-    for (let j = i + 1; j < atoms.length; j++) {
-      const aj = atoms[j];
+    const neighbors = buildNeighborPairs(
+      atoms,
+      params.cutoff,
+      params.minR,
+      halfBox,
+      usePeriodic,
+    );
+    for (const pair of neighbors) {
+      const ai = atoms[pair.i];
+      const aj = atoms[pair.j];
+      const { dx, dy, dz, r } = pair;
+      const wCut = smoothCutoffWeight(r, params.cutoff, switchStart);
+      if (wCut <= 1e-8) continue;
+      const pairScale = bondedPairScales.get(pairIdKey(ai.id, aj.id));
+      const ljScale = pairScale?.lj ?? 1;
+      const electroScale = pairScale?.electro ?? 1;
 
-      const dx = aj.x - ai.x;
-      const dy = aj.y - ai.y;
-      const dz = aj.z - ai.z;
-
-      const r2 = dx * dx + dy * dy + dz * dz;
-      if (r2 > cut2) continue;
-
-      let r = Math.sqrt(r2) || 1e-6;
-      if (r < params.minR) r = params.minR;
-
-      // LJ
       const mixed = mixLorentzBerthelot(params.lj, ai.el, aj.el);
-      const sig = mixed.sigma;
-      const eps = mixed.epsilon;
-      if (eps > 1e-6) {
-        let fmag = ljForce(r, eps, sig);
+      if (mixed.epsilon > 1e-6 && ljScale > 1e-8) {
+        let fmag = ljForce(r, mixed.epsilon, mixed.sigma);
+        fmag *= ljScale * wCut;
         fmag = clamp(fmag, -params.maxPairForce, params.maxPairForce);
-
         const invR = 1 / r;
         const fx = fmag * dx * invR;
         const fy = fmag * dy * invR;
         const fz = fmag * dz * invR;
-
         ai.fx -= fx; ai.fy -= fy; ai.fz -= fz;
         aj.fx += fx; aj.fy += fy; aj.fz += fz;
       }
 
-      // Electrostatics (screened)
-      if (params.enableElectrostatics) {
+      if (params.enableElectrostatics && electroScale > 1e-8) {
         const qi = params.charges[ai.el] ?? 0;
         const qj = params.charges[aj.el] ?? 0;
-        const ke = params.ke;
-        if (Math.abs(qi * qj) > 1e-9 && ke !== 0) {
+        if (Math.abs(qi * qj) > 1e-9 && params.ke !== 0) {
           let fmagE = yukawaForce(
             r,
-            ke,
+            params.ke,
             qi,
             qj,
             params.screeningLength,
             params.electroRepulsionScale ?? 2.2,
-            params.electroAttractionScale ?? 2.0
+            params.electroAttractionScale ?? 2.0,
           );
+          fmagE *= electroScale * wCut;
           fmagE = clamp(fmagE, -params.maxPairForce, params.maxPairForce);
-
           const invR = 1 / r;
           const fx = fmagE * dx * invR;
           const fy = fmagE * dy * invR;
           const fz = fmagE * dz * invR;
-
-          // NOTE: positive fmagE means repulsive when qi*qj>0 and attractive when qi*qj<0
           ai.fx -= fx; ai.fy -= fy; ai.fz -= fz;
           aj.fx += fx; aj.fy += fy; aj.fz += fz;
         }
       }
     }
-  }
 
-  // bonded springs
-  for (const b of sim.bonds) {
-    const a = getAtom(sim, b.aId);
-    const c = getAtom(sim, b.bId);
-    if (!a || !c) continue;
+    for (const b of sim.bonds) {
+      const a = atomById.get(b.aId);
+      const c = atomById.get(b.bId);
+      if (!a || !c) continue;
 
-    const dx = c.x - a.x;
-    const dy = c.y - a.y;
-    const dz = c.z - a.z;
+      const d = displacement(
+        a.x,
+        a.y,
+        a.z,
+        c.x,
+        c.y,
+        c.z,
+        halfBox,
+        usePeriodic,
+      );
+      const r = Math.sqrt(d.dx * d.dx + d.dy * d.dy + d.dz * d.dz) || 1e-6;
 
-    const r = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-6;
+      let fmag = b.k * (r - b.r0);
+      fmag = clamp(fmag, -params.maxPairForce, params.maxPairForce);
+      const invR = 1 / r;
+      const fx = fmag * d.dx * invR;
+      const fy = fmag * d.dy * invR;
+      const fz = fmag * d.dz * invR;
 
-    let fmag = b.k * (r - b.r0);
-    fmag = clamp(fmag, -params.maxPairForce, params.maxPairForce);
+      a.fx += fx; a.fy += fy; a.fz += fz;
+      c.fx -= fx; c.fy -= fy; c.fz -= fz;
+    }
 
-    const invR = 1 / r;
-    const fx = fmag * dx * invR;
-    const fy = fmag * dy * invR;
-    const fz = fmag * dz * invR;
+    applyAngleForces(sim, params);
+    applyDihedralForces(sim, params);
+    applyValencePenaltyForces(sim, params, atomById, halfBox, usePeriodic);
 
-    a.fx += fx; a.fy += fy; a.fz += fz;
-    c.fx -= fx; c.fy -= fy; c.fz -= fz;
-  }
+    if (!usePeriodic) {
+      const S = halfBox;
+      for (const a of atoms) {
+        const left = -S + params.wallPadding + a.r;
+        const right = S - params.wallPadding - a.r;
+        const bottom = -S + params.wallPadding + a.r;
+        const top = S - params.wallPadding - a.r;
+        const back = -S + params.wallPadding + a.r;
+        const front = S - params.wallPadding - a.r;
 
-  applyAngleForces(sim, params);
-  applyDihedralForces(sim, params);
-
-  // container walls
-  const S = params.boxHalfSize;
-  for (const a of atoms) {
-    const left = -S + params.wallPadding + a.r;
-    const right = S - params.wallPadding - a.r;
-    const bottom = -S + params.wallPadding + a.r;
-    const top = S - params.wallPadding - a.r;
-    const back = -S + params.wallPadding + a.r;
-    const front = S - params.wallPadding - a.r;
-
-    if (a.x < left) a.fx += (left - a.x) * params.wallK;
-    if (a.x > right) a.fx -= (a.x - right) * params.wallK;
-
-    if (a.y < bottom) a.fy += (bottom - a.y) * params.wallK;
-    if (a.y > top) a.fy -= (a.y - top) * params.wallK;
-
-    if (a.z < back) a.fz += (back - a.z) * params.wallK;
-    if (a.z > front) a.fz -= (a.z - front) * params.wallK;
-  }
-
-  // grabbing
-  if (sim.grabbedId && sim.grabTarget) {
-    const g = getAtom(sim, sim.grabbedId);
-    if (g) {
-      const dx = sim.grabTarget.x - g.x;
-      const dy = sim.grabTarget.y - g.y;
-      const dz = sim.grabTarget.z - g.z;
-
-      let fx = dx * params.grabK - g.vx * 1.1;
-      let fy = dy * params.grabK - g.vy * 1.1;
-      let fz = dz * params.grabK - g.vz * 1.1;
-
-      const mag = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1e-6;
-      if (mag > params.grabMaxForce) {
-        const s = params.grabMaxForce / mag;
-        fx *= s; fy *= s; fz *= s;
+        if (a.x < left) a.fx += (left - a.x) * params.wallK;
+        if (a.x > right) a.fx -= (a.x - right) * params.wallK;
+        if (a.y < bottom) a.fy += (bottom - a.y) * params.wallK;
+        if (a.y > top) a.fy -= (a.y - top) * params.wallK;
+        if (a.z < back) a.fz += (back - a.z) * params.wallK;
+        if (a.z > front) a.fz -= (a.z - front) * params.wallK;
       }
+    }
 
-      g.fx += fx; g.fy += fy; g.fz += fz;
+    if (sim.grabbedId && sim.grabTarget) {
+      const g = atomById.get(sim.grabbedId);
+      if (g) {
+        let dx = sim.grabTarget.x - g.x;
+        let dy = sim.grabTarget.y - g.y;
+        let dz = sim.grabTarget.z - g.z;
+        if (usePeriodic) {
+          dx = minimumImage(dx, halfBox);
+          dy = minimumImage(dy, halfBox);
+          dz = minimumImage(dz, halfBox);
+        }
+
+        let fx = dx * params.grabK - g.vx * 1.1;
+        let fy = dy * params.grabK - g.vy * 1.1;
+        let fz = dz * params.grabK - g.vz * 1.1;
+        const mag = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1e-6;
+        if (mag > params.grabMaxForce) {
+          const s = params.grabMaxForce / mag;
+          fx *= s; fy *= s; fz *= s;
+        }
+        g.fx += fx; g.fy += fy; g.fz += fz;
+      }
+    }
+  };
+
+  applyForces();
+
+  // Velocity Verlet half-kick + drift
+  for (const a of atoms) {
+    const invMass = 1 / Math.max(0.1, a.mass);
+    a.vx += 0.5 * a.fx * invMass * safeDt;
+    a.vy += 0.5 * a.fy * invMass * safeDt;
+    a.vz += 0.5 * a.fz * invMass * safeDt;
+
+    a.x += a.vx * safeDt;
+    a.y += a.vy * safeDt;
+    a.z += a.vz * safeDt;
+
+    if (usePeriodic) {
+      a.x = wrapPeriodicCoordinate(a.x, halfBox);
+      a.y = wrapPeriodicCoordinate(a.y, halfBox);
+      a.z = wrapPeriodicCoordinate(a.z, halfBox);
     }
   }
 
-  // integrate
-  const damp = params.damping;
+  applyForces();
 
+  // Velocity Verlet half-kick
   for (const a of atoms) {
-    const ax = a.fx / Math.max(0.1, a.mass);
-    const ay = a.fy / Math.max(0.1, a.mass);
-    const az = a.fz / Math.max(0.1, a.mass);
-
-    a.vx = (a.vx + ax * dt) * damp;
-    a.vy = (a.vy + ay * dt) * damp;
-    a.vz = (a.vz + az * dt) * damp;
-
+    const invMass = 1 / Math.max(0.1, a.mass);
+    a.vx += 0.5 * a.fx * invMass * safeDt;
+    a.vy += 0.5 * a.fy * invMass * safeDt;
+    a.vz += 0.5 * a.fz * invMass * safeDt;
   }
 
-  if (params.temperature > 0) {
-    // Stochastic bath kicks with exact zero net momentum injection.
-    const kick = params.tempVelKick * params.temperature * Math.sqrt(dt);
+  if (useLangevin && (params.langevinGamma ?? 0) > 0) {
+    const gamma = Math.max(0, params.langevinGamma ?? 0);
+    const temp = Math.max(0, reducedTemp);
+    const thermalScale = Math.max(0, params.tempVelKick);
+
+    let mTot = 0;
+    let dPx = 0;
+    let dPy = 0;
+    let dPz = 0;
+
+    for (const a of atoms) {
+      const m = Math.max(0.1, a.mass);
+      const drag = Math.max(0, 1 - gamma * safeDt);
+      a.vx *= drag;
+      a.vy *= drag;
+      a.vz *= drag;
+
+      if (temp > 0 && thermalScale > 0) {
+        const sigma = Math.sqrt((2 * gamma * temp * thermalScale * safeDt) / m);
+        const dvx = sigma * randomNormal();
+        const dvy = sigma * randomNormal();
+        const dvz = sigma * randomNormal();
+        a.vx += dvx;
+        a.vy += dvy;
+        a.vz += dvz;
+
+        mTot += m;
+        dPx += m * dvx;
+        dPy += m * dvy;
+        dPz += m * dvz;
+      }
+    }
+
+    if (mTot > 1e-12) {
+      const corrX = dPx / mTot;
+      const corrY = dPy / mTot;
+      const corrZ = dPz / mTot;
+      for (const a of atoms) {
+        a.vx -= corrX;
+        a.vy -= corrY;
+        a.vz -= corrZ;
+      }
+    }
+  } else if (reducedTemp > 0) {
+    // Legacy stochastic bath kicks with exact zero net momentum injection.
+    const kick = params.tempVelKick * reducedTemp * Math.sqrt(safeDt);
     let mTot = 0;
     let dPx = 0;
     let dPy = 0;
@@ -1381,18 +1984,28 @@ export function stepSim3D(sim: Sim3D, params: Params3D, dt: number) {
     }
   }
 
+  const damp = Math.pow(clamp(params.damping, 0, 1), safeDt * 60);
   for (const a of atoms) {
-    a.x += a.vx * dt;
-    a.y += a.vy * dt;
-    a.z += a.vz * dt;
+    a.vx *= damp;
+    a.vy *= damp;
+    a.vz *= damp;
+    if (usePeriodic) {
+      a.x = wrapPeriodicCoordinate(a.x, halfBox);
+      a.y = wrapPeriodicCoordinate(a.y, halfBox);
+      a.z = wrapPeriodicCoordinate(a.z, halfBox);
+    }
   }
 
-  pruneBrokenBonds(sim, params);
+  // Trim chemistry work at high atom counts; keeps 200+ atoms responsive.
+  const reactionInterval = atoms.length >= 160 ? 2 : 1;
+  if (sim.stepCount % reactionInterval === 0) {
+    pruneBrokenBonds(sim, params, safeDt);
+    recomputeValenceUsage(sim);
+    tryFormBonds(sim, params, safeDt);
+    recomputeBondOrders(sim, params);
+  }
   recomputeValenceUsage(sim);
-  tryFormBonds(sim, params);
-  recomputeBondOrders(sim, params);
-  recomputeValenceUsage(sim);
-  applyTemperatureEquilibration(sim, params);
+  if (!useLangevin) applyTemperatureEquilibration(sim, params);
 }
 
 export function nudgeAll(sim: Sim3D, strength = 1.0) {
