@@ -89,7 +89,9 @@ function renderDescriptionWithNewBadge(description) {
   const after = description.slice(idx + marker.length).trimStart();
   return (
     <>
-      {before} <span style={newBadgeStyle}>NEW</span> {after}
+      {before}
+      <br />
+      <span style={newBadgeStyle}>NEW</span> {after}
     </>
   );
 }

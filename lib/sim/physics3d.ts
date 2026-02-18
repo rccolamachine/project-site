@@ -853,8 +853,8 @@ function pruneBrokenBonds(sim: Sim3D, params: Params3D, dt: number) {
       const compSize = (mol.atomsByComp.get(compId) || []).length;
       if (compDeficit <= 0 && compChargeAbs <= NEUTRAL_EPS) molBarrierMult = STABLE_MOLECULE_BREAK_STRETCH;
       else if (compChargeAbs <= NEAR_NEUTRAL_EPS) molBarrierMult = SEMISTABLE_MOLECULE_BREAK_STRETCH;
-      if (compSize >= 10) molBarrierMult *= 1.08;
-      else if (compSize >= 6) molBarrierMult *= 1.04;
+      if (compSize >= 10) molBarrierMult *= 0.98;
+      else if (compSize >= 6) molBarrierMult *= 1.0;
     }
     const barrierBreakR = b.breakR * barrierMult * molBarrierMult;
 
@@ -1025,9 +1025,17 @@ function tryFormBonds(sim: Sim3D, params: Params3D, dt: number) {
     const defBComp = compB ? (mol.deficitByComp.get(compB) ?? 0) : valenceDeficit(aj);
     const sameComp = compA !== undefined && compA === compB;
 
-    // Avoid fusing already-stable molecules.
+    // Heavily suppress fusion of already-stable neutral fragments, but do not
+    // hard-block it. At elevated temperature this allows rare rearrangement paths
+    // needed to assemble larger molecules.
+    let stableFusionPenalty = 1.0;
     if (!sameComp && defAComp <= 0 && defBComp <= 0) {
-      if (Math.abs(chargeA) <= STABLE_CHARGE_EPS && Math.abs(chargeB) <= STABLE_CHARGE_EPS) continue;
+      if (Math.abs(chargeA) <= STABLE_CHARGE_EPS && Math.abs(chargeB) <= STABLE_CHARGE_EPS) {
+        const closeFactor = clamp(1 - d / Math.max(1e-6, formR), 0, 1);
+        const hotFactor = clamp((temp - 1.0) / 1.6, 0, 1);
+        stableFusionPenalty = 0.08 + 0.72 * hotFactor + 0.2 * closeFactor;
+        if (hotFactor < 0.08 && d > r0Single * 0.92) continue;
+      }
     }
 
     let neutralityGain = 0;
@@ -1046,7 +1054,15 @@ function tryFormBonds(sim: Sim3D, params: Params3D, dt: number) {
     const deficitBoost = 1 + Math.min(1.2, 0.14 * (defAComp + defBComp));
     const neutralityBoost = 1 + Math.min(0.8, Math.max(0, neutralityGain) * 0.55);
     const pForm = clamp(
-      1 - Math.exp(-attemptRate * arrhenius * deficitBoost * neutralityBoost * dt * 60),
+      1 - Math.exp(
+        -attemptRate *
+          arrhenius *
+          deficitBoost *
+          neutralityBoost *
+          stableFusionPenalty *
+          dt *
+          60,
+      ),
       0,
       1,
     );

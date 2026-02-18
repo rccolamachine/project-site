@@ -46,6 +46,16 @@ const ITEMS = [
     links: [{ label: "Open Pictures", href: "/pictures" }],
   },
   {
+    id: "game-scores-on-guestbook",
+    title: "Guestbook: add game scores",
+    area: "Guestbook",
+    priority: "P2",
+    status: "todo",
+    notes:
+      "Show game progress on Guestbook (UI and API) -- farm snapshot, molecule catalog progress, button clicks",
+    links: [{ label: "Open Guestbook", href: "/guestbook" }],
+  },
+  {
     id: "reactor-page-make-all-molecules",
     title: "Ensure all molecules in catalogue can be made in Reactor",
     area: "Reactor",
