@@ -35,6 +35,7 @@ import {
   REACTOR_SAVE_EXPORT_FORMAT,
 } from "./reactorSaveCrypto";
 import {
+  ATOMIC_WEIGHTS,
   catalogueNumberFromId,
   CatalogueNameCell,
   computeMolecularWeight,

@@ -11,7 +11,7 @@ const PREVIEW_ELEMENT_COLORS = {
   S: "#facc15",
 };
 
-const ATOMIC_WEIGHTS = {
+export const ATOMIC_WEIGHTS = {
   H: 1.008,
   C: 12.011,
   N: 14.007,

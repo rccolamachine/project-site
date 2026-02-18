@@ -8,10 +8,7 @@ import React, {
   useState,
 } from "react";
 import DesktopBadge from "../../components/DesktopBadge";
-import {
-  decryptSaveJsonPayload,
-  encryptSaveJson,
-} from "./farmSaveCrypto";
+import { decryptSaveJsonPayload, encryptSaveJson } from "./farmSaveCrypto";
 import {
   countLabel,
   formatLogClock,
@@ -1302,9 +1299,7 @@ export default function FarmPage() {
 
       <div className="farm-layout">
         <div className="farm-sidebar">
-          <div
-            className="card farm-tool-card"
-          >
+          <div className="card farm-tool-card">
             <h2 className="farm-title">Tools & Upgrades</h2>
             <div className="farm-tools-wrap">
               {TOOLS.filter((tool) => isToolVisible(game, tool.id)).map(
@@ -1562,9 +1557,7 @@ export default function FarmPage() {
                   Each tile can hold up to 3 animals.
                 </div>
                 <div className="farm-panel-strong-12">
-                  <div className="farm-text-10-86">
-                    Animal Tile Action
-                  </div>
+                  <div className="farm-text-10-86">Animal Tile Action</div>
                   <div className="farm-row-gap-8-wrap">
                     <button
                       onClick={() => {
@@ -1679,9 +1672,7 @@ export default function FarmPage() {
                         </div>
                         {expanded ? (
                           <div className="farm-grid-gap-2">
-                            <div className="farm-text-9-78">
-                              {animal.desc}
-                            </div>
+                            <div className="farm-text-9-78">{animal.desc}</div>
                             <div className="farm-text-9-70">
                               Unlocks at marketing M{reqPrestige}. At M
                               {reqPrestige}, max owned is 1. Unlimited starts at
@@ -1730,9 +1721,7 @@ export default function FarmPage() {
                   </div>
                   <div className="farm-panel-muted-6">
                     <div className="farm-panel-soft-4">
-                      <div className="farm-text-10-86">
-                        Current:
-                      </div>
+                      <div className="farm-text-10-86">Current:</div>
                       <div className="farm-text-10-82">
                         Marketing Level: <strong>M{game.prestigeLevel}</strong>
                       </div>
@@ -1769,9 +1758,7 @@ export default function FarmPage() {
                             </div>
                           ))
                         ) : (
-                          <div className="farm-text-10-72">
-                            None
-                          </div>
+                          <div className="farm-text-10-72">None</div>
                         )}
                         <div className="farm-text-10-72">
                           Marketing perks: +
@@ -1801,14 +1788,15 @@ export default function FarmPage() {
                       Claimed platinum rewards:{" "}
                       {formatLargeNumber(totalMilestoneRewardShards)}
                     </div>
-                    <div className="farm-text-10-80">
-                      Earned milestones:
-                    </div>
+                    <div className="farm-text-10-80">Earned milestones:</div>
                     {earnedMilestones.length > 0 ? (
                       <ul className="farm-list-grid">
                         {earnedMilestones.map((m) => (
-                            <li key={`earned-${m.id}`} className="farm-text-10-84">
-                              <div className="farm-row-between-top">
+                          <li
+                            key={`earned-${m.id}`}
+                            className="farm-text-10-84"
+                          >
+                            <div className="farm-row-between-top">
                               <span>
                                 M{m.reqPrestige}: {m.title}
                               </span>
@@ -1821,13 +1809,9 @@ export default function FarmPage() {
                         ))}
                       </ul>
                     ) : (
-                      <div className="farm-text-10-66">
-                        None yet.
-                      </div>
+                      <div className="farm-text-10-66">None yet.</div>
                     )}
-                    <div className="farm-text-10-80">
-                      Next milestone:
-                    </div>
+                    <div className="farm-text-10-80">Next milestone:</div>
                     {nextMilestone ? (
                       <ul className="farm-list-compact">
                         <li className="farm-text-10-82">
@@ -1857,9 +1841,7 @@ export default function FarmPage() {
                   {selectedActionToolLabel} upgrades
                 </div>
                 <div className="farm-panel-muted-6">
-                  <div className="farm-text-10-84">
-                    Brush upgrades
-                  </div>
+                  <div className="farm-text-10-84">Brush upgrades</div>
                   <div className="farm-text-10-72">
                     {actionBrushDescriptionByTool[game.selectedTool] || ""}
                   </div>
@@ -1993,9 +1975,7 @@ export default function FarmPage() {
                       {selectedAutoKey &&
                       (canBuyAllSelectedAutomation ||
                         canCancelAllSelectedAutomation) ? (
-                        <div
-                          className="farm-row-gap-8-wrap"
-                        >
+                        <div className="farm-row-gap-8-wrap">
                           {canBuyAllSelectedAutomation ? (
                             <button
                               onClick={() =>
@@ -2035,9 +2015,7 @@ export default function FarmPage() {
             {showGenericUnlockCard ? (
               <div className="farm-inset-card">
                 {toolUnlockText ? (
-                  <div className="farm-text-10-84">
-                    {toolUnlockText}
-                  </div>
+                  <div className="farm-text-10-84">{toolUnlockText}</div>
                 ) : null}
 
                 {showFarmUnlocks ? (
@@ -2070,7 +2048,10 @@ export default function FarmPage() {
                           game.prestigeLevel >= exp.reqPrestige &&
                           game.prestigeShards >= exp.unlockShards;
                         return (
-                          <div key={`farm-exp-${exp.size}`} className="farm-row-between">
+                          <div
+                            key={`farm-exp-${exp.size}`}
+                            className="farm-row-between"
+                          >
                             <span className="farm-text-10-80">
                               {exp.size}x{exp.size}{" "}
                               {exp.size === 3
@@ -2116,7 +2097,10 @@ export default function FarmPage() {
                             !lockedByMarketing &&
                             game.prestigeShards >= cost;
                           return (
-                            <div key={upgrade.id} className="farm-grid-gap-2 farm-upgrade-row">
+                            <div
+                              key={upgrade.id}
+                              className="farm-grid-gap-2 farm-upgrade-row"
+                            >
                               <div className="farm-row-between">
                                 <span className="farm-text-10">
                                   {upgrade.label} Lv {level}/{upgrade.cap}
@@ -2284,7 +2268,10 @@ export default function FarmPage() {
                         ))}
                       </span>
                       {showTileValueTags || canHarvest ? (
-                        <span className="farm-tile-label-progress" style={{ fontSize: progressLabelFontSize }}>
+                        <span
+                          className="farm-tile-label-progress"
+                          style={{ fontSize: progressLabelFontSize }}
+                        >
                           {progressTag}
                         </span>
                       ) : null}
@@ -2314,9 +2301,7 @@ export default function FarmPage() {
           </div>
           <div className="card farm-main-card farm-main-card-tight">
             <div className="farm-season-card">
-              <div className="farm-text-10-72">
-                Harvest Festival
-              </div>
+              <div className="farm-text-10-72">Harvest Festival</div>
               <div className="farm-text-12">
                 <strong>{currentSeason.label}</strong>
               </div>
@@ -2383,12 +2368,13 @@ export default function FarmPage() {
                               : "#e8ddcb";
                     return (
                       <div key={entry.id} className="farm-log-item">
-                        <span className="farm-log-time" style={{ color: toneColor }}>
+                        <span
+                          className="farm-log-time"
+                          style={{ color: toneColor }}
+                        >
                           {formatLogClock(entry.at)}
                         </span>
-                        <span className="farm-text-10-90">
-                          {entry.text}
-                        </span>
+                        <span className="farm-text-10-90">{entry.text}</span>
                       </div>
                     );
                   })}
