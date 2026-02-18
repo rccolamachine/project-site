@@ -56,6 +56,7 @@ export default function SiteHeader() {
           <Link
             className={pathname.startsWith("/reactor") ? "active" : ""}
             href="/reactor"
+            prefetch={false}
           >
             Reactor
           </Link>

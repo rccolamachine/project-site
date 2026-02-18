@@ -201,7 +201,7 @@ export default function Page() {
         const stage = stageRef.current;
 
         const off = offscreenRef.current;
-        const offCtx = off.getContext("2d");
+        const offCtx = off.getContext("2d", { willReadFrequently: true });
 
         const snapSmall = snapSmallRef.current;
 
@@ -733,7 +733,7 @@ export default function Page() {
     snapSmall.width = off.width;
     snapSmall.height = off.height;
 
-    const sctx = snapSmall.getContext("2d");
+    const sctx = snapSmall.getContext("2d", { willReadFrequently: true });
     sctx.imageSmoothingEnabled = false;
     sctx.clearRect(0, 0, snapSmall.width, snapSmall.height);
     sctx.drawImage(off, 0, 0);

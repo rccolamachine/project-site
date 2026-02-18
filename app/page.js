@@ -135,7 +135,11 @@ export default function Home() {
               <div className="card" key={card.title}>
                 <h2>{card.title}</h2>
                 <p>{renderDescriptionWithNewBadge(card.description)}</p>
-                <Link className="btn" href={card.href}>
+                <Link
+                  className="btn"
+                  href={card.href}
+                  prefetch={card.href === "/reactor" ? false : undefined}
+                >
                   {card.cta}
                 </Link>
               </div>
