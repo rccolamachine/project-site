@@ -1,0 +1,328 @@
+# Reactor Recipe Search
+
+Generated: 2026-02-18T02:12:36.640Z
+Scope: 310 molecules
+Found: 23
+Coverage: 7.42%
+
+Settings constraints:
+- allowMultipleBonds: true
+- sigma/epsilon: defaults (unchanged)
+- controls varied: temperature, damping, bondScale, boxHalfSize
+- max atoms spawned: 200
+
+Per-molecule recommendation:
+
+`id | name | formula | temperature | damping | bond | box | spawn counts | hitRate | avgHitS`
+
+- mol-0033 | C2NP | C2NP | T=1140K | damp=0.987 | bond=3.72 | box=4.41 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":0} | hitRate=0.2 | avgHitS=1.5
+- mol-0044 | CH2O2 isomer 1 | CH2O2 | T=964K | damp=0.9835 | bond=2.65 | box=5.7 | spawn={"S":0,"P":0,"O":2,"N":0,"C":1,"H":2} | hitRate=0.2 | avgHitS=0.1
+- mol-0049 | H2NPS | H2NPS | T=704K | damp=0.9885 | bond=3.15 | box=5 | spawn={"S":1,"P":1,"O":0,"N":1,"C":0,"H":2} | hitRate=0 | avgHitS=-
+- mol-0057 | C2H2O isomer 3 | C2H2O | T=604K | damp=0.9947 | bond=4.5 | box=4.85 | spawn={"S":0,"P":0,"O":1,"N":0,"C":2,"H":2} | hitRate=0.2 | avgHitS=9
+- mol-0059 | C2HNO | C2HNO | T=822K | damp=0.9907 | bond=3.7 | box=5.25 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":1} | hitRate=0 | avgHitS=-
+- mol-0060 | C3H2 isomer 2 | C3H2 | T=824K | damp=0.9907 | bond=3.7 | box=5.25 | spawn={"S":0,"P":0,"O":0,"N":0,"C":3,"H":2} | hitRate=0 | avgHitS=-
+- mol-0062 | CH2NP | CH2NP | T=824K | damp=0.9907 | bond=3.7 | box=5.25 | spawn={"S":0,"P":1,"O":0,"N":1,"C":1,"H":2} | hitRate=0 | avgHitS=-
+- mol-0066 | HNO2S | HNO2S | T=482K | damp=0.9943 | bond=4.15 | box=4.85 | spawn={"S":7,"P":0,"O":14,"N":7,"C":0,"H":7} | hitRate=0.2 | avgHitS=4.6
+- mol-0068 | C2H3N isomer 1 | C2H3N | T=806K | damp=0.9893 | bond=3.58 | box=5.14 | spawn={"S":0,"P":0,"O":0,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0073 | C2H3N isomer 2 | C2H3N | T=866K | damp=0.9855 | bond=2.98 | box=4.44 | spawn={"S":0,"P":0,"O":0,"N":1,"C":2,"H":3} | hitRate=0.4 | avgHitS=0.1
+- mol-0074 | C2H3P isomer 3 | C2H3P | T=686K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":0,"P":1,"O":0,"N":0,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0076 | C2HNOS | C2HNOS | T=682K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":1,"P":0,"O":1,"N":1,"C":2,"H":1} | hitRate=0 | avgHitS=-
+- mol-0079 | CH2N2S isomer 1 | CH2N2S | T=684K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":1,"P":0,"O":0,"N":2,"C":1,"H":2} | hitRate=0 | avgHitS=-
+- mol-0080 | CH2O3 | CH2O3 | T=684K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":0,"P":0,"O":3,"N":0,"C":1,"H":2} | hitRate=0 | avgHitS=-
+- mol-0083 | CH3NO isomer 3 | CH3NO | T=686K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":0,"P":0,"O":1,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0087 | CH3OP isomer 2 | CH3OP | T=686K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":0,"P":1,"O":1,"N":0,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0088 | CH3OP isomer 3 | CH3OP | T=686K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":0,"P":1,"O":1,"N":0,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0089 | CH3PS | CH3PS | T=686K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":1,"P":1,"O":0,"N":0,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0090 | H2N2O2 isomer 1 | H2N2O2 | T=684K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":0,"P":0,"O":2,"N":2,"C":0,"H":2} | hitRate=0 | avgHitS=-
+- mol-0091 | H2N2O2 isomer 2 | H2N2O2 | T=684K | damp=0.989 | bond=3.23 | box=5.14 | spawn={"S":0,"P":0,"O":2,"N":2,"C":0,"H":2} | hitRate=0 | avgHitS=-
+- mol-0098 | C4H2 isomer 1 | C4H2 | T=1104K | damp=0.9879 | bond=3.88 | box=4.69 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":2} | hitRate=0.2 | avgHitS=0.3
+- mol-0100 | C2H2OS isomer 2 | C2H2OS | T=804K | damp=0.9911 | bond=3.78 | box=5.39 | spawn={"S":1,"P":0,"O":1,"N":0,"C":2,"H":2} | hitRate=0 | avgHitS=-
+- mol-0103 | C2H3N isomer 4 | C2H3N | T=806K | damp=0.9911 | bond=3.78 | box=5.39 | spawn={"S":0,"P":0,"O":0,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0105 | C2H3P isomer 5 | C2H3P | T=806K | damp=0.9911 | bond=3.78 | box=5.39 | spawn={"S":0,"P":1,"O":0,"N":0,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0106 | C4H2 isomer 3 | C4H2 | T=804K | damp=0.9911 | bond=3.78 | box=5.39 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":2} | hitRate=0 | avgHitS=-
+- mol-0107 | CH2N2O isomer 2 | CH2N2O | T=804K | damp=0.9911 | bond=3.78 | box=5.39 | spawn={"S":0,"P":0,"O":1,"N":2,"C":1,"H":2} | hitRate=0 | avgHitS=-
+- mol-0110 | CHNO3 | CHNO3 | T=802K | damp=0.9911 | bond=3.78 | box=5.39 | spawn={"S":0,"P":0,"O":3,"N":1,"C":1,"H":1} | hitRate=0 | avgHitS=-
+- mol-0111 | CH3NO isomer 4 | CH3NO | T=686K | damp=0.9908 | bond=3.43 | box=5.39 | spawn={"S":0,"P":0,"O":1,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0112 | CH3NS isomer 3 | CH3NS | T=686K | damp=0.9908 | bond=3.43 | box=5.39 | spawn={"S":1,"P":0,"O":0,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0116 | C2H3NO isomer 1 | C2H3NO | T=786K | damp=0.9898 | bond=3.66 | box=5.28 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0117 | C3H3P isomer 1 | C3H3P | T=786K | damp=0.9898 | bond=3.66 | box=5.28 | spawn={"S":0,"P":1,"O":0,"N":0,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0118 | C3H3P isomer 2 | C3H3P | T=786K | damp=0.9898 | bond=3.66 | box=5.28 | spawn={"S":0,"P":1,"O":0,"N":0,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0119 | C3H3P isomer 3 | C3H3P | T=786K | damp=0.9898 | bond=3.66 | box=5.28 | spawn={"S":0,"P":1,"O":0,"N":0,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0121 | C2H2OS2 | C2H2OS2 | T=664K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":2,"P":0,"O":1,"N":0,"C":2,"H":2} | hitRate=0 | avgHitS=-
+- mol-0123 | C2H3NO isomer 3 | C2H3NO | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0124 | C2H3NS isomer 1 | C2H3NS | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":1,"P":0,"O":0,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0125 | C2H3OP isomer 1 | C2H3OP | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":1,"O":1,"N":0,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0126 | C2H4O isomer 1 | C2H4O | T=848K | damp=0.9859 | bond=3.06 | box=4.58 | spawn={"S":0,"P":0,"O":1,"N":0,"C":2,"H":4} | hitRate=0.2 | avgHitS=0.1
+- mol-0128 | C2H4S isomer 1 | C2H4S | T=848K | damp=0.9859 | bond=3.06 | box=4.58 | spawn={"S":1,"P":0,"O":0,"N":0,"C":2,"H":4} | hitRate=0.25 | avgHitS=0.2
+- mol-0129 | C3H4 isomer 2 | C3H4 | T=668K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":0,"O":0,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0130 | CH2NPS2 | CH2NPS2 | T=664K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":2,"P":1,"O":0,"N":1,"C":1,"H":2} | hitRate=0 | avgHitS=-
+- mol-0131 | CH3NO2 isomer 1 | CH3NO2 | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":0,"O":2,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0132 | CH3NO2 isomer 2 | CH3NO2 | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":0,"O":2,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0133 | CH3NOS isomer 1 | CH3NOS | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":1,"P":0,"O":1,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0135 | CH3NOS isomer 3 | CH3NOS | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":1,"P":0,"O":1,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0136 | CH3NOS isomer 4 | CH3NOS | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":1,"P":0,"O":1,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0137 | CH3NOS isomer 5 | CH3NOS | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":1,"P":0,"O":1,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0138 | CH3NP2 isomer 1 | CH3NP2 | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":2,"O":0,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0139 | CH3NP2 isomer 2 | CH3NP2 | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":2,"O":0,"N":1,"C":1,"H":3} | hitRate=0.2 | avgHitS=0.1
+- mol-0140 | CH3NS2 | CH3NS2 | T=846K | damp=0.9859 | bond=3.06 | box=4.58 | spawn={"S":10,"P":0,"O":0,"N":5,"C":5,"H":15} | hitRate=0.2 | avgHitS=0.1
+- mol-0141 | CH3O2P | CH3O2P | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":1,"O":2,"N":0,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0142 | CH3OPS | CH3OPS | T=666K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":1,"P":1,"O":1,"N":0,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0143 | CH3PS2 | CH3PS2 | T=446K | damp=0.9934 | bond=4.11 | box=4.88 | spawn={"S":2,"P":1,"O":0,"N":0,"C":1,"H":3} | hitRate=0.2 | avgHitS=4.9
+- mol-0144 | CH4N2 isomer 1 | CH4N2 | T=848K | damp=0.9859 | bond=3.06 | box=4.58 | spawn={"S":0,"P":0,"O":0,"N":2,"C":1,"H":4} | hitRate=0.2 | avgHitS=1
+- mol-0146 | CH4NP isomer 1 | CH4NP | T=668K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":1,"O":0,"N":1,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0147 | CH4NP isomer 2 | CH4NP | T=668K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":1,"O":0,"N":1,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0148 | CH4NP isomer 3 | CH4NP | T=668K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":1,"O":0,"N":1,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0149 | CH4NP isomer 4 | CH4NP | T=668K | damp=0.9894 | bond=3.31 | box=5.28 | spawn={"S":0,"P":1,"O":0,"N":1,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0150 | CH4P2 | CH4P2 | T=448K | damp=0.9934 | bond=4.11 | box=4.88 | spawn={"S":0,"P":2,"O":0,"N":0,"C":1,"H":4} | hitRate=0.2 | avgHitS=4.5
+- mol-0152 | CH4O2 isomer 2 | CH4O2 | T=548K | damp=0.9891 | bond=2.96 | box=5.28 | spawn={"S":0,"P":0,"O":2,"N":0,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0153 | CH4OS isomer 1 | CH4OS | T=728K | damp=0.9857 | bond=2.71 | box=4.58 | spawn={"S":1,"P":0,"O":1,"N":0,"C":1,"H":4} | hitRate=0.2 | avgHitS=5.8
+- mol-0154 | CH4OS isomer 2 | CH4OS | T=548K | damp=0.9891 | bond=2.96 | box=5.28 | spawn={"S":1,"P":0,"O":1,"N":0,"C":1,"H":4} | hitRate=0.25 | avgHitS=6.5
+- mol-0155 | CH4S2 isomer 1 | CH4S2 | T=548K | damp=0.9891 | bond=2.96 | box=5.28 | spawn={"S":10,"P":0,"O":0,"N":0,"C":5,"H":20} | hitRate=0.4 | avgHitS=3.75
+- mol-0159 | H4N2O | H4N2O | T=548K | damp=0.9891 | bond=2.96 | box=5.28 | spawn={"S":0,"P":0,"O":1,"N":2,"C":0,"H":4} | hitRate=0 | avgHitS=-
+- mol-0160 | H4N2S isomer 1 | H4N2S | T=728K | damp=0.9857 | bond=2.71 | box=4.58 | spawn={"S":10,"P":0,"O":0,"N":20,"C":0,"H":40} | hitRate=0.6 | avgHitS=10.767
+- mol-0161 | H4N2S isomer 2 | H4N2S | T=548K | damp=0.9891 | bond=2.96 | box=5.28 | spawn={"S":1,"P":0,"O":0,"N":2,"C":0,"H":4} | hitRate=0 | avgHitS=-
+- mol-0162 | H4NOP | H4NOP | T=548K | damp=0.9891 | bond=2.96 | box=5.28 | spawn={"S":0,"P":1,"O":1,"N":1,"C":0,"H":4} | hitRate=0 | avgHitS=-
+- mol-0163 | H4NPS | H4NPS | T=548K | damp=0.9891 | bond=2.96 | box=5.28 | spawn={"S":1,"P":1,"O":0,"N":1,"C":0,"H":4} | hitRate=0 | avgHitS=-
+- mol-0164 | C2H2O2S | C2H2O2S | T=784K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":1,"P":0,"O":2,"N":0,"C":2,"H":2} | hitRate=0 | avgHitS=-
+- mol-0165 | C2H2OP2 | C2H2OP2 | T=784K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":2,"O":1,"N":0,"C":2,"H":2} | hitRate=0 | avgHitS=-
+- mol-0166 | C2H3NO isomer 4 | C2H3NO | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0167 | C2H3NO isomer 5 | C2H3NO | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0168 | C2H3NS isomer 2 | C2H3NS | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":1,"P":0,"O":0,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0169 | C2H3OP isomer 2 | C2H3OP | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":1,"O":1,"N":0,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0170 | C2H3PS isomer 1 | C2H3PS | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":1,"P":1,"O":0,"N":0,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0171 | C2H3PS isomer 2 | C2H3PS | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":1,"P":1,"O":0,"N":0,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0172 | C3H3N isomer 1 | C3H3N | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0173 | C3H3N isomer 2 | C3H3N | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0174 | C3H3N isomer 3 | C3H3N | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0175 | C3H3N isomer 4 | C3H3N | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0176 | C3H3P isomer 4 | C3H3P | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":1,"O":0,"N":0,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0178 | CH3N3 | CH3N3 | T=786K | damp=0.9916 | bond=3.86 | box=5.53 | spawn={"S":0,"P":0,"O":0,"N":3,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0179 | C2H4O isomer 2 | C2H4O | T=668K | damp=0.9912 | bond=3.51 | box=5.53 | spawn={"S":0,"P":0,"O":1,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0181 | CH3NO2 isomer 3 | CH3NO2 | T=666K | damp=0.9912 | bond=3.51 | box=5.53 | spawn={"S":0,"P":0,"O":2,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0183 | CH3NOS isomer 7 | CH3NOS | T=666K | damp=0.9912 | bond=3.51 | box=5.53 | spawn={"S":1,"P":0,"O":1,"N":1,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0184 | CH4N2 isomer 3 | CH4N2 | T=668K | damp=0.9912 | bond=3.51 | box=5.53 | spawn={"S":0,"P":0,"O":0,"N":2,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0185 | C3H2N2O | C3H2N2O | T=764K | damp=0.9902 | bond=3.74 | box=5.42 | spawn={"S":0,"P":0,"O":1,"N":2,"C":3,"H":2} | hitRate=0 | avgHitS=-
+- mol-0186 | C3H4O isomer 1 | C3H4O | T=768K | damp=0.9902 | bond=3.74 | box=5.42 | spawn={"S":0,"P":0,"O":1,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0187 | C4H3N isomer 1 | C4H3N | T=766K | damp=0.9902 | bond=3.74 | box=5.42 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":3} | hitRate=0 | avgHitS=-
+- mol-0188 | C4H4 isomer 1 | C4H4 | T=768K | damp=0.9902 | bond=3.74 | box=5.42 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0189 | C2H3NO2 | C2H3NO2 | T=646K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":0,"P":0,"O":2,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0190 | C2H4N2 isomer 1 | C2H4N2 | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0191 | C2H4NP isomer 1 | C2H4NP | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0192 | C2H4OS isomer 1 | C2H4OS | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":0,"O":1,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0193 | C2H4OS isomer 2 | C2H4OS | T=428K | damp=0.9939 | bond=4.19 | box=5.02 | spawn={"S":1,"P":0,"O":1,"N":0,"C":2,"H":4} | hitRate=0.2 | avgHitS=7.5
+- mol-0194 | C2H4OS isomer 3 | C2H4OS | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":0,"O":1,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0195 | C2H4OS isomer 4 | C2H4OS | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":0,"O":1,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0196 | C2H5N isomer 1 | C2H5N | T=500K | damp=0.9924 | bond=3.89 | box=5.97 | spawn={"S":0,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0.2 | avgHitS=0.1
+- mol-0197 | C2H5N isomer 2 | C2H5N | T=650K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":0,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0198 | C2H5N isomer 3 | C2H5N | T=650K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":0,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0199 | C2H5P isomer 1 | C2H5P | T=650K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":0,"P":1,"O":0,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0200 | C2H5P isomer 2 | C2H5P | T=650K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":0,"P":1,"O":0,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0202 | C3H2O2S | C3H2O2S | T=644K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":0,"O":2,"N":0,"C":3,"H":2} | hitRate=0 | avgHitS=-
+- mol-0204 | C3H4S isomer 1 | C3H4S | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":0,"O":0,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0206 | C4H4 isomer 2 | C4H4 | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0207 | CH3N3S isomer 1 | CH3N3S | T=646K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":0,"O":0,"N":3,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0209 | CH4N2S isomer 1 | CH4N2S | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":0,"O":0,"N":2,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0210 | CH4N2S isomer 2 | CH4N2S | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":0,"O":0,"N":2,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0211 | CH4NPS isomer 1 | CH4NPS | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":1,"O":0,"N":1,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0212 | CH4NPS isomer 2 | CH4NPS | T=648K | damp=0.9899 | bond=3.39 | box=5.42 | spawn={"S":1,"P":1,"O":0,"N":1,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0213 | Ethane | C2H6 | T=532K | damp=0.9896 | bond=3.04 | box=5.42 | spawn={"S":0,"P":0,"O":0,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0214 | CH4OS2 isomer 1 | CH4OS2 | T=528K | damp=0.9896 | bond=3.04 | box=5.42 | spawn={"S":2,"P":0,"O":1,"N":0,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0215 | CH4OS2 isomer 2 | CH4OS2 | T=528K | damp=0.9896 | bond=3.04 | box=5.42 | spawn={"S":2,"P":0,"O":1,"N":0,"C":1,"H":4} | hitRate=0.2 | avgHitS=9.2
+- mol-0216 | CH4OS2 isomer 3 | CH4OS2 | T=378K | damp=0.9921 | bond=3.54 | box=5.97 | spawn={"S":2,"P":0,"O":1,"N":0,"C":1,"H":4} | hitRate=0.2 | avgHitS=19.4
+- mol-0218 | CH5NO isomer 2 | CH5NO | T=530K | damp=0.9896 | bond=3.04 | box=5.42 | spawn={"S":0,"P":0,"O":1,"N":1,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0219 | CH5NS | CH5NS | T=530K | damp=0.9896 | bond=3.04 | box=5.42 | spawn={"S":1,"P":0,"O":0,"N":1,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0220 | CH5OP isomer 1 | CH5OP | T=530K | damp=0.9896 | bond=3.04 | box=5.42 | spawn={"S":0,"P":1,"O":1,"N":0,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0222 | CH5PS | CH5PS | T=530K | damp=0.9896 | bond=3.04 | box=5.42 | spawn={"S":1,"P":1,"O":0,"N":0,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0223 | H4N2O2 | H4N2O2 | T=528K | damp=0.9896 | bond=3.04 | box=5.42 | spawn={"S":0,"P":0,"O":2,"N":2,"C":0,"H":4} | hitRate=0 | avgHitS=-
+- mol-0224 | C4H3N isomer 2 | C4H3N | T=886K | damp=0.9923 | bond=4.29 | box=5.67 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":3} | hitRate=0 | avgHitS=-
+- mol-0225 | C2H3OPS | C2H3OPS | T=766K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":1,"P":1,"O":1,"N":0,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0226 | C2H4N2 isomer 2 | C2H4N2 | T=768K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0227 | C2H4N2 isomer 3 | C2H4N2 | T=768K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0228 | C2H4NP isomer 2 | C2H4NP | T=768K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0229 | C3H3NS | C3H3NS | T=766K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":1,"P":0,"O":0,"N":1,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0230 | C3H4O isomer 3 | C3H4O | T=768K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":0,"O":1,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0232 | C3H4O isomer 5 | C3H4O | T=768K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":0,"O":1,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0233 | C3H4O isomer 6 | C3H4O | T=768K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":0,"O":1,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0234 | C4H3N isomer 3 | C4H3N | T=766K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":3} | hitRate=0 | avgHitS=-
+- mol-0235 | C4H4 isomer 3 | C4H4 | T=768K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0236 | C4H4 isomer 4 | C4H4 | T=768K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0237 | CH2N3PS | CH2N3PS | T=764K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":1,"P":1,"O":0,"N":3,"C":1,"H":2} | hitRate=0 | avgHitS=-
+- mol-0238 | CH3N3S isomer 2 | CH3N3S | T=766K | damp=0.992 | bond=3.94 | box=5.67 | spawn={"S":1,"P":0,"O":0,"N":3,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0239 | C2H4O2 isomer 1 | C2H4O2 | T=498K | damp=0.9942 | bond=4.09 | box=6.22 | spawn={"S":0,"P":0,"O":2,"N":0,"C":2,"H":4} | hitRate=0.2 | avgHitS=8.4
+- mol-0240 | C2H4O2 isomer 2 | C2H4O2 | T=648K | damp=0.9917 | bond=3.59 | box=5.67 | spawn={"S":0,"P":0,"O":2,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0242 | C2H5P isomer 4 | C2H5P | T=650K | damp=0.9917 | bond=3.59 | box=5.67 | spawn={"S":0,"P":1,"O":0,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0243 | CH4N2O | CH4N2O | T=648K | damp=0.9917 | bond=3.59 | box=5.67 | spawn={"S":0,"P":0,"O":1,"N":2,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0244 | CH4N2S isomer 3 | CH4N2S | T=648K | damp=0.9917 | bond=3.59 | box=5.67 | spawn={"S":1,"P":0,"O":0,"N":2,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0245 | C3H4O2 isomer 1 | C3H4O2 | T=748K | damp=0.9907 | bond=3.82 | box=5.56 | spawn={"S":0,"P":0,"O":2,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0246 | C3H4OS | C3H4OS | T=748K | damp=0.9907 | bond=3.82 | box=5.56 | spawn={"S":1,"P":0,"O":1,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0247 | C3H5N isomer 1 | C3H5N | T=750K | damp=0.9907 | bond=3.82 | box=5.56 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0248 | C2H3NO3 | C2H3NO3 | T=626K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":3,"N":1,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0249 | C2H4N2O isomer 1 | C2H4N2O | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0250 | C2H4N2O isomer 2 | C2H4N2O | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0251 | C2H4NOP isomer 1 | C2H4NOP | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":1,"O":1,"N":1,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0252 | C2H4O2S | C2H4O2S | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":1,"P":0,"O":2,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0253 | C2H4O3 | C2H4O3 | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":3,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0254 | C2H4OP2 | C2H4OP2 | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":2,"O":1,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0255 | C2H5NO isomer 1 | C2H5NO | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0256 | C2H5NO isomer 2 | C2H5NO | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0257 | C2H5NO isomer 3 | C2H5NO | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0258 | C2H5NO isomer 4 | C2H5NO | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0259 | C2H5NO isomer 5 | C2H5NO | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0260 | C2H5NO isomer 6 | C2H5NO | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0261 | C2H5NS isomer 1 | C2H5NS | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":1,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0262 | C2H5NS isomer 2 | C2H5NS | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":1,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0263 | C2H5NS isomer 3 | C2H5NS | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":1,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0264 | C2H5NS isomer 4 | C2H5NS | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":1,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0265 | C2H5OP isomer 1 | C2H5OP | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":1,"O":1,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0266 | C2H5OP isomer 2 | C2H5OP | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":1,"O":1,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0267 | C2H5OP isomer 3 | C2H5OP | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":1,"O":1,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0268 | C2H5OP isomer 4 | C2H5OP | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":1,"O":1,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0269 | C2H5OP isomer 5 | C2H5OP | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":1,"O":1,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0270 | C2H5PS | C2H5PS | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":1,"P":1,"O":0,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0271 | C3H5N isomer 2 | C3H5N | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0272 | C3H5N isomer 3 | C3H5N | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0273 | C3H5N isomer 4 | C3H5N | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0274 | C3H5N isomer 5 | C3H5N | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0275 | C3H5P isomer 1 | C3H5P | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":1,"O":0,"N":0,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0276 | C3H5P isomer 2 | C3H5P | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":1,"O":0,"N":0,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0278 | CH3O3PS | CH3O3PS | T=626K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":1,"P":1,"O":3,"N":0,"C":1,"H":3} | hitRate=0 | avgHitS=-
+- mol-0279 | CH4N2O2 | CH4N2O2 | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":2,"N":2,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0280 | CH4N4 | CH4N4 | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":0,"O":0,"N":4,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0281 | CH4NOPS | CH4NOPS | T=628K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":1,"P":1,"O":1,"N":1,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0282 | CH5NP2 isomer 1 | CH5NP2 | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":2,"O":0,"N":1,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0283 | CH5NP2 isomer 2 | CH5NP2 | T=630K | damp=0.9903 | bond=3.47 | box=5.56 | spawn={"S":0,"P":2,"O":0,"N":1,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0284 | C2H6O isomer 1 | C2H6O | T=512K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":0,"P":0,"O":1,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0286 | C2H6S isomer 1 | C2H6S | T=512K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":1,"P":0,"O":0,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0287 | C2H6S isomer 2 | C2H6S | T=512K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":1,"P":0,"O":0,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0288 | CH5NO2 | CH5NO2 | T=510K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":0,"P":0,"O":2,"N":1,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0289 | CH5NOS | CH5NOS | T=510K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":1,"P":0,"O":1,"N":1,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0290 | CH5O2P isomer 1 | CH5O2P | T=510K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":0,"P":1,"O":2,"N":0,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0291 | CH5O2P isomer 2 | CH5O2P | T=510K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":0,"P":1,"O":2,"N":0,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0292 | CH6N2 | CH6N2 | T=512K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":0,"P":0,"O":0,"N":2,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0293 | CH6NP isomer 1 | CH6NP | T=512K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":0,"P":1,"O":0,"N":1,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0294 | CH6NP isomer 2 | CH6NP | T=512K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":0,"P":1,"O":0,"N":1,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0295 | H5N2OP | H5N2OP | T=510K | damp=0.99 | bond=3.12 | box=5.56 | spawn={"S":0,"P":1,"O":1,"N":2,"C":0,"H":5} | hitRate=0 | avgHitS=-
+- mol-0296 | C3H4N2 isomer 1 | C3H4N2 | T=868K | damp=0.9928 | bond=4.37 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":2,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0297 | C4H4O | C4H4O | T=868K | damp=0.9928 | bond=4.37 | box=5.81 | spawn={"S":0,"P":0,"O":1,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0298 | C4H4S | C4H4S | T=868K | damp=0.9928 | bond=4.37 | box=5.81 | spawn={"S":1,"P":0,"O":0,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0299 | C6H2O | C6H2O | T=864K | damp=0.9928 | bond=4.37 | box=5.81 | spawn={"S":0,"P":0,"O":1,"N":0,"C":6,"H":2} | hitRate=0 | avgHitS=-
+- mol-0300 | C2H4N2O isomer 3 | C2H4N2O | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":1,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0301 | C2H4N2O isomer 4 | C2H4N2O | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":1,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0302 | C2H4N2S | C2H4N2S | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":1,"P":0,"O":0,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0303 | C2H4NOP isomer 2 | C2H4NOP | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":1,"O":1,"N":1,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0304 | C2H4NOP isomer 3 | C2H4NOP | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":1,"O":1,"N":1,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0305 | C2H4NPS | C2H4NPS | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":1,"P":1,"O":0,"N":1,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0306 | C3H3NOS | C3H3NOS | T=746K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":1,"P":0,"O":1,"N":1,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0307 | C3H4N2 isomer 2 | C3H4N2 | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":2,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0308 | C3H4N2 isomer 3 | C3H4N2 | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":2,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0309 | C3H4NP | C3H4NP | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":1,"O":0,"N":1,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0310 | C3H4O2 isomer 2 | C3H4O2 | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":2,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0311 | C3H4P2 | C3H4P2 | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":2,"O":0,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0312 | C3H5N isomer 6 | C3H5N | T=750K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0313 | C3H5N isomer 7 | C3H5N | T=750K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0314 | C3H5N isomer 8 | C3H5N | T=750K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0315 | C3H5N isomer 9 | C3H5N | T=750K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0316 | C3H5N isomer 10 | C3H5N | T=750K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0317 | C3H5N isomer 11 | C3H5N | T=750K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0318 | Furan | C4H4O | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":1,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0319 | Thiophene | C4H4S | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":1,"P":0,"O":0,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0320 | C5H4 isomer 1 | C5H4 | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":0,"C":5,"H":4} | hitRate=0 | avgHitS=-
+- mol-0321 | C5H4 isomer 2 | C5H4 | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":0,"C":5,"H":4} | hitRate=0 | avgHitS=-
+- mol-0322 | C5H4 isomer 3 | C5H4 | T=748K | damp=0.9925 | bond=4.02 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":0,"C":5,"H":4} | hitRate=0 | avgHitS=-
+- mol-0323 | C2H5NO isomer 7 | C2H5NO | T=630K | damp=0.9921 | bond=3.67 | box=5.81 | spawn={"S":0,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0324 | C2H5NS isomer 5 | C2H5NS | T=630K | damp=0.9921 | bond=3.67 | box=5.81 | spawn={"S":1,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0325 | Cyclopropane | C3H6 | T=632K | damp=0.9921 | bond=3.67 | box=5.81 | spawn={"S":0,"P":0,"O":0,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+- mol-0326 | CH4NO2P | CH4NO2P | T=628K | damp=0.9921 | bond=3.67 | box=5.81 | spawn={"S":0,"P":1,"O":2,"N":1,"C":1,"H":4} | hitRate=0 | avgHitS=-
+- mol-0327 | C2H4N2OS | C2H4N2OS | T=728K | damp=0.9911 | bond=3.9 | box=5.7 | spawn={"S":1,"P":0,"O":1,"N":2,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0328 | C4H5N isomer 1 | C4H5N | T=730K | damp=0.9911 | bond=3.9 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0329 | C4H5N isomer 2 | C4H5N | T=730K | damp=0.9911 | bond=3.9 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0330 | C4H6 isomer 1 | C4H6 | T=732K | damp=0.9911 | bond=3.9 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":6} | hitRate=0 | avgHitS=-
+- mol-0331 | C4H6 isomer 2 | C4H6 | T=732K | damp=0.9911 | bond=3.9 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":6} | hitRate=0 | avgHitS=-
+- mol-0332 | C2H5N3 | C2H5N3 | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":3,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0333 | C2H5NO2 isomer 1 | C2H5NO2 | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":2,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0334 | C2H5NO2 isomer 2 | C2H5NO2 | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":2,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0335 | C2H5NO2 isomer 3 | C2H5NO2 | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":2,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0336 | C2H5NO2 isomer 4 | C2H5NO2 | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":2,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0337 | C2H5NOS isomer 1 | C2H5NOS | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0338 | C2H5NOS isomer 2 | C2H5NOS | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0339 | C2H5NOS isomer 3 | C2H5NOS | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0340 | C2H5NOS isomer 4 | C2H5NOS | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0341 | C2H5NOS isomer 5 | C2H5NOS | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":1,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0342 | C2H5NS2 isomer 1 | C2H5NS2 | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":2,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0343 | C2H5NS2 isomer 2 | C2H5NS2 | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":2,"P":0,"O":0,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0344 | C2H5O2P isomer 1 | C2H5O2P | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":2,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0345 | C2H5O2P isomer 2 | C2H5O2P | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":2,"N":0,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0346 | C2H6N2 isomer 1 | C2H6N2 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0347 | C2H6N2 isomer 2 | C2H6N2 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0348 | C2H6N2 isomer 3 | C2H6N2 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0349 | C2H6N2 isomer 4 | C2H6N2 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0350 | C2H6N2 isomer 5 | C2H6N2 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0351 | C2H6N2 isomer 6 | C2H6N2 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":2,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0352 | C2H6NP isomer 1 | C2H6NP | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0353 | C2H6NP isomer 2 | C2H6NP | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0354 | C2H6NP isomer 3 | C2H6NP | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0356 | C2H6NP isomer 5 | C2H6NP | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0357 | C2H6NP isomer 6 | C2H6NP | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0358 | C2H6NP isomer 7 | C2H6NP | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":0,"N":1,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0359 | C2H6P2 | C2H6P2 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":2,"O":0,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0360 | C3H3NO2S | C3H3NO2S | T=606K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":2,"N":1,"C":3,"H":3} | hitRate=0 | avgHitS=-
+- mol-0361 | C3H4NOP | C3H4NOP | T=608K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":1,"N":1,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0362 | C3H4O3 | C3H4O3 | T=608K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":3,"N":0,"C":3,"H":4} | hitRate=0 | avgHitS=-
+- mol-0363 | C3H5NO isomer 1 | C3H5NO | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":1,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0364 | C3H5NO isomer 2 | C3H5NO | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":1,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0365 | C3H5NS isomer 1 | C3H5NS | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0366 | C3H5OP isomer 1 | C3H5OP | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":1,"N":0,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0367 | C3H5OP isomer 2 | C3H5OP | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":1,"N":0,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0368 | C3H5OP isomer 3 | C3H5OP | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":1,"N":0,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0369 | C3H6O isomer 1 | C3H6O | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":1,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+- mol-0370 | C3H6O isomer 2 | C3H6O | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":1,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+- mol-0372 | Acetone | C3H6O | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":1,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+- mol-0374 | C3H6S isomer 2 | C3H6S | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":0,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+- mol-0375 | C3H6S isomer 3 | C3H6S | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":0,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+- mol-0376 | C3H6S isomer 4 | C3H6S | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":0,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+- mol-0377 | C3H6S isomer 5 | C3H6S | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":0,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+- mol-0378 | C4H5N isomer 3 | C4H5N | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0379 | C4H5N isomer 4 | C4H5N | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0380 | C4H5N isomer 5 | C4H5N | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0381 | C4H5P isomer 1 | C4H5P | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":1,"O":0,"N":0,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0382 | C4H6 isomer 3 | C4H6 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":6} | hitRate=0 | avgHitS=-
+- mol-0383 | C4H6 isomer 4 | C4H6 | T=612K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":6} | hitRate=0 | avgHitS=-
+- mol-0384 | CH5N3S isomer 1 | CH5N3S | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":0,"N":3,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0385 | CH5N3S isomer 2 | CH5N3S | T=610K | damp=0.9908 | bond=3.55 | box=5.7 | spawn={"S":1,"P":0,"O":0,"N":3,"C":1,"H":5} | hitRate=0 | avgHitS=-
+- mol-0386 | C2H6O2 | C2H6O2 | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":0,"P":0,"O":2,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0387 | C2H6OS isomer 1 | C2H6OS | T=672K | damp=0.987 | bond=2.95 | box=5 | spawn={"S":1,"P":0,"O":1,"N":0,"C":2,"H":6} | hitRate=0.2 | avgHitS=0.1
+- mol-0388 | C2H6OS isomer 2 | C2H6OS | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":1,"P":0,"O":1,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0389 | C2H6OS isomer 3 | C2H6OS | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":1,"P":0,"O":1,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0390 | C2H6S2 | C2H6S2 | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":2,"P":0,"O":0,"N":0,"C":2,"H":6} | hitRate=0 | avgHitS=-
+- mol-0391 | C2H7N isomer 1 | C2H7N | T=494K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":1,"C":2,"H":7} | hitRate=0 | avgHitS=-
+- mol-0392 | C2H7N isomer 2 | C2H7N | T=494K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":0,"P":0,"O":0,"N":1,"C":2,"H":7} | hitRate=0 | avgHitS=-
+- mol-0393 | C2H7P | C2H7P | T=494K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":0,"P":1,"O":0,"N":0,"C":2,"H":7} | hitRate=0 | avgHitS=-
+- mol-0394 | CH6N2O | CH6N2O | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":0,"P":0,"O":1,"N":2,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0395 | CH6N2S | CH6N2S | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":1,"P":0,"O":0,"N":2,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0396 | CH6NOP isomer 1 | CH6NOP | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":0,"P":1,"O":1,"N":1,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0397 | CH6NOP isomer 2 | CH6NOP | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":0,"P":1,"O":1,"N":1,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0398 | CH6NOP isomer 3 | CH6NOP | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":0,"P":1,"O":1,"N":1,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0399 | CH6NPS | CH6NPS | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":1,"P":1,"O":0,"N":1,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0400 | CH6P2S | CH6P2S | T=492K | damp=0.9905 | bond=3.2 | box=5.7 | spawn={"S":1,"P":2,"O":0,"N":0,"C":1,"H":6} | hitRate=0 | avgHitS=-
+- mol-0401 | C4H4NP | C4H4NP | T=848K | damp=0.9932 | bond=4.45 | box=5.95 | spawn={"S":0,"P":1,"O":0,"N":1,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0402 | C2H3N2OPS | C2H3N2OPS | T=726K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":1,"P":1,"O":1,"N":2,"C":2,"H":3} | hitRate=0 | avgHitS=-
+- mol-0403 | C2H4O2P2 | C2H4O2P2 | T=728K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":2,"O":2,"N":0,"C":2,"H":4} | hitRate=0 | avgHitS=-
+- mol-0404 | C3H5NO isomer 3 | C3H5NO | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":1,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0405 | C3H5NO isomer 4 | C3H5NO | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":1,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0406 | C3H5NO isomer 5 | C3H5NO | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":1,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0407 | C3H5NO isomer 6 | C3H5NO | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":1,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0408 | C3H5NS isomer 2 | C3H5NS | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":1,"P":0,"O":0,"N":1,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0409 | C3H5OP isomer 4 | C3H5OP | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":1,"O":1,"N":0,"C":3,"H":5} | hitRate=0 | avgHitS=-
+- mol-0410 | C4H4N2 | C4H4N2 | T=728K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":0,"N":2,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0411 | Pyrimidine | C4H4N2 | T=728K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":0,"N":2,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0412 | C4H4O2 | C4H4O2 | T=728K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":2,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0413 | C4H4OS | C4H4OS | T=728K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":1,"P":0,"O":1,"N":0,"C":4,"H":4} | hitRate=0 | avgHitS=-
+- mol-0414 | Pyrrole | C4H5N | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0415 | C4H5N isomer 6 | C4H5N | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":0,"N":1,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0416 | C4H5P isomer 2 | C4H5P | T=730K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":1,"O":0,"N":0,"C":4,"H":5} | hitRate=0 | avgHitS=-
+- mol-0417 | C4H6 isomer 5 | C4H6 | T=732K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":6} | hitRate=0 | avgHitS=-
+- mol-0418 | C4H6 isomer 6 | C4H6 | T=732K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":0,"N":0,"C":4,"H":6} | hitRate=0 | avgHitS=-
+- mol-0419 | C6H4 | C6H4 | T=728K | damp=0.9929 | bond=4.1 | box=5.95 | spawn={"S":0,"P":0,"O":0,"N":0,"C":6,"H":4} | hitRate=0 | avgHitS=-
+- mol-0420 | C2H5NO2 isomer 5 | C2H5NO2 | T=610K | damp=0.9926 | bond=3.75 | box=5.95 | spawn={"S":0,"P":0,"O":2,"N":1,"C":2,"H":5} | hitRate=0 | avgHitS=-
+- mol-0421 | C3H6O isomer 4 | C3H6O | T=612K | damp=0.9926 | bond=3.75 | box=5.95 | spawn={"S":0,"P":0,"O":1,"N":0,"C":3,"H":6} | hitRate=0 | avgHitS=-
+

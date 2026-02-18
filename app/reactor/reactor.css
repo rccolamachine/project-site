@@ -1,0 +1,158 @@
+.reactor-expanded-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(15, 23, 42, 0.56);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overscroll-behavior: contain;
+}
+
+.reactor-expanded-panel {
+  width: min(95vw, 980px);
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(248, 250, 252, 0.98);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.45);
+  padding: 12px;
+}
+
+.reactor-expanded-body {
+  display: grid;
+  place-items: center;
+  padding: 8px 4px 4px;
+}
+
+.reactor-expanded-canvas-host {
+  width: min(1080px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.reactor-expanded-canvas-frame {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  position: relative;
+}
+
+.reactor-expanded-canvas {
+  width: 100%;
+  aspect-ratio: 100 / 64;
+}
+
+.reactor-expanded-hints {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  pointer-events: none;
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  text-shadow: 0 1px 2px rgba(248, 250, 252, 0.92);
+}
+
+.reactor-hidden-input {
+  display: none;
+}
+
+.reactor-col-gap-8 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reactor-row-gap-8-wrap {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reactor-row-gap-8 {
+  display: flex;
+  gap: 8px;
+}
+
+.reactor-row-gap-6-wrap {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.reactor-grid-gap-8-center {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.reactor-grid-gap-4 {
+  display: grid;
+  gap: 4px;
+}
+
+.reactor-text-12-strong {
+  font-size: 12px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.reactor-text-11-title {
+  font-size: 11px;
+  font-weight: 950;
+  color: #0f172a;
+}
+
+.reactor-text-11-slate {
+  font-size: 11px;
+  color: #334155;
+}
+
+.reactor-text-10-muted {
+  font-size: 10px;
+  color: #475569;
+}
+
+.reactor-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  justify-self: start;
+  font-size: 10px;
+  font-weight: 900;
+  color: #334155;
+}
+
+.reactor-catalogue-number {
+  font-size: 11px;
+  font-weight: 800;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+.reactor-catalogue-weight {
+  font-size: 11px;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.reactor-catalogue-status-wrap {
+  display: grid;
+  gap: 2px;
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+  min-width: 0;
+}
