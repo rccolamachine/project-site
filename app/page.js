@@ -138,7 +138,11 @@ export default function Home() {
                 <Link
                   className="btn"
                   href={card.href}
-                  prefetch={card.href === "/reactor" ? false : undefined}
+                  prefetch={
+                    card.href === "/reactor" || card.href === "/farm"
+                      ? false
+                      : undefined
+                  }
                 >
                   {card.cta}
                 </Link>

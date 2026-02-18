@@ -44,6 +44,7 @@ export default function SiteHeader() {
           <Link
             className={pathname.startsWith("/farm") ? "active" : ""}
             href="/farm"
+            prefetch={false}
           >
             Farm
           </Link>
