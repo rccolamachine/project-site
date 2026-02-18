@@ -1,33 +1,123 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 
 const SECTION_GAP = 16;
 
+/**
+ * ResumePage
+ * - Single-file, self-contained resume renderer + print-to-PDF workflow.
+ * - Data-driven: edit arrays below (LINKS / EXPERIENCE / PROJECTS) instead of JSX.
+ * - Style preserved: matches your existing “resume paper” look + print-only mode.
+ */
 export default function ResumePage() {
   const paperRef = useRef(null);
 
   useEffect(() => {
     const prev = document.title;
-    document.title = "Rob_Chapleski_Lead_SDET_Resume";
+    document.title = "Rob_Chapleski_Resume";
     return () => {
       document.title = prev;
     };
   }, []);
 
   const downloadPDF = () => {
-    // Add a body class that switches the page into "resume-only print mode"
     document.body.classList.add("print-resume");
-    // Give the DOM a beat to apply styles before print dialog snapshots
     requestAnimationFrame(() => {
       window.print();
-      // Remove class after returning from print dialog
       setTimeout(() => document.body.classList.remove("print-resume"), 200);
     });
   };
 
+  const LINKS = useMemo(
+    () => [
+      {
+        label: "LinkedIn",
+        href: "https://www.linkedin.com/in/robert-chapleski",
+        printText: "linkedin.com/in/robert-chapleski",
+      },
+      {
+        label: "GitHub",
+        href: "https://github.com/rccolamachine",
+        printText: "github.com/rccolamachine",
+      },
+      {
+        label: "Portfolio",
+        href: "https://rccolamachine.com",
+        printText: "rccolamachine.com",
+      },
+    ],
+    [],
+  );
+
+  const EXPERIENCE = useMemo(
+    () => [
+      {
+        company: "Accumulus Technologies",
+        title: "Senior Test Automation Engineer",
+        right: "Jun 2025 – Sep 2025 · Remote",
+        bullets: [
+          "Developed Playwright automation for GraphQL and REST workflows",
+          "Improved CI-driven release stability through API validation",
+          "Contributed to reusable automation abstractions and code reviews",
+        ],
+      },
+      {
+        company: "Unqork",
+        title: "Backend Quality Lead",
+        right: "Jul 2021 – Jun 2025 · Remote",
+        bullets: [
+          "Led backend quality strategy across five product teams and mentored eight engineers",
+          "Designed RBAC validation framework covering authentication and authorization systems",
+          "Validated OpenAPI documentation and integrations (SSO, OAuth2, Workato)",
+          "Executed MongoDB performance benchmarking during schema migrations",
+          "Used Datadog telemetry to diagnose distributed backend failures",
+          "Architected testing strategy for new GenAI product",
+        ],
+      },
+      {
+        company: "Research & Computational Systems",
+        title: "ORNL · UTK · Virginia Tech",
+        right: "2012 – 2021",
+        bullets: [
+          "Executed large-scale simulations on national supercomputing infrastructure",
+          "Built scripting pipelines to automate computational workflows",
+          "Published peer-reviewed research in complex systems modeling",
+        ],
+      },
+    ],
+    [],
+  );
+
+  const PROJECTS = useMemo(
+    () => [
+      {
+        company: "Interactive Photobooth Platform",
+        title: "Next.js · React · API Routes · Object Storage",
+        href: "https://rccolamachine.com/photobooth",
+        printText: "rccolamachine.com/photobooth",
+        bullets: [
+          "Built full-stack camera application with client-side image processing",
+          "Designed API routes for persistence, validation, and structured contracts",
+          "Balanced UX responsiveness with server-side storage trade-offs",
+        ],
+      },
+      {
+        company: "Reactive Simulation Sandbox",
+        title: "JavaScript · Systems Modeling",
+        href: "https://rccolamachine.com/reactor",
+        printText: "rccolamachine.com/reactor",
+        bullets: [
+          "Implemented browser-based reactive system modeling interacting entities",
+          "Evaluated algorithmic trade-offs between realism and performance",
+        ],
+      },
+    ],
+    [],
+  );
+
   return (
-    <section className="resumePage">
+    <section className="page resumePage">
       {/* Local, page-only styles (includes print rules) */}
       <style jsx global>{`
         /* ---------- Screen layout helpers ---------- */
@@ -36,7 +126,24 @@ export default function ResumePage() {
           justify-content: space-between;
           align-items: center;
           gap: 12px;
-          margin-bottom: 14px;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
+        }
+
+        /* Explicit screen/print toggles */
+        .screenOnly {
+          display: inline;
+        }
+        .printOnly {
+          display: none;
+        }
+        @media print {
+          .screenOnly {
+            display: none !important;
+          }
+          .printOnly {
+            display: inline !important;
+          }
         }
 
         /* ---------- Resume paper styles (screen) ---------- */
@@ -75,10 +182,7 @@ export default function ResumePage() {
           line-height: 1.4;
           opacity: 0.9;
         }
-        .resumeLinks a {
-          color: inherit;
-          text-decoration: underline;
-        }
+
         .dot {
           margin: 0 8px;
           opacity: 0.65;
@@ -111,7 +215,7 @@ export default function ResumePage() {
           margin: 0 0 4px;
         }
 
-        /* ---------- Role block (reused by Education now) ---------- */
+        /* ---------- Role block ---------- */
         .role {
           margin-top: 14px;
         }
@@ -137,17 +241,6 @@ export default function ResumePage() {
           opacity: 0.9;
           white-space: nowrap;
         }
-        .roleDates {
-          font-weight: 600;
-        }
-        .roleLoc {
-          opacity: 0.9;
-        }
-
-        .roleArea {
-          margin-top: 8px;
-          font-size: 12.5px;
-        }
 
         .roleBullets {
           margin: 6px 0 0;
@@ -159,24 +252,30 @@ export default function ResumePage() {
           margin: 0 0 4px;
         }
 
-        .skillsGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px 16px;
+        /* Links: clean by default, icy-blue on hover/focus (no highlight) */
+        .resumePaper a {
+          color: inherit;
+          text-decoration: none;
+          transition:
+            color 120ms ease,
+            opacity 120ms ease,
+            text-decoration-color 120ms ease;
         }
-        .skillsHead {
-          font-size: 12.5px;
-          margin-bottom: 2px;
+
+        .resumePaper a:hover,
+        .resumePaper a:focus-visible {
+          color: #8fe8ff; /* icy blue */
+          text-decoration: underline; /* optional: remove if you want zero underline always */
+          text-decoration-thickness: 1px;
+          text-underline-offset: 2px;
         }
-        .skillsLine {
-          font-size: 12.5px;
-          line-height: 1.45;
-          opacity: 0.95;
+
+        .resumePaper a:active {
+          opacity: 0.9;
         }
 
         /* ---------- Print: ONLY resume contents ---------- */
         @media print {
-          /* Ensure clean white output */
           html,
           body {
             background: #fff !important;
@@ -211,11 +310,6 @@ export default function ResumePage() {
             display: none !important;
           }
 
-          /* Avoid column weirdness on narrow printers */
-          .competencies {
-            columns: 2;
-          }
-
           /* Reduce risk of awkward page breaks */
           .role {
             break-inside: avoid-page;
@@ -225,10 +319,6 @@ export default function ResumePage() {
           a[href]::after {
             content: "" !important;
           }
-
-          /* Some browsers add header/footer; user must disable:
-             - Chrome: Print dialog -> "Headers and footers" unchecked
-             We can't programmatically force that off. */
         }
 
         @page {
@@ -237,12 +327,12 @@ export default function ResumePage() {
         }
       `}</style>
 
-      <div className="noPrint resumeTopBar">
-        <h1 style={{ margin: 0 }}>Resume</h1>
+      <header className="noPrint resumeTopBar">
+        <h1>Resume</h1>
         <button className="btn" onClick={downloadPDF}>
           Download PDF
         </button>
-      </div>
+      </header>
 
       <article className="resumePaper" ref={paperRef} aria-label="Resume">
         {/* HEADER */}
@@ -250,435 +340,170 @@ export default function ResumePage() {
           <div>
             <div className="resumeName">Rob Chapleski Jr., Ph.D.</div>
             <div className="resumeTitle">
-              Lead / Senior SDET · Quality Engineering
+              Senior Software Engineer · Quality Architecture · Full-Stack
+              Systems
             </div>
           </div>
 
           <div className="resumeContact">
             <div>United States · Remote</div>
-            <div className="resumeLinks">
-              {/* screen: clickable */}
+
+            {/* Screen: clickable; Print: raw URLs */}
+            <div>
               <span className="screenOnly">
-                <a
-                  href="https://www.linkedin.com/in/robert-chapleski"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  LinkedIn
-                </a>
-                <span className="dot">•</span>
-                <a
-                  href="https://github.com/rccolamachine"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  GitHub
-                </a>
-                <span className="dot">•</span>
-                <a
-                  href="https://rccolamachine.com"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Portfolio
-                </a>
+                {LINKS.map((l, idx) => (
+                  <React.Fragment key={l.href}>
+                    <a href={l.href} target="_blank" rel="noreferrer noopener">
+                      {l.label}
+                    </a>
+                    {idx < LINKS.length - 1 ? (
+                      <span className="dot">•</span>
+                    ) : null}
+                  </React.Fragment>
+                ))}
               </span>
 
-              {/* print: raw URLs */}
               <span className="printOnly">
-                linkedin.com/in/robert-chapleski <span className="dot">•</span>{" "}
-                github.com/rccolamachine <span className="dot">•</span>{" "}
-                rccolamachine.com
+                {LINKS.map((l, idx) => (
+                  <React.Fragment key={l.printText}>
+                    {l.printText}
+                    {idx < LINKS.length - 1 ? (
+                      <span className="dot">•</span>
+                    ) : null}
+                  </React.Fragment>
+                ))}
               </span>
             </div>
           </div>
         </header>
 
-        {/* PROFILE */}
-        <section style={{ marginTop: SECTION_GAP }}>
-          <h2 className="resumeH2">Profile</h2>
+        {/* SUMMARY */}
+        <Section title="Professional Summary">
           <p className="resumeP">
-            Lead-level Software Development Engineer in Test with deep
-            experience designing automation strategy, backend quality systems,
-            and CI integrated test frameworks for complex SaaS platforms. Known
-            for building durable API and RBAC validation, owning release gates,
-            and mentoring teams toward automation maturity. Comfortable
-            operating at technical depth with senior engineering leadership
-            while staying grounded in product risk, reliability, and user
-            outcomes. Brings a rigorous scientific mindset to debugging,
-            measurement, and systems thinking.
+            Senior Software Engineer with expertise in automation architecture,
+            API validation, CI/CD integration, and full-stack JavaScript
+            systems. Experienced collaborating with engineering leadership to
+            improve release reliability, design resilient access control models,
+            and strengthen platform quality across distributed SaaS
+            environments. Combines strong technical depth with systems thinking
+            and pragmatic delivery.
           </p>
-        </section>
+        </Section>
 
         {/* CORE COMPETENCIES */}
-        <section style={{ marginTop: SECTION_GAP }}>
-          <h2 className="resumeH2">Core Competencies</h2>
+        <Section title="Core Competencies">
           <ul className="competencies">
-            <li>Quality strategy & release gates</li>
-            <li>Playwright E2E automation</li>
-            <li>API testing (GraphQL, REST)</li>
-            <li>RBAC & security validation</li>
-            <li>Test architecture & patterns</li>
-            <li>CI pipelines & reporting</li>
-            <li>Performance testing & analysis</li>
-            <li>Mentorship & cross functional leadership</li>
+            <li>Automation framework design</li>
+            <li>Full-stack JavaScript systems</li>
+            <li>API validation (REST, GraphQL)</li>
+            <li>RBAC & access control modeling</li>
+            <li>CI/CD integration</li>
+            <li>Performance & load testing</li>
+            <li>Distributed system debugging</li>
+            <li>Technical mentorship & leadership</li>
           </ul>
-        </section>
+        </Section>
 
         {/* EXPERIENCE */}
-        <section style={{ marginTop: SECTION_GAP }}>
-          <h2 className="resumeH2">Experience</h2>
+        <Section title="Experience">
+          {EXPERIENCE.map((r) => (
+            <Role
+              key={`${r.company}-${r.title}`}
+              company={r.company}
+              title={r.title}
+              right={r.right}
+              bullets={r.bullets}
+            />
+          ))}
+        </Section>
 
-          <div className="role">
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">Accumulus Technologies</div>
-                <div className="roleTitle">Senior Test Automation Engineer</div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">Jun 2025 to Sep 2025</div>
-                <div className="roleLoc">Remote</div>
-              </div>
-            </div>
-
-            <div className="roleArea">
-              <strong>Automation Architecture</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Developed and refactored 50 plus Playwright TypeScript end to
-                end tests within a 2000 test suite covering GraphQL and REST
-                workflows
-              </li>
-              <li>
-                Implemented Page Object Model abstractions and reusable SDK
-                components to improve test maintainability and reduce locator
-                fragility
-              </li>
-              <li>
-                Leveraged mocked GraphQL responses and API driven setup to
-                stabilize complex UI workflows and increase deterministic
-                coverage
-              </li>
-            </ul>
-
-            <div className="roleArea">
-              <strong>CI & Release Quality</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Maintained 100 percent release pass rate through GitLab CI
-                pipelines integrated with Xray and Allure reporting
-              </li>
-              <li>
-                Practiced shift left quality through refinement participation,
-                UX feedback, and proactive defect identification, using AI tools
-                to accelerate problem solving and test design
-              </li>
-            </ul>
-          </div>
-
-          <div className="role">
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">Unqork</div>
-                <div className="roleTitle">Backend Quality Assurance Lead</div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">Jul 2021 to Jun 2025</div>
-                <div className="roleLoc">Remote</div>
-              </div>
-            </div>
-
-            <div className="roleArea">
-              <strong>Quality Leadership</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Led backend quality strategy across five product teams and
-                mentored eight QA engineers, serving as release gatekeeper for
-                authentication, RBAC, integrations, data, and platform control
-                plane work
-              </li>
-              <li>
-                Defined test requirements and release readiness criteria for
-                major platform initiatives, including application versioning and
-                version merge functionality
-              </li>
-            </ul>
-
-            <div className="roleArea">
-              <strong>API & Security Testing</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Designed and maintained a comprehensive RBAC test suite covering
-                authentication, authorization, role hierarchies, and permission
-                expansion across internal endpoints
-              </li>
-              <li>
-                Validated OpenAPI documentation and integrations including SSO,
-                OAuth2, and Workato connectors, collaborating closely with
-                senior and principal engineers on architecture and risk
-              </li>
-            </ul>
-
-            <div className="roleArea">
-              <strong>Performance & Observability</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Conducted performance benchmarking using Postman and K6 to
-                evaluate large scale database migrations and CRUD optimization
-                risk
-              </li>
-              <li>
-                Leveraged Datadog logs and MongoDB queries to diagnose backend
-                defects and improve service reliability
-              </li>
-            </ul>
-          </div>
-
-          <div className="role">
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">Oak Ridge National Laboratory</div>
-                <div className="roleTitle">
-                  Postdoctoral Researcher · Chemical Separations Group
-                </div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">Jan 2020 to Jul 2021</div>
-                <div className="roleLoc">Oak Ridge, TN</div>
-              </div>
-            </div>
-
-            <div className="roleArea">
-              <strong>Large Scale Computation</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Executed high performance computational simulations on national
-                laboratory supercomputing resources to study adsorption
-                mechanisms on rare earth mineral analogues
-              </li>
-              <li>
-                Built automated scripting pipelines to transform simulation
-                outputs into structured inputs for downstream calculations,
-                improving throughput and reproducibility
-              </li>
-            </ul>
-
-            <div className="roleArea">
-              <strong>Research & Publication</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Published peer reviewed research and translated theoretical
-                results into actionable insights for experimental collaborators
-                and proposal development
-              </li>
-              <li>
-                Authored a chapter in the Handbook on the Physics and Chemistry
-                of Rare Earths and contributed to peer reviewed journal
-                publications
-              </li>
-            </ul>
-          </div>
-
-          <div className="role">
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">University of Tennessee</div>
-                <div className="roleTitle">
-                  Postdoctoral Researcher · Computational Physical Chemistry
-                </div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">Jul 2017 to Jan 2020</div>
-                <div className="roleLoc">Knoxville, TN</div>
-              </div>
-            </div>
-
-            <div className="roleArea">
-              <strong>Computational Modeling</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Applied density functional theory to characterize surface
-                reaction mechanisms and interpret experimental outcomes under
-                multiple conditions
-              </li>
-              <li>
-                Mentored graduate and undergraduate researchers and contributed
-                to publications through rigorous modeling, analysis, and
-                technical writing
-              </li>
-            </ul>
-          </div>
-
-          <div className="role">
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">Virginia Tech</div>
-                <div className="roleTitle">
-                  Graduate Research Assistant · Computational Physical Chemistry
-                </div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">Aug 2012 to May 2017</div>
-                <div className="roleLoc">Blacksburg, VA</div>
-              </div>
-            </div>
-
-            <div className="roleArea">
-              <strong>Experimental Systems & Quality</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Maintained and designed ultra-high vacuum scientific apparatus
-                for advanced data collection, operating in tightly controlled
-                conditions and ensuring measurement integrity across experiments
-              </li>
-              <li>
-                Trained undergraduate students in analytical chemistry
-                laboratory methods with emphasis on quality in chemical
-                analysis, documentation, and repeatable technique
-              </li>
-              <li>
-                Developed and executed large scale computational models to study
-                gas surface reaction pathways, adsorption, and catalytic
-                hydrolysis mechanisms, including chemical agent simulants
-              </li>
-            </ul>
-          </div>
-
-          <div className="role">
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">Carroll County Public Schools</div>
-                <div className="roleTitle">
-                  High School Teacher · Physics & Chemistry
-                </div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">Jul 2007 to Jun 2012</div>
-                <div className="roleLoc">Maryland</div>
-              </div>
-            </div>
-
-            <div className="roleArea">
-              <strong>Leadership & Communication</strong>
-            </div>
-            <ul className="roleBullets">
-              <li>
-                Taught physics and chemistry to diverse learners and built
-                rigorous course materials, strengthening the communication and
-                coaching skills that translate directly to mentoring engineers
-                and aligning teams
-              </li>
-              <li>
-                Developed curriculum used across the county and led student
-                organizations, demonstrating ownership, stakeholder alignment,
-                and delivery under real world constraints
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        {/* EDUCATION (now matches role styling) */}
-        <section style={{ marginTop: SECTION_GAP }}>
-          <h2 className="resumeH2">Education</h2>
-
-          <div className="role" style={{ marginTop: 8 }}>
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">
-                  Fullstack Academy / Virginia Tech
-                </div>
-                <div className="roleTitle">Software Developer Certificate</div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">Feb 2024</div>
-                <div className="roleLoc">Remote</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="role">
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">Virginia Tech</div>
-                <div className="roleTitle">Ph.D. Chemistry</div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">May 2017</div>
-                <div className="roleLoc">Blacksburg, VA</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="role">
-            <div className="roleTop">
-              <div>
-                <div className="roleCompany">Towson University</div>
-                <div className="roleTitle">
-                  B.S. Chemistry · Honors College · Summa cum laude
-                </div>
-              </div>
-              <div className="roleRight">
-                <div className="roleDates">May 2007</div>
-                <div className="roleLoc">Towson, MD</div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* PROJECTS */}
+        <Section title="Selected Projects">
+          {PROJECTS.map((p) => (
+            <Role
+              key={p.href}
+              company={p.company}
+              title={p.title}
+              right={
+                <>
+                  <span className="screenOnly">
+                    <a href={p.href} target="_blank" rel="noreferrer noopener">
+                      {toPrettyHostPath(p.href)}
+                    </a>
+                  </span>
+                  <span className="printOnly">{p.printText}</span>
+                </>
+              }
+              bullets={p.bullets}
+              compactTop
+            />
+          ))}
+        </Section>
 
         {/* SKILLS */}
-        <section style={{ marginTop: SECTION_GAP }}>
-          <h2 className="resumeH2">Skills</h2>
-
-          <div className="skillsGrid">
-            <div>
-              <div className="skillsHead">
-                <strong>Test Automation & Frameworks</strong>
-              </div>
-              <div className="skillsLine">
-                Playwright · TypeScript · Selenium · CodeceptJS
-              </div>
-            </div>
-            <div>
-              <div className="skillsHead">
-                <strong>APIs & Security</strong>
-              </div>
-              <div className="skillsLine">GraphQL · REST · RBAC · OAuth2</div>
-            </div>
-            <div>
-              <div className="skillsHead">
-                <strong>CI/CD & Observability</strong>
-              </div>
-              <div className="skillsLine">
-                GitLab CI · Xray · Allure · Datadog
-              </div>
-            </div>
-            <div>
-              <div className="skillsHead">
-                <strong>Data & Performance</strong>
-              </div>
-              <div className="skillsLine">MongoDB · K6 · Postman · OpenAPI</div>
-            </div>
-          </div>
-        </section>
-
-        {/* STRENGTHS */}
-        <section style={{ marginTop: SECTION_GAP }}>
-          <h2 className="resumeH2">Strengths</h2>
-          <p className="resumeP" style={{ marginBottom: 0 }}>
-            Strategic leadership · Architectural thinking · Technical depth ·
-            Cross-functional communication · Detail-oriented
+        <Section title="Technical Skills">
+          <p className="resumeP">
+            JavaScript · TypeScript · Node.js · React · GraphQL · REST · MongoDB
+            · Playwright · Selenium · CodeceptJS · Postman · K6 · GitLab CI ·
+            Datadog · Jira · AI-assisted development tools
           </p>
-        </section>
+        </Section>
+
+        {/* EDUCATION */}
+        <Section title="Education">
+          <p className="resumeP">
+            Software Developer Certificate – Fullstack Academy / Virginia Tech
+            (2024)
+            <br />
+            Ph.D. Chemistry – Virginia Tech (2017)
+            <br />
+            B.S. Chemistry – Towson University, Summa cum laude (2007)
+          </p>
+        </Section>
       </article>
     </section>
   );
+}
+
+/** Small presentational wrappers for consistency */
+function Section({ title, children }) {
+  return (
+    <section style={{ marginTop: SECTION_GAP }}>
+      <h2 className="resumeH2">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function Role({ company, title, right, bullets, compactTop = false }) {
+  return (
+    <div className="role" style={compactTop ? { marginTop: 8 } : undefined}>
+      <div className="roleTop">
+        <div>
+          <div className="roleCompany">{company}</div>
+          <div className="roleTitle">{title}</div>
+        </div>
+        <div className="roleRight">{right}</div>
+      </div>
+      {bullets?.length ? (
+        <ul className="roleBullets">
+          {bullets.map((b, i) => (
+            <li key={`${company}-${i}`}>{b}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/** rccolamachine.com/xyz pretty printing */
+function toPrettyHostPath(url) {
+  try {
+    const u = new URL(url);
+    const host = u.host.replace(/^www\./, "");
+    const path = (u.pathname || "/").replace(/\/$/, "");
+    return `${host}${path}`;
+  } catch {
+    return url;
+  }
 }

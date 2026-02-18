@@ -12,7 +12,7 @@ export default function GuestbookPage() {
       </header>
       <div className="guestbookCtaRow">
         <a className="btn" href="/pixelbooth">
-          {`--> Go to Pixelbooth`}
+          {`Go to Pixelbooth`}
         </a>
       </div>
 

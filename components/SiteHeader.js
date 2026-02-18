@@ -3,30 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-function singularizeForHeader(word) {
-  const w = String(word || "")
-    .trim()
-    .toLowerCase();
-  if (!w) return "";
-
-  if (w.length > 1 && w.endsWith("s")) return w.slice(0, -1);
-
-  return w;
-}
-
-function titleFromPath(pathname) {
-  if (!pathname || pathname === "/") return "cola";
-
-  const first =
-    pathname.split("?")[0].split("#")[0].split("/").filter(Boolean)[0] ||
-    "cola";
-  return first.toLowerCase();
-}
-
 export default function SiteHeader() {
   const pathname = usePathname();
-  const raw = titleFromPath(pathname);
-  const middle = raw === "cola" ? "cola" : singularizeForHeader(raw);
+  const middle = "cola";
 
   return (
     <header className="nav">

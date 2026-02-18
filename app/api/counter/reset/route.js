@@ -7,6 +7,9 @@ export const runtime = "nodejs";
 
 const KEY_VALUE = "game:counter:value";
 const KEY_SHAME = "game:counter:shame";
+const KEY_VALUE_EVENTS = "game:counter:valueEvents";
+const KEY_VALUE_DAILY = "game:counter:valueDaily";
+const MAX_VALUE_EVENTS = 25000;
 
 // simple per-IP rate limit: 10 requests / 60 seconds (separate bucket)
 async function rateLimit(req, limit = 10, windowSec = 60) {
@@ -55,14 +58,22 @@ export async function POST(req) {
 
     const beforeValue = Number((await kv.get(KEY_VALUE)) ?? 0);
 
-    // set counter to 0
-    await kv.set(KEY_VALUE, 0);
+    const resetAt = new Date().toISOString();
+    const dayKey = resetAt.slice(0, 10);
+
+    // set counter to 0 and append value history point
+    await Promise.all([
+      kv.set(KEY_VALUE, 0),
+      kv.lpush(KEY_VALUE_EVENTS, JSON.stringify({ ts: resetAt, value: 0 })),
+      kv.ltrim(KEY_VALUE_EVENTS, 0, MAX_VALUE_EVENTS - 1),
+      kv.hset(KEY_VALUE_DAILY, { [dayKey]: 0 }),
+    ]);
 
     const entry = {
       id: crypto.randomBytes(10).toString("hex"),
       name,
       photoDataUrl,
-      resetAt: new Date().toISOString(),
+      resetAt,
       beforeValue,
     };
 

@@ -34,6 +34,10 @@ function hash2(ix, iy, seed) {
   return (h >>> 0) / 4294967296;
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+}
+
 function exportTinyGridToBlob(
   tinyCanvas,
   { outW = 1024, mime = "image/png", quality } = {},
@@ -786,6 +790,8 @@ export default function Page() {
 
     if (!name) return setSaveError("Name is required.");
     if (!email) return setSaveError("Email is required.");
+    if (!isValidEmail(email))
+      return setSaveError("Enter a valid email address.");
 
     const tiny = snapSmallRef.current;
     if (!tiny?.width || !tiny?.height)
@@ -847,6 +853,12 @@ export default function Page() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [showSaveModal]);
 
+  const canSnap = !error && !snapped;
+  const canBackToLive = !error && snapped;
+  const canPublish = !error && snapped;
+  const canSubmitSaveModal =
+    lead.name.trim().length > 0 && isValidEmail(lead.email);
+
   return (
     <div
       ref={stageRef}
@@ -905,7 +917,29 @@ export default function Page() {
           </div>
         ) : null}
 
+        <style jsx>{`
+          .pixelboothActions .pixelboothActionBtn {
+            width: auto;
+            height: 40px;
+            padding: 0 10px;
+            line-height: 1;
+            text-align: center;
+            justify-content: center;
+            color: var(--text);
+            text-decoration: none;
+            white-space: nowrap;
+          }
+          .pixelboothActions .pixelboothActionBtn:hover {
+            color: var(--text);
+          }
+          .pixelSlider {
+            width: 100%;
+            accent-color: var(--accent);
+          }
+        `}</style>
+
         <div
+          className="pixelboothActions"
           style={{
             display: "flex",
             gap: 12,
@@ -914,19 +948,28 @@ export default function Page() {
             flexWrap: "wrap",
           }}
         >
-          <button onClick={handleSnap} disabled={!!error || snapped}>
-            {snapped ? "Drag pixels in photo to edit" : "Snap"}
-          </button>
+          {canSnap ? (
+            <button className="btn pixelboothActionBtn" onClick={handleSnap}>
+              Snap
+            </button>
+          ) : null}
 
-          <button onClick={handleBackToLive} disabled={!!error || !snapped}>
-            Back to Live
-          </button>
+          {canBackToLive ? (
+            <button
+              className="btn pixelboothActionBtn"
+              onClick={handleBackToLive}
+            >
+              Back to Live
+            </button>
+          ) : null}
 
-          <button onClick={openSaveModal} disabled={!!error || !snapped}>
-            Publish to Guestbook
-          </button>
-          <a className="btn" href="/guestbook">
-            {`--> Go to Guestbook`}
+          {canPublish ? (
+            <button className="btn pixelboothActionBtn" onClick={openSaveModal}>
+              Publish to Guestbook
+            </button>
+          ) : null}
+          <a className="btn pixelboothActionBtn" href="/guestbook">
+            Go to Guestbook
           </a>
 
           <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>
@@ -963,7 +1006,7 @@ export default function Page() {
             value={slider}
             disabled={snapped}
             onChange={(e) => setSlider(Number(e.target.value))}
-            style={{ width: "100%" }}
+            className="pixelSlider"
           />
         </div>
 
@@ -1056,6 +1099,7 @@ export default function Page() {
                   Guestbook)
                 </span>
                 <input
+                  type="email"
                   value={lead.email}
                   onChange={(e) =>
                     setLead((p) => ({ ...p, email: e.target.value }))
@@ -1140,7 +1184,10 @@ export default function Page() {
                 >
                   Cancel
                 </button>
-                <button onClick={submitSave} disabled={saving}>
+                <button
+                  onClick={submitSave}
+                  disabled={saving || !canSubmitSaveModal}
+                >
                   {saving ? "Saving..." : "Submit & Save"}
                 </button>
               </div>

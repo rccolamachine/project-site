@@ -8,6 +8,9 @@ const KEY_VALUE = "game:counter:value";
 const KEY_MAX = "game:counter:max";
 const KEY_MAX_AT = "game:counter:maxAt";
 const KEY_LAST_CLICK_AT = "game:counter:lastClickAt";
+const KEY_VALUE_EVENTS = "game:counter:valueEvents";
+const KEY_VALUE_DAILY = "game:counter:valueDaily";
+const MAX_VALUE_EVENTS = 25000;
 
 // simple per-IP rate limit: 10 requests / 60 seconds
 async function rateLimit(req, limit = 10, windowSec = 60) {
@@ -43,11 +46,20 @@ export async function POST(req) {
       : 1;
 
     const now = new Date().toISOString();
+    const dayKey = now.slice(0, 10);
 
     // incrby is supported by Redis; @vercel/kv exposes it.
     // If your typings complain, it still works at runtime.
     const newValue = await kv.incrby(KEY_VALUE, delta);
-    await kv.set(KEY_LAST_CLICK_AT, now);
+    await Promise.all([
+      kv.set(KEY_LAST_CLICK_AT, now),
+      kv.lpush(
+        KEY_VALUE_EVENTS,
+        JSON.stringify({ ts: now, value: Number(newValue) }),
+      ),
+      kv.ltrim(KEY_VALUE_EVENTS, 0, MAX_VALUE_EVENTS - 1),
+      kv.hset(KEY_VALUE_DAILY, { [dayKey]: Number(newValue) }),
+    ]);
 
     const currentMax = Number((await kv.get(KEY_MAX)) ?? 0);
     if (newValue > currentMax) {

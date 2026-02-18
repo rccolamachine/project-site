@@ -67,6 +67,7 @@ const COLLECTION_PAGE_SIZE = 36;
 const FIRST_DISCOVERY_CALLOUT_MS = 5200;
 const FIRST_DISCOVERY_CALLOUT_FADE_MS = 1700;
 const REACTOR_OVERLAY_LIGHT_TEXT = "#e2e8f0";
+const MIN_CATALOGUE_VISIBLE_ROWS = 3;
 const LIVE_SELECTION_PALETTE = Object.freeze([
   {
     atomSoft: "#86efac",
@@ -121,6 +122,61 @@ const TOOL = {
   ROTATE: "rotate",
   SAVE: "save",
 };
+
+const CONTROL_PROTOCOLS = Object.freeze([
+  {
+    id: "trap-cycle",
+    name: "Trap breaker",
+    label: "Trap breaker: compress, mix, then step-expand",
+    description:
+      "Repeated pressure pulses to force collisions, then controlled expansion to preserve useful bonds.",
+  },
+  {
+    id: "scaffold-then-cap",
+    name: "Scaffold then cap",
+    label: "Scaffold then cap: heavy framework then hydrogenation",
+    description:
+      "Build heavy-atom skeletons first, then cap open valences in a cooler consolidation stage.",
+  },
+  {
+    id: "gentle-anneal",
+    name: "Gentle anneal",
+    label: "Gentle anneal: slow cool and settle",
+    description:
+      "A low-shock stabilization sweep that gradually cools and strengthens existing structures.",
+  },
+]);
+
+const AUTOMATION_FEEDS = Object.freeze({
+  trapBalanced: {
+    label: "Trap feed",
+    description: "Balanced pulse used during trap-cycle runs.",
+    counts: { C: 5, N: 2, O: 3, P: 1, S: 1, H: 8 },
+    jitter: 1.4,
+  },
+  scaffoldBuild: {
+    label: "Scaffold feed",
+    description: "Heavy-first scaffold mix used during scaffold stage.",
+    counts: { C: 8, N: 3, O: 4, P: 1, S: 1, H: 0 },
+    jitter: 1.55,
+  },
+  hydrogenPulse: {
+    label: "Hydrogen pulse",
+    description: "Hydrogen-only pulse used during cap/hydrogenation stage.",
+    counts: { H: 20, C: 0, N: 0, O: 0, P: 0, S: 0 },
+    jitter: 1.3,
+  },
+});
+
+function formatFeedAtomBreakdown(counts = {}) {
+  const parts = ELEMENTS.map((el) => ({
+    el,
+    count: Math.max(0, Math.floor(Number(counts?.[el]) || 0)),
+  }))
+    .filter((row) => row.count > 0)
+    .map((row) => `${row.el}:${row.count}`);
+  return parts.join(" ");
+}
 
 const CATALOG_ID_SET = new Set(MOLECULE_CATALOG.map((entry) => entry.id));
 
@@ -187,6 +243,7 @@ export default function ReactorPage() {
   // box size (half-size)
   const [boxHalfSize, setBoxHalfSize] = useState(DEFAULT_BOX_HALF_SIZE);
   const [showBoxEdges, setShowBoxEdges] = useState(true);
+  const [adaptiveForceField, setAdaptiveForceField] = useState(true);
 
   // per-element LJ
   const [lj, setLj] = useState(() => structuredClone(DEFAULT_LJ));
@@ -196,7 +253,19 @@ export default function ReactorPage() {
 
   // overlays (controls hidden by default for mobile friendliness)
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [automationOpen, setAutomationOpen] = useState(false);
   const [wellsOpen, setWellsOpen] = useState(false);
+  const [spawnElementCount, setSpawnElementCount] = useState(5);
+  const [spawnFeedType, setSpawnFeedType] = useState("trapBalanced");
+  const [spawnFeedSelectOpen, setSpawnFeedSelectOpen] = useState(false);
+  const [protocolPreset, setProtocolPreset] = useState("trap-cycle");
+  const [protocolSelectOpen, setProtocolSelectOpen] = useState(false);
+  const [protocolAutoRun, setProtocolAutoRun] = useState(false);
+  const [protocolIncludeDosing, setProtocolIncludeDosing] = useState(true);
+  const [protocolRunning, setProtocolRunning] = useState(false);
+  const [protocolStatus, setProtocolStatus] = useState("idle");
+  const [protocolTrendTags, setProtocolTrendTags] = useState("");
+  const [protocolElapsedMs, setProtocolElapsedMs] = useState(0);
   const [modeOpen, setModeOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
@@ -251,6 +320,24 @@ export default function ReactorPage() {
     startY: 0,
     startAngles: { x: 0, y: 0, z: 0 },
   });
+  const protocolRunRef = useRef({
+    running: false,
+    preset: "trap-cycle",
+    startedAtMs: 0,
+    base: null,
+    currentCycle: 1,
+    lastTrapDoseCycle: -1,
+    lastScaffoldDoseStep: -1,
+    lastHydrogenDoseStep: -1,
+  });
+  const controlValuesRef = useRef({
+    temperatureK: DEFAULT_TEMPERATURE_K,
+    damping: DEFAULT_DAMPING,
+    bondScale: DEFAULT_BOND_SCALE,
+    boxHalfSize: DEFAULT_BOX_HALF_SIZE,
+  });
+  const protocolAutoRunRef = useRef(protocolAutoRun);
+  const protocolIncludeDosingRef = useRef(protocolIncludeDosing);
 
   const threeRef = useRef({
     renderer: null,
@@ -413,6 +500,10 @@ export default function ReactorPage() {
     const start = (activeCollectionPage - 1) * COLLECTION_PAGE_SIZE;
     return sortedCollection.slice(start, start + COLLECTION_PAGE_SIZE);
   }, [activeCollectionPage, sortedCollection]);
+  const cataloguePlaceholderRowCount = Math.max(
+    0,
+    MIN_CATALOGUE_VISIBLE_ROWS - visibleCollection.length,
+  );
 
   useEffect(() => {
     const valid = readSavedCatalogueIdsFromStorage();
@@ -758,6 +849,11 @@ export default function ReactorPage() {
       maxReactionEventsPerStep: 18,
       valencePenaltyK: 6,
       valencePenaltyForceCap: 15,
+      adaptiveForceField,
+      adaptiveTrapHeavyMin: 5,
+      adaptiveTrapHeavyMax: 8,
+      hydrogenationThrottle: 0.52,
+      rearrangementWindowStrength: 0.5,
 
       grabK: 80,
       grabMaxForce: 140,
@@ -777,7 +873,15 @@ export default function ReactorPage() {
       electroBondBiasStrength: 0.75,
       electroDihedral180Scale: 0.2,
     };
-  }, [lj, temperatureK, damping, bondScale, allowMultipleBonds, boxHalfSize]);
+  }, [
+    lj,
+    temperatureK,
+    damping,
+    bondScale,
+    allowMultipleBonds,
+    boxHalfSize,
+    adaptiveForceField,
+  ]);
 
   // Approximate volume change by scaling coordinates with box size.
   useEffect(() => {
@@ -881,7 +985,8 @@ export default function ReactorPage() {
         width: 420,
         maxWidth: "min(420px, 92vw)",
         maxHeight: "calc(100% - 74px)",
-        overflow: "auto",
+        overflowY: "auto",
+        overflowX: "hidden",
         borderRadius: 14,
         border: "1px solid rgba(15,23,42,0.16)",
         background: "rgba(248,250,252,0.92)",
@@ -889,6 +994,7 @@ export default function ReactorPage() {
         boxShadow: "0 10px 30px rgba(15,23,42,0.18)",
         padding: 10,
         pointerEvents: "auto",
+        zIndex: 440,
       },
       instructions: {
         position: "absolute",
@@ -903,6 +1009,7 @@ export default function ReactorPage() {
         boxShadow: "0 10px 24px rgba(15,23,42,0.14)",
         padding: "10px 10px",
         pointerEvents: "auto",
+        zIndex: 460,
       },
       headerRow: {
         display: "flex",
@@ -912,6 +1019,28 @@ export default function ReactorPage() {
         marginBottom: 8,
       },
       title: { fontSize: 12, fontWeight: 950, color: "#0f172a" },
+      titleBtn: {
+        border: "none",
+        background: "transparent",
+        padding: 0,
+        margin: 0,
+        fontSize: 12,
+        fontWeight: 950,
+        color: "#0f172a",
+        cursor: "pointer",
+        textAlign: "left",
+      },
+      sectionTitleBtn: {
+        border: "none",
+        background: "transparent",
+        padding: 0,
+        margin: 0,
+        fontSize: 11,
+        fontWeight: 950,
+        color: "#0f172a",
+        cursor: "pointer",
+        textAlign: "left",
+      },
 
       btnDark: {
         padding: "8px 10px",
@@ -955,6 +1084,8 @@ export default function ReactorPage() {
         background: "rgba(255,255,255,0.95)",
         color: "#0f172a",
         fontWeight: 800,
+        maxWidth: "100%",
+        minWidth: 0,
       },
       section: {
         borderTop: "1px solid rgba(15,23,42,0.12)",
@@ -968,6 +1099,7 @@ export default function ReactorPage() {
         alignItems: "center",
         justifyContent: "space-between",
         gap: 10,
+        minWidth: 0,
       },
       hintTitle: { fontSize: 11, fontWeight: 950, color: "#0f172a" },
       hintText: { fontSize: 11, color: "#475569", lineHeight: 1.35 },
@@ -976,12 +1108,14 @@ export default function ReactorPage() {
         left: 10,
         top: 10,
         pointerEvents: "auto",
+        zIndex: 430,
       },
       instructionsShow: {
         position: "absolute",
         right: 10,
         top: 10,
         pointerEvents: "auto",
+        zIndex: 450,
       },
       tutorial: {
         position: "absolute",
@@ -997,6 +1131,7 @@ export default function ReactorPage() {
         boxShadow: "0 10px 24px rgba(15,23,42,0.14)",
         padding: "10px 10px",
         pointerEvents: "auto",
+        zIndex: 445,
       },
       tutorialShow: {
         position: "absolute",
@@ -1004,6 +1139,7 @@ export default function ReactorPage() {
         top: 10,
         transform: "translateX(-50%)",
         pointerEvents: "auto",
+        zIndex: 435,
       },
       catalogue: {
         position: "absolute",
@@ -1020,6 +1156,7 @@ export default function ReactorPage() {
         boxShadow: "0 10px 24px rgba(15,23,42,0.14)",
         padding: "10px 10px",
         pointerEvents: "auto",
+        zIndex: 440,
       },
       catalogueShow: {
         position: "absolute",
@@ -1028,6 +1165,7 @@ export default function ReactorPage() {
         display: "grid",
         justifyItems: "end",
         pointerEvents: "auto",
+        zIndex: 420,
       },
       liveHud: {
         position: "absolute",
@@ -1035,14 +1173,20 @@ export default function ReactorPage() {
         right: 10,
         bottom: 10,
         display: "flex",
-        alignItems: "stretch",
+        alignItems: "flex-end",
         gap: 8,
         minHeight: 40,
         pointerEvents: "none",
-        zIndex: 150,
+        zIndex: 120,
+      },
+      liveHudControls: {
+        display: "grid",
+        gap: 8,
+        alignContent: "end",
       },
       liveHudBar: {
         flex: 1,
+        alignSelf: "flex-end",
         borderRadius: 12,
         border: "1px solid rgba(15,23,42,0.2)",
         background: "rgba(248,250,252,0.96)",
@@ -1716,9 +1860,9 @@ export default function ReactorPage() {
     const resize = () => {
       const rect = mount.getBoundingClientRect();
       const w = Math.max(320, Math.floor(rect.width));
-      const h = Math.max(240, Math.floor(rect.height)); // ✅ use container height too
+      const h = Math.max(240, Math.floor(rect.height)); // use container height too
       renderer.setSize(w, h, false);
-      camera.aspect = w / h; // ✅ rectangle aspect
+      camera.aspect = w / h; // rectangle aspect
       camera.updateProjectionMatrix();
     };
 
@@ -1994,6 +2138,12 @@ export default function ReactorPage() {
     toggleLiveSelection,
   ]);
 
+  useEffect(() => {
+    return () => {
+      protocolRunRef.current.running = false;
+    };
+  }, []);
+
   // actions
   function clearAll() {
     clearSim3D(simRef.current);
@@ -2003,6 +2153,48 @@ export default function ReactorPage() {
   function shake() {
     nudgeAll(simRef.current, 1.8);
   }
+
+  const spawnElementCounts = useCallback(
+    (counts, jitter = 1.4, doShake = true) => {
+      const sim = simRef.current;
+      for (const el of ELEMENTS) {
+        const count = Math.max(0, Math.floor(Number(counts?.[el]) || 0));
+        for (let i = 0; i < count; i += 1) {
+          addAtom3D(
+            sim,
+            (Math.random() - 0.5) * jitter,
+            (Math.random() - 0.5) * jitter,
+            (Math.random() - 0.5) * jitter,
+            el,
+            elements,
+            MAX_ATOMS,
+          );
+        }
+      }
+      if (doShake) nudgeAll(simRef.current, 1.8);
+      scanCollectionProgress(sim);
+    },
+    [elements, scanCollectionProgress],
+  );
+
+  const spawnAutomationFeed = useCallback(
+    (feedKey, doses = 1) => {
+      const feed = AUTOMATION_FEEDS[feedKey];
+      if (!feed) return;
+      const n = clamp(Math.floor(Number(doses) || 0), 0, 24);
+      if (n <= 0) return;
+
+      const scaledCounts = {};
+      for (const el of ELEMENTS) {
+        scaledCounts[el] = Math.max(
+          0,
+          Math.floor(Number(feed.counts?.[el]) || 0) * n,
+        );
+      }
+      spawnElementCounts(scaledCounts, feed.jitter, true);
+    },
+    [spawnElementCounts],
+  );
 
   function spawnAtoms(count, mode = "selected") {
     const sim = simRef.current;
@@ -2025,6 +2217,299 @@ export default function ReactorPage() {
     shake();
     scanCollectionProgress(sim);
   }
+
+  const runAutomationDosing = useCallback(
+    (preset, elapsedMs, run) => {
+      if (!protocolIncludeDosingRef.current) return;
+
+      if (preset === "trap-cycle") {
+        const cycleMs = 32000;
+        const cycleIndex = Math.floor(elapsedMs / cycleMs);
+        const phase = (elapsedMs % cycleMs) / cycleMs;
+        if (phase >= 0.62 && run.lastTrapDoseCycle !== cycleIndex) {
+          spawnAutomationFeed("trapBalanced", 1);
+          run.lastTrapDoseCycle = cycleIndex;
+        }
+        return;
+      }
+
+      if (preset === "scaffold-then-cap") {
+        const totalMs = 42000;
+        const t = clamp(elapsedMs / totalMs, 0, 1);
+
+        if (t < 0.4) {
+          const scaffoldStep = Math.floor(elapsedMs / 9000);
+          if (run.lastScaffoldDoseStep !== scaffoldStep) {
+            spawnAutomationFeed("scaffoldBuild", 1);
+            run.lastScaffoldDoseStep = scaffoldStep;
+          }
+        }
+
+        if (t >= 0.4 && t < 0.8) {
+          const capElapsedMs = elapsedMs - totalMs * 0.4;
+          const hydrogenStep = Math.floor(capElapsedMs / 4500);
+          if (run.lastHydrogenDoseStep !== hydrogenStep) {
+            spawnAutomationFeed("hydrogenPulse", 1);
+            run.lastHydrogenDoseStep = hydrogenStep;
+          }
+        }
+      }
+    },
+    [spawnAutomationFeed],
+  );
+
+  function computeProtocolTargets(
+    preset,
+    elapsedMs,
+    base,
+    autoRun = true,
+    cycleIndex = 1,
+  ) {
+    const mix = (a, b, t) => a + (b - a) * t;
+    if (preset === "trap-cycle") {
+      const cycleMs = 32000;
+      const trapCycleIndex = autoRun ? Math.floor(elapsedMs / cycleMs) + 1 : 1;
+      const phase = autoRun
+        ? (elapsedMs % cycleMs) / cycleMs
+        : clamp(elapsedMs / cycleMs, 0, 1);
+      const compressedBox = clamp(base.boxHalfSize * 0.75, 2.8, 10.5);
+      const expandedBox = clamp(compressedBox * 1.5, 3.2, 12);
+
+      if (phase < 0.22) {
+        const t = phase / 0.22;
+        return {
+          temperatureK: mix(base.temperatureK, 1400, t),
+          damping: mix(base.damping, 0.9995, t),
+          bondScale: mix(
+            base.bondScale,
+            Math.max(2.1, base.bondScale - 0.5),
+            t,
+          ),
+          boxHalfSize: mix(base.boxHalfSize, compressedBox, t),
+          status: autoRun
+            ? `Cycle ${trapCycleIndex}: compress + energize`
+            : "Compress + energize",
+          done: false,
+        };
+      }
+      if (phase < 0.56) {
+        return {
+          temperatureK: 1400,
+          damping: 0.9995,
+          bondScale: Math.max(2.1, base.bondScale - 0.5),
+          boxHalfSize: compressedBox,
+          status: autoRun
+            ? `Cycle ${trapCycleIndex}: collision mixing`
+            : "Collision mixing",
+          done: false,
+        };
+      }
+
+      const t = (phase - 0.56) / 0.44;
+      const step = Math.min(4, Math.floor(t * 5));
+      const steppedBox = clamp(
+        compressedBox * (1 + step * 0.15),
+        compressedBox,
+        expandedBox,
+      );
+      return {
+        temperatureK: mix(1300, 640, t),
+        damping: mix(0.9993, 0.995, t),
+        bondScale: mix(
+          Math.max(2.0, base.bondScale - 0.35),
+          Math.min(5.6, base.bondScale + 0.95),
+          t,
+        ),
+        boxHalfSize: steppedBox,
+        status: autoRun
+          ? `Cycle ${trapCycleIndex}: expand in 15% steps`
+          : "Trap cycle: expand in 15% steps",
+        done: !autoRun && elapsedMs >= cycleMs,
+      };
+    }
+
+    if (preset === "scaffold-then-cap") {
+      const totalMs = 42000;
+      const t = clamp(elapsedMs / totalMs, 0, 1);
+      const cyclePrefix = autoRun ? `Cycle ${cycleIndex}: ` : "";
+      if (t < 0.4) {
+        const p = t / 0.4;
+        return {
+          temperatureK: mix(base.temperatureK, 1280, p),
+          damping: mix(base.damping, 0.9993, p),
+          bondScale: mix(
+            base.bondScale,
+            Math.max(2.2, base.bondScale - 0.45),
+            p,
+          ),
+          boxHalfSize: mix(
+            base.boxHalfSize,
+            clamp(base.boxHalfSize * 0.78, 2.9, 10.0),
+            p,
+          ),
+          status: `${cyclePrefix}Scaffold stage: heavy-atom growth`,
+          done: false,
+        };
+      }
+      if (t < 0.8) {
+        const p = (t - 0.4) / 0.4;
+        return {
+          temperatureK: mix(1240, 780, p),
+          damping: mix(0.9992, 0.9965, p),
+          bondScale: mix(
+            Math.max(2.2, base.bondScale - 0.35),
+            Math.min(5.4, base.bondScale + 0.8),
+            p,
+          ),
+          boxHalfSize: mix(
+            clamp(base.boxHalfSize * 0.78, 2.9, 10.0),
+            clamp(base.boxHalfSize * 1.08, 3.2, 12),
+            p,
+          ),
+          status: `${cyclePrefix}Cap stage: controlled hydrogenation`,
+          done: false,
+        };
+      }
+      return {
+        temperatureK: mix(780, base.temperatureK, (t - 0.8) / 0.2),
+        damping: mix(0.9965, base.damping, (t - 0.8) / 0.2),
+        bondScale: mix(
+          Math.min(5.4, base.bondScale + 0.8),
+          base.bondScale,
+          (t - 0.8) / 0.2,
+        ),
+        boxHalfSize: mix(
+          clamp(base.boxHalfSize * 1.08, 3.2, 12),
+          base.boxHalfSize,
+          (t - 0.8) / 0.2,
+        ),
+        status: `${cyclePrefix}Scaffold protocol complete`,
+        done: t >= 1,
+      };
+    }
+
+    // gentle-anneal
+    const totalMs = 36000;
+    const t = clamp(elapsedMs / totalMs, 0, 1);
+    const cyclePrefix = autoRun ? `Cycle ${cycleIndex}: ` : "";
+    return {
+      temperatureK: mix(base.temperatureK, 520, t),
+      damping: mix(base.damping, 0.9988, t),
+      bondScale: mix(base.bondScale, Math.min(5.0, base.bondScale + 0.65), t),
+      boxHalfSize: mix(
+        base.boxHalfSize,
+        clamp(base.boxHalfSize * 1.12, 3.2, 12),
+        t,
+      ),
+      status: t >= 1 ? `${cyclePrefix}Anneal complete` : `${cyclePrefix}Annealing`,
+      done: t >= 1,
+    };
+  }
+
+  function stopControlProtocol(message = "idle") {
+    protocolRunRef.current.running = false;
+    setProtocolRunning(false);
+    setProtocolStatus(message);
+    setProtocolTrendTags("");
+  }
+
+  function buildProtocolTrendTags(current, next) {
+    const tags = [];
+    const pushTag = (code, delta, threshold) => {
+      if (delta > threshold) tags.push(`+${code}`);
+      else if (delta < -threshold) tags.push(`-${code}`);
+    };
+    pushTag("T", (next.temperatureK ?? 0) - (current.temperatureK ?? 0), 0.5);
+    pushTag("B", (next.bondScale ?? 0) - (current.bondScale ?? 0), 0.01);
+    pushTag("V", (next.boxHalfSize ?? 0) - (current.boxHalfSize ?? 0), 0.01);
+    pushTag("D", (next.damping ?? 0) - (current.damping ?? 0), 1e-4);
+    return tags.join(" ");
+  }
+
+  useEffect(() => {
+    controlValuesRef.current = {
+      temperatureK,
+      damping,
+      bondScale,
+      boxHalfSize,
+    };
+  }, [temperatureK, damping, bondScale, boxHalfSize]);
+
+  useEffect(() => {
+    protocolAutoRunRef.current = protocolAutoRun;
+  }, [protocolAutoRun]);
+
+  useEffect(() => {
+    protocolIncludeDosingRef.current = protocolIncludeDosing;
+  }, [protocolIncludeDosing]);
+
+  useEffect(() => {
+    if (!protocolRunning) return undefined;
+
+    const startedAtMs = performance.now();
+    protocolRunRef.current = {
+      running: true,
+      preset: protocolPreset,
+      startedAtMs,
+      base: { ...controlValuesRef.current },
+      currentCycle: 1,
+      lastTrapDoseCycle: -1,
+      lastScaffoldDoseStep: -1,
+      lastHydrogenDoseStep: -1,
+    };
+    setProtocolElapsedMs(0);
+    setProtocolStatus("running");
+    setProtocolTrendTags("");
+    setPaused(false);
+
+    const tick = () => {
+      const run = protocolRunRef.current;
+      if (!run.running || !run.base) return;
+      const elapsedMs = Math.max(0, performance.now() - run.startedAtMs);
+      const next = computeProtocolTargets(
+        run.preset,
+        elapsedMs,
+        run.base,
+        protocolAutoRunRef.current,
+        run.currentCycle || 1,
+      );
+      runAutomationDosing(run.preset, elapsedMs, run);
+      const curr = controlValuesRef.current;
+      setProtocolTrendTags(buildProtocolTrendTags(curr, next));
+      setProtocolElapsedMs(elapsedMs);
+      setTemperatureK((prev) =>
+        Math.abs(prev - next.temperatureK) < 0.5 ? prev : next.temperatureK,
+      );
+      setDamping((prev) =>
+        Math.abs(prev - next.damping) < 1e-4 ? prev : next.damping,
+      );
+      setBondScale((prev) =>
+        Math.abs(prev - next.bondScale) < 0.01 ? prev : next.bondScale,
+      );
+      setBoxHalfSize((prev) =>
+        Math.abs(prev - next.boxHalfSize) < 0.01 ? prev : next.boxHalfSize,
+      );
+      setProtocolStatus(next.status);
+      if (next.done) {
+        if (protocolAutoRunRef.current) {
+          run.startedAtMs = performance.now();
+          run.base = { ...controlValuesRef.current };
+          run.currentCycle = (run.currentCycle || 1) + 1;
+          run.lastTrapDoseCycle = -1;
+          run.lastScaffoldDoseStep = -1;
+          run.lastHydrogenDoseStep = -1;
+          setProtocolElapsedMs(0);
+          setProtocolStatus("running");
+          return;
+        }
+        stopControlProtocol("completed");
+      }
+    };
+
+    tick();
+    const intervalId = window.setInterval(tick, 180);
+    return () => window.clearInterval(intervalId);
+  }, [protocolRunning, protocolPreset, runAutomationDosing]);
 
   function normalizeCatalogueIds(candidate) {
     if (!Array.isArray(candidate)) return [];
@@ -2140,6 +2625,7 @@ export default function ReactorPage() {
 
   // Reset ALL controls EXCEPT the currently-selected tool mode
   function resetAllControls() {
+    stopControlProtocol("idle");
     setPaused(false);
     setTemperatureK(DEFAULT_TEMPERATURE_K);
     setDamping(DEFAULT_DAMPING);
@@ -2147,9 +2633,17 @@ export default function ReactorPage() {
 
     setBoxHalfSize(DEFAULT_BOX_HALF_SIZE);
     setShowBoxEdges(true);
+    setAdaptiveForceField(true);
 
     setShowBonds(true);
     setAllowMultipleBonds(true);
+    setSpawnElementCount(5);
+    setSpawnFeedType("trapBalanced");
+    setSpawnFeedSelectOpen(false);
+    setProtocolPreset("trap-cycle");
+    setProtocolAutoRun(false);
+    setProtocolIncludeDosing(true);
+    setProtocolElapsedMs(0);
 
     // DO NOT change tool
     setPlaceElement("C");
@@ -2157,7 +2651,8 @@ export default function ReactorPage() {
     setLj(structuredClone(DEFAULT_LJ));
     setLjElement("C");
 
-    // leave controlsOpen as-is (don’t force open on mobile)
+    // leave controlsOpen as-is (don't force open on mobile)
+    setAutomationOpen(false);
     setWellsOpen(false);
   }
 
@@ -2205,16 +2700,40 @@ export default function ReactorPage() {
         aria-hidden="true"
       >
         {showDown ? (
-          <span style={{ transform: "translateY(1px)" }}>↓</span>
+          <span style={{ transform: "translateY(1px)" }}>&darr;</span>
         ) : null}
         {showUp ? (
-          <span style={{ transform: "translateY(-1px)" }}>↑</span>
+          <span style={{ transform: "translateY(-1px)" }}>&uarr;</span>
         ) : null}
       </span>
     );
   }
 
-  const placeElementName = ELEMENT_NAMES[placeElement] || placeElement;
+  const activeProtocolMeta =
+    CONTROL_PROTOCOLS.find((item) => item.id === protocolPreset) ||
+    CONTROL_PROTOCOLS[0];
+  const placeElementLabel = ELEMENT_NAMES[placeElement] || placeElement;
+  const protocolStatusKey = String(protocolStatus || "").trim().toLowerCase();
+  const protocolStatusIsActive =
+    protocolStatusKey !== "idle" && protocolStatusKey !== "stopped";
+  const activeProtocolDosingPanelText = useMemo(() => {
+    if (!protocolIncludeDosing) {
+      return "Dosing profile: disabled for automation cycles.";
+    }
+    if (protocolPreset === "scaffold-then-cap") {
+      return `Dosing profile: scaffold feed during build stage [${formatFeedAtomBreakdown(
+        AUTOMATION_FEEDS.scaffoldBuild.counts,
+      )}], then hydrogen pulses during cap stage [${formatFeedAtomBreakdown(
+        AUTOMATION_FEEDS.hydrogenPulse.counts,
+      )}].`;
+    }
+    if (protocolPreset === "trap-cycle") {
+      return `Dosing profile: one balanced feed pulse each trap-breaker cycle [${formatFeedAtomBreakdown(
+        AUTOMATION_FEEDS.trapBalanced.counts,
+      )}].`;
+    }
+    return "Dosing profile: no auto-dosing events for this cycle.";
+  }, [protocolIncludeDosing, protocolPreset]);
 
   const instructionText = useMemo(() => {
     if (tool === TOOL.ROTATE) {
@@ -2239,7 +2758,7 @@ export default function ReactorPage() {
     return {
       title: "Place/Select mode",
       lines: [
-        `Click empty space: place ${placeElement} atom`,
+        `Click empty space: place one ${placeElement} atom`,
         "Drag existing atom: move it",
         "Click live molecule: select/deselect it",
       ],
@@ -2265,7 +2784,7 @@ export default function ReactorPage() {
     }
     if (tool === TOOL.DELETE) return ["Click atom: delete it"];
     return [
-      `Click empty space: place ${placeElement} atom`,
+      `Click empty space: place one ${placeElement} atom`,
       "Drag existing atom: move it",
       "Click live molecule: select/deselect it",
     ];
@@ -2287,12 +2806,25 @@ export default function ReactorPage() {
       <div ref={canvasCardRef} style={ui.canvasCard}>
         {/* Controls: top-left */}
         {controlsOpen ? (
-          <div id="controls-overlay" style={ui.controls}>
+          <div
+            id="controls-overlay"
+            style={{
+              ...ui.controls,
+              maxHeight: "calc(100% - 136px)",
+            }}
+          >
             <div style={ui.headerRow}>
-              <div style={ui.title}>Controls</div>
+              <button
+                onClick={() => setControlsOpen(false)}
+                style={ui.titleBtn}
+                title="Close controls panel."
+              >
+                Controls
+              </button>
               <button
                 onClick={() => setControlsOpen(false)}
                 style={ui.btnLight}
+                title="Close controls panel."
               >
                 Hide
               </button>
@@ -2300,119 +2832,225 @@ export default function ReactorPage() {
 
             <div className="reactor-col-gap-8">
               <div className="reactor-row-gap-8-wrap">
-                <button onClick={() => setPaused((p) => !p)} style={ui.btnDark}>
+                <button
+                  onClick={() => setPaused((p) => !p)}
+                  style={ui.btnDark}
+                  title="Pause or resume physics updates."
+                >
                   {paused ? "Resume" : "Pause"}
                 </button>
-                <button onClick={shake} style={ui.btnLight}>
+                <button
+                  onClick={shake}
+                  style={ui.btnLight}
+                  title="Apply a random nudge to all atoms."
+                >
                   Shake
                 </button>
-              </div>
-              <div className="reactor-row-gap-8-wrap">
-                <button onClick={resetAllControls} style={ui.btnLight}>
+                <button
+                  onClick={resetAllControls}
+                  style={ui.btnLight}
+                  title="Restore reactor/control defaults."
+                >
                   Reset all controls
-                </button>
-                <button onClick={resetView} style={ui.btnLight}>
-                  Reset view
                 </button>
               </div>
             </div>
 
             <div style={ui.section}>
-              <div className="reactor-text-11-title">Simulation</div>
+              <div className="reactor-text-11-title">Reactor controls</div>
 
               <MiniSlider
                 label="Temp (K)"
                 value={temperatureK}
                 min={0}
-                max={1400}
+                max={1800}
                 step={10}
                 onChange={setTemperatureK}
+                tooltip="Thermal energy level. Higher values increase motion and collisions."
               />
               <MiniSlider
                 label="Damping"
                 value={damping}
-                min={0.97}
-                max={0.9995}
+                min={0.95}
+                max={0.9998}
                 step={0.001}
                 onChange={setDamping}
+                tooltip="Velocity retention per step. Higher values keep motion longer."
               />
               <MiniSlider
                 label="Bond strength"
                 value={bondScale}
-                min={0.2}
-                max={4.0}
+                min={0.1}
+                max={7.0}
                 step={0.05}
                 onChange={setBondScale}
+                tooltip="Scales bond attraction/hold strength."
               />
               <MiniSlider
                 label="Volume (box size)"
                 value={boxHalfSize}
-                min={2.5}
-                max={12}
+                min={2.0}
+                max={14}
                 step={0.1}
                 onChange={setBoxHalfSize}
+                tooltip="Container size. Smaller volume increases collision frequency."
               />
-
-              <label style={ui.row}>
-                <span className="reactor-text-12-strong">View Box Edges</span>
-                <input
-                  type="checkbox"
-                  checked={showBoxEdges}
-                  onChange={(e) => setShowBoxEdges(e.target.checked)}
-                />
-              </label>
-
-              <label style={ui.row}>
-                <span className="reactor-text-12-strong">Visualize Bonds</span>
-                <input
-                  type="checkbox"
-                  checked={showBonds}
-                  onChange={(e) => setShowBonds(e.target.checked)}
-                />
-              </label>
-
-              <label style={ui.row}>
-                <span className="reactor-text-12-strong">
-                  Allow double/triple
-                </span>
-                <input
-                  type="checkbox"
-                  checked={allowMultipleBonds}
-                  onChange={(e) => setAllowMultipleBonds(e.target.checked)}
-                />
-              </label>
             </div>
 
             <div style={ui.section}>
               <div style={ui.row}>
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    minWidth: 0,
-                  }}
+                <button
+                  onClick={() =>
+                    setAutomationOpen((open) => (open ? false : open))
+                  }
+                  style={ui.sectionTitleBtn}
+                  title="Click to close Reactor automation cycles."
                 >
-                  <div className="reactor-text-11-title">
-                    {wellsOpen ? "Nonbonded (LJ) for" : "Nonbonded (LJ)"}
-                  </div>
-                  {wellsOpen ? (
-                    <select
-                      value={ljElement}
-                      onChange={(e) => setLjElement(e.target.value)}
-                      style={ui.select}
+                  Reactor automation cycles
+                </button>
+                <div className="reactor-row-gap-8">
+                  {!automationOpen && protocolRunning ? (
+                    <button
+                      onClick={() => stopControlProtocol("stopped")}
+                      style={ui.btnDark}
+                      title="Stop the currently running automation protocol."
                     >
-                      {ELEMENTS.map((k) => (
-                        <option key={k} value={k}>
-                          {k}
-                        </option>
-                      ))}
-                    </select>
+                      Stop
+                    </button>
                   ) : null}
+                  <button
+                    onClick={() => setAutomationOpen((open) => !open)}
+                    style={ui.btnLight}
+                    title="Show or hide Reactor automation cycle controls."
+                  >
+                    {automationOpen ? "Hide" : "Show"}
+                  </button>
                 </div>
+              </div>
+              {automationOpen ? (
+                <div className="reactor-grid-gap-4">
+                  <div
+                    style={{
+                      border: "1px solid rgba(15,23,42,0.12)",
+                      borderRadius: 10,
+                      background: "rgba(241,245,249,0.72)",
+                      padding: "8px 9px",
+                      display: "grid",
+                      gap: 4,
+                    }}
+                  >
+                    <div
+                      className="reactor-text-11-title"
+                      style={{ fontWeight: 900 }}
+                    >
+                      {`Current automation: ${activeProtocolMeta?.name ?? "Unknown"}`}
+                    </div>
+                    <div
+                      className="reactor-text-10-muted"
+                      style={{
+                        color: protocolStatusIsActive ? "#a16207" : "#475569",
+                        fontWeight: protocolStatusIsActive ? 800 : 700,
+                      }}
+                    >
+                      {`Status: ${protocolStatus}${protocolRunning ? ` (${(protocolElapsedMs / 1000).toFixed(1)}s)` : ""}${protocolRunning && protocolTrendTags ? ` ${protocolTrendTags}` : ""}`}
+                    </div>
+                    <div className="reactor-text-10-muted">
+                      {activeProtocolMeta?.description}
+                    </div>
+                    <div className="reactor-text-10-muted">
+                      {activeProtocolDosingPanelText}
+                    </div>
+                  </div>
+                  <select
+                    value={protocolPreset}
+                    onChange={(e) => {
+                      if (protocolRunning) stopControlProtocol("stopped");
+                      setProtocolPreset(e.target.value);
+                      setProtocolSelectOpen(false);
+                    }}
+                    onFocus={() => setProtocolSelectOpen(true)}
+                    onMouseDown={() => setProtocolSelectOpen(true)}
+                    onBlur={() => setProtocolSelectOpen(false)}
+                    style={{ ...ui.select, width: "100%" }}
+                    title="Select an automation cycle for reactor control values."
+                  >
+                    {CONTROL_PROTOCOLS.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.id === protocolPreset && !protocolSelectOpen
+                          ? item.name
+                          : item.label}
+                      </option>
+                    ))}
+                  </select>
+                  <label style={ui.row}>
+                    <span
+                      className="reactor-text-10-muted"
+                      title="Automatically restart the protocol when a run completes."
+                    >
+                      Auto-run protocol
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={protocolAutoRun}
+                      onChange={(e) => setProtocolAutoRun(e.target.checked)}
+                      title="Repeat completed protocol runs automatically."
+                    />
+                  </label>
+                  <label style={ui.row}>
+                    <span
+                      className="reactor-text-10-muted"
+                      title="Inject preset atom doses while automation runs."
+                    >
+                      Include dosing with automation
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={protocolIncludeDosing}
+                      onChange={(e) =>
+                        setProtocolIncludeDosing(e.target.checked)
+                      }
+                      title="When enabled, automation injects recipe doses during applicable stages."
+                    />
+                  </label>
+                  <div
+                    className="reactor-row-gap-8-wrap"
+                    style={{ justifyContent: "center" }}
+                  >
+                    <button
+                      onClick={() =>
+                        protocolRunning
+                          ? stopControlProtocol("stopped")
+                          : setProtocolRunning(true)
+                      }
+                      style={protocolRunning ? ui.btnDark : ui.btnLight}
+                      title={
+                        protocolRunning
+                          ? "Stop the current protocol run."
+                          : "Run the selected protocol once."
+                      }
+                    >
+                      {protocolRunning
+                        ? "Stop automation protocol"
+                        : "Run automation protocol"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div style={ui.section}>
+              <div style={ui.row}>
+                <button
+                  onClick={() => setWellsOpen((open) => (open ? false : open))}
+                  style={ui.sectionTitleBtn}
+                  title="Click to close Electronics controls."
+                >
+                  Electronics controls
+                </button>
                 <button
                   onClick={() => setWellsOpen((s) => !s)}
                   style={ui.btnLight}
+                  title="Show or hide electronics controls."
                 >
                   {wellsOpen ? "Hide" : "Show"}
                 </button>
@@ -2420,21 +3058,77 @@ export default function ReactorPage() {
 
               {wellsOpen ? (
                 <>
+                  <label style={ui.row}>
+                    <span
+                      className="reactor-text-12-strong"
+                      title="Allow higher bond orders when chemistry rules permit."
+                    >
+                      Allow double/triple bonds
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={allowMultipleBonds}
+                      onChange={(e) => setAllowMultipleBonds(e.target.checked)}
+                      title="Allow higher bond orders when chemistry rules permit."
+                    />
+                  </label>
+                  <label style={ui.row}>
+                    <span
+                      className="reactor-text-12-strong"
+                      title="Auto-tune force field intensity as local chemistry changes."
+                    >
+                      Adaptive force field
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={adaptiveForceField}
+                      onChange={(e) => setAdaptiveForceField(e.target.checked)}
+                      title="Auto-tune force field intensity as local chemistry changes."
+                    />
+                  </label>
+                  <div style={ui.row}>
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        minWidth: 0,
+                      }}
+                    >
+                      <div className="reactor-text-11-title">
+                        Nonbonded (LJ) for
+                      </div>
+                      <select
+                        value={ljElement}
+                        onChange={(e) => setLjElement(e.target.value)}
+                        style={ui.select}
+                        title="Choose which element's LJ profile to edit."
+                      >
+                        {ELEMENTS.map((k) => (
+                          <option key={k} value={k}>
+                            {k}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                   <MiniSlider
-                    label="σ (distance)"
+                    label="Sigma (distance)"
                     value={selectedSigma}
                     min={0.6}
                     max={2.3}
                     step={0.02}
                     onChange={(v) => updateSelectedLJ("sigma", v)}
+                    tooltip="Preferred nonbonded spacing (larger = farther apart)."
                   />
                   <MiniSlider
-                    label="ε (stickiness)"
+                    label="Epsilon (stickiness)"
                     value={selectedEpsilon}
                     min={0.0}
                     max={2.4}
                     step={0.05}
                     onChange={(v) => updateSelectedLJ("epsilon", v)}
+                    tooltip="Nonbonded attraction depth (larger = stickier)."
                   />
 
                   <div style={{ marginTop: 8 }}>
@@ -2466,7 +3160,13 @@ export default function ReactorPage() {
             }}
           >
             <div style={ui.headerRow}>
-              <div style={ui.title}>Mode</div>
+              <button
+                onClick={() => setModeOpen(false)}
+                style={ui.titleBtn}
+                title="Close mode panel."
+              >
+                Mode
+              </button>
               <button onClick={() => setModeOpen(false)} style={ui.btnLight}>
                 Hide
               </button>
@@ -2530,6 +3230,7 @@ export default function ReactorPage() {
                         fontWeight: 900,
                         color: "#0f172a",
                       }}
+                      title="Element used for click placement and default spawn actions."
                     >
                       Place element
                     </span>
@@ -2537,6 +3238,7 @@ export default function ReactorPage() {
                       value={placeElement}
                       onChange={(e) => setPlaceElement(e.target.value)}
                       style={ui.select}
+                      title="Select the atom type to place."
                     >
                       {ELEMENTS.map((k) => (
                         <option key={k} value={k}>
@@ -2546,30 +3248,99 @@ export default function ReactorPage() {
                     </select>
                   </div>
 
-                  <div className="reactor-grid-gap-8-center">
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <div className="reactor-row-gap-8" style={{ minWidth: 0 }}>
+                      <span
+                        className="reactor-text-12-strong"
+                        title="Spawn the selected element into the reactor."
+                      >
+                        {placeElementLabel}
+                      </span>
+                      <span className="reactor-text-12-strong">x</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={MAX_ATOMS}
+                        step={1}
+                        value={spawnElementCount}
+                        onChange={(e) =>
+                          setSpawnElementCount(
+                            clamp(
+                              Math.floor(Number(e.target.value) || 0),
+                              0,
+                              MAX_ATOMS,
+                            ),
+                          )
+                        }
+                        style={{
+                          ...ui.select,
+                          width: 62,
+                          padding: "7px 8px",
+                          textAlign: "right",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                        title="How many selected atoms to spawn."
+                      />
+                    </div>
                     <button
-                      onClick={() => spawnAtoms(1, "selected")}
+                      onClick={() => spawnAtoms(spawnElementCount, "selected")}
                       style={ui.btnLight}
+                      disabled={spawnElementCount <= 0}
+                      title="Spawn selected-element atoms."
                     >
-                      {`Spawn 1 ${placeElementName}`}
+                      Spawn
                     </button>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      alignItems: "start",
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
+                      <select
+                        value={spawnFeedType}
+                        onChange={(e) => {
+                          setSpawnFeedType(e.target.value);
+                          setSpawnFeedSelectOpen(false);
+                        }}
+                        onFocus={() => setSpawnFeedSelectOpen(true)}
+                        onMouseDown={() => setSpawnFeedSelectOpen(true)}
+                        onBlur={() => setSpawnFeedSelectOpen(false)}
+                        style={{ ...ui.select, width: 220 }}
+                        title={
+                          AUTOMATION_FEEDS[spawnFeedType]?.description ||
+                          "Choose automation feed recipe."
+                        }
+                      >
+                        {Object.entries(AUTOMATION_FEEDS).map(([key, feed]) => (
+                          <option key={key} value={key}>
+                            {spawnFeedSelectOpen || spawnFeedType !== key
+                              ? `${feed.label} [${formatFeedAtomBreakdown(feed.counts)}]`
+                              : feed.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <button
-                      onClick={() => spawnAtoms(5, "selected")}
+                      onClick={() => spawnAutomationFeed(spawnFeedType)}
                       style={ui.btnLight}
+                      title={
+                        AUTOMATION_FEEDS[spawnFeedType]?.description ||
+                        "Spawn selected automation feed."
+                      }
                     >
-                      {`Spawn 5 ${placeElementName}`}
-                    </button>
-                    <button
-                      onClick={() => spawnAtoms(10, "selected")}
-                      style={ui.btnLight}
-                    >
-                      {`Spawn 10 ${placeElementName}`}
-                    </button>
-                    <button
-                      onClick={() => spawnAtoms(10, "random")}
-                      style={ui.btnLight}
-                    >
-                      Spawn 10 Random
+                      Spawn
                     </button>
                   </div>
                 </>
@@ -2580,6 +3351,31 @@ export default function ReactorPage() {
                   <button onClick={clearAll} style={ui.btnLight}>
                     Clear all atoms
                   </button>
+                </div>
+              ) : null}
+
+              {tool === TOOL.ROTATE ? (
+                <div className="reactor-grid-gap-8-center">
+                  <label style={ui.row}>
+                    <span className="reactor-text-12-strong">
+                      View Box Edges
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showBoxEdges}
+                      onChange={(e) => setShowBoxEdges(e.target.checked)}
+                    />
+                  </label>
+                  <label style={ui.row}>
+                    <span className="reactor-text-12-strong">
+                      Visualize Bonds
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showBonds}
+                      onChange={(e) => setShowBonds(e.target.checked)}
+                    />
+                  </label>
                 </div>
               ) : null}
 
@@ -2667,7 +3463,12 @@ export default function ReactorPage() {
         )}
 
         {tutorialOpen ? (
-          <div id="tutorial-overlay" style={ui.tutorial}>
+          <div
+            id="tutorial-overlay"
+            style={{ ...ui.tutorial, cursor: "pointer" }}
+            onClick={() => setTutorialOpen(false)}
+            title="Click anywhere to close tutorial."
+          >
             <div style={ui.headerRow}>
               <div style={ui.title}>Tutorial</div>
               <button
@@ -2698,11 +3499,17 @@ export default function ReactorPage() {
           </div>
         )}
 
-        {/* ✅ Rectangle canvas: set explicit height */}
+        {/* Rectangle canvas: set explicit height */}
         {catalogueOpen ? (
           <div id="catalogue-overlay" style={ui.catalogue}>
             <div style={ui.headerRow}>
-              <div style={ui.title}>Molecule Catalogue</div>
+              <button
+                onClick={() => setCatalogueOpen(false)}
+                style={ui.titleBtn}
+                title="Close Molecule Catalogue panel."
+              >
+                Molecule Catalogue
+              </button>
               <div className="reactor-row-gap-8">
                 <button
                   onClick={() => setCatalogueOpen(false)}
@@ -2891,6 +3698,7 @@ export default function ReactorPage() {
                       gap: 8,
                       alignItems: "center",
                       padding: "6px 8px",
+                      minHeight: 60,
                       borderBottom: "1px solid rgba(15,23,42,0.08)",
                       background: isSelectedLive
                         ? selectedPalette.rowBg
@@ -2981,6 +3789,25 @@ export default function ReactorPage() {
                   </div>
                 );
               })}
+              {Array.from({ length: cataloguePlaceholderRowCount }).map(
+                (_, idx) => (
+                  <div
+                    key={`catalogue-placeholder-row-${idx}`}
+                    aria-hidden="true"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "74px 92px minmax(160px, 1fr) 124px 112px",
+                      gap: 8,
+                      alignItems: "center",
+                      padding: "6px 8px",
+                      minHeight: 60,
+                      borderBottom: "1px solid rgba(15,23,42,0.06)",
+                      background: "rgba(255,255,255,0.36)",
+                    }}
+                  />
+                ),
+              )}
             </div>
           </div>
         ) : (
@@ -3037,19 +3864,55 @@ export default function ReactorPage() {
         )}
 
         <div id="live-molecules-overlay" style={ui.liveHud}>
-          <button
-            onClick={() => setPaused((p) => !p)}
-            style={{
-              ...ui.btnDark,
-              pointerEvents: "auto",
-              alignSelf: "stretch",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {paused ? "Resume" : "Pause"}
-          </button>
+          <div style={ui.liveHudControls}>
+            <button
+              onClick={resetView}
+              style={{
+                ...ui.btnLight,
+                pointerEvents: "auto",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Reset view
+            </button>
+            <button
+              onClick={() =>
+                protocolRunning
+                  ? stopControlProtocol("stopped")
+                  : setProtocolRunning(true)
+              }
+              style={{
+                ...ui.btnLight,
+                pointerEvents: "auto",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title={
+                protocolRunning
+                  ? "Stop the currently running automation protocol."
+                  : "Run the currently selected automation protocol."
+              }
+            >
+              {protocolRunning
+                ? "Stop automation protocol"
+                : "Run automation protocol"}
+            </button>
+            <button
+              onClick={() => setPaused((p) => !p)}
+              style={{
+                ...ui.btnDark,
+                pointerEvents: "auto",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {paused ? "Resume" : "Pause"}
+            </button>
+          </div>
           <div style={ui.liveHudBar}>
             <span className="reactor-text-11-slate" style={{ fontWeight: 900 }}>
               Current species:{" "}
@@ -3139,7 +4002,7 @@ export default function ReactorPage() {
                       <div>Click + drag: rotate</div>
                       <div>Scroll: zoom</div>
                     </div>
-                </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3210,14 +4073,14 @@ export default function ReactorPage() {
   );
 }
 
-function MiniSlider({ label, value, min, max, step, onChange }) {
+function MiniSlider({ label, value, min, max, step, onChange, tooltip = "" }) {
   const format = () => {
     if (Number.isInteger(step)) return `${Math.round(value)}`;
     return value.toFixed(step < 0.01 ? 3 : step < 0.1 ? 2 : 2);
   };
 
   return (
-    <label style={{ display: "grid", gap: 4 }}>
+    <label style={{ display: "grid", gap: 4 }} title={tooltip}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
         <span style={{ fontSize: 11, fontWeight: 900, color: "#0f172a" }}>
           {label}
@@ -3238,6 +4101,7 @@ function MiniSlider({ label, value, min, max, step, onChange }) {
         min={min}
         max={max}
         step={step}
+        title={tooltip}
         onChange={(e) =>
           onChange(
             step % 1 === 0
@@ -3412,4 +4276,3 @@ function clamp01(v) {
 function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v));
 }
-

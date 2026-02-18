@@ -144,6 +144,11 @@ export type Params3D = {
   maxReactionEventsPerStep?: number;
   valencePenaltyK?: number;
   valencePenaltyForceCap?: number;
+  adaptiveForceField?: boolean;
+  adaptiveTrapHeavyMin?: number;
+  adaptiveTrapHeavyMax?: number;
+  hydrogenationThrottle?: number; // 0..1; lower = less eager H attachment while heavy scaffold is unsatisfied
+  rearrangementWindowStrength?: number; // 0..1; high-T bond shuffle aid for trapped larger scaffolds
 
   // grabbing
   grabK: number;
@@ -814,10 +819,15 @@ function pruneBrokenBonds(sim: Sim3D, params: Params3D, dt: number) {
   const barrierScale = Math.max(0.2, params.reactionBarrierScale ?? 1.0);
   const attemptRate = Math.max(0, params.reactionAttemptRate ?? 1.0);
   const temp = Math.max(0.03, getReducedTemperature(params));
+  const adaptive = params.adaptiveForceField ?? true;
+  const trapHeavyMin = Math.max(3, Math.floor(params.adaptiveTrapHeavyMin ?? 5));
+  const trapHeavyMax = Math.max(trapHeavyMin, Math.floor(params.adaptiveTrapHeavyMax ?? 8));
+  const rearrangeStrength = clamp(params.rearrangementWindowStrength ?? 0.45, 0, 1);
   const byId = new Map<number, Atom3D>();
   for (const atom of sim.atoms) byId.set(atom.id, atom);
 
   const mol = buildMoleculeState(sim, params);
+  const { heavyCountByComp, heavyDeficitByComp } = buildHeavyStatsFromMoleculeState(mol);
 
   const kept: Bond3D[] = [];
   for (const b of sim.bonds) {
@@ -851,10 +861,22 @@ function pruneBrokenBonds(sim: Sim3D, params: Params3D, dt: number) {
       const compChargeAbs = Math.abs(mol.chargeByComp.get(compId) ?? 0);
       const compDeficit = mol.deficitByComp.get(compId) ?? 0;
       const compSize = (mol.atomsByComp.get(compId) || []).length;
+      const compHeavyCount = heavyCountByComp.get(compId) ?? 0;
+      const compHeavyDeficit = heavyDeficitByComp.get(compId) ?? 0;
       if (compDeficit <= 0 && compChargeAbs <= NEUTRAL_EPS) molBarrierMult = STABLE_MOLECULE_BREAK_STRETCH;
       else if (compChargeAbs <= NEAR_NEUTRAL_EPS) molBarrierMult = SEMISTABLE_MOLECULE_BREAK_STRETCH;
       if (compSize >= 10) molBarrierMult *= 0.98;
       else if (compSize >= 6) molBarrierMult *= 1.0;
+      if (
+        adaptive &&
+        compHeavyCount >= trapHeavyMin &&
+        compHeavyCount <= trapHeavyMax &&
+        compHeavyDeficit <= 1.4 &&
+        a.el !== "H" &&
+        c.el !== "H"
+      ) {
+        molBarrierMult *= 1.1;
+      }
     }
     const barrierBreakR = b.breakR * barrierMult * molBarrierMult;
 
@@ -881,6 +903,49 @@ function pruneBrokenBonds(sim: Sim3D, params: Params3D, dt: number) {
       c.valenceUsed = Math.max(0, c.valenceUsed - cost);
       continue;
     }
+
+    // High-T rearrangement window:
+    // selectively release some H-heavy single bonds in larger heavy scaffolds
+    // so trapped intermediates can continue heavy-atom growth.
+    if (
+      adaptive &&
+      rearrangeStrength > 0 &&
+      b.order === 1 &&
+      compId !== undefined &&
+      temp > 0.95
+    ) {
+      const compHeavyCount = heavyCountByComp.get(compId) ?? 0;
+      const compHeavyDeficit = heavyDeficitByComp.get(compId) ?? 0;
+      const isHydrogenHeavy = (a.el === "H") !== (c.el === "H");
+      if (
+        isHydrogenHeavy &&
+        compHeavyCount >= trapHeavyMin &&
+        compHeavyCount <= Math.max(trapHeavyMax + 2, trapHeavyMax) &&
+        compHeavyDeficit > 0.3
+      ) {
+        const hotFactor = clamp((temp - 0.95) / 1.6, 0, 1);
+        const needFactor = clamp(compHeavyDeficit / 4.2, 0, 1);
+        const pShuffle = clamp(
+          1 -
+            Math.exp(
+              -attemptRate *
+                rearrangeStrength *
+                (0.004 + 0.026 * hotFactor * (0.4 + needFactor)) *
+                dt *
+                60,
+            ),
+          0,
+          0.075,
+        );
+        if (Math.random() < pShuffle) {
+          const cost = bondValenceCost(b.order);
+          a.valenceUsed = Math.max(0, a.valenceUsed - cost);
+          c.valenceUsed = Math.max(0, c.valenceUsed - cost);
+          continue;
+        }
+      }
+    }
+
     kept.push(b);
   }
   sim.bonds = kept;
@@ -891,6 +956,25 @@ function chooseBondOrder(d: number, r0Single: number, allowMultiple: boolean): B
   if (d < r0Single * 0.8) return 3;
   if (d < r0Single * 0.9) return 2;
   return 1;
+}
+
+function buildHeavyStatsFromMoleculeState(mol: MoleculeState) {
+  const heavyCountByComp = new Map<number, number>();
+  const heavyDeficitByComp = new Map<number, number>();
+
+  for (const [compId, atoms] of mol.atomsByComp.entries()) {
+    let heavyCount = 0;
+    let heavyDeficit = 0;
+    for (const atom of atoms) {
+      if (atom.el === "H") continue;
+      heavyCount += 1;
+      heavyDeficit += valenceDeficit(atom);
+    }
+    heavyCountByComp.set(compId, heavyCount);
+    heavyDeficitByComp.set(compId, heavyDeficit);
+  }
+
+  return { heavyCountByComp, heavyDeficitByComp };
 }
 
 function chooseBondOrderWithOctetBias(
@@ -968,8 +1052,13 @@ function tryFormBonds(sim: Sim3D, params: Params3D, dt: number) {
   const barrierScale = Math.max(0.2, params.reactionBarrierScale ?? 1.0);
   const attemptRate = Math.max(0, params.reactionAttemptRate ?? 1.0);
   const temp = Math.max(0.03, getReducedTemperature(params));
+  const adaptive = params.adaptiveForceField ?? true;
+  const trapHeavyMin = Math.max(3, Math.floor(params.adaptiveTrapHeavyMin ?? 5));
+  const trapHeavyMax = Math.max(trapHeavyMin, Math.floor(params.adaptiveTrapHeavyMax ?? 8));
+  const hydrogenationThrottle = clamp(params.hydrogenationThrottle ?? 0.55, 0.05, 1);
 
   const mol = buildMoleculeState(sim, params);
+  const { heavyCountByComp, heavyDeficitByComp } = buildHeavyStatsFromMoleculeState(mol);
   const reactionCutoff = Math.max(
     params.reactionCutoff ?? params.cutoff,
     Math.min(params.cutoff, 2.2),
@@ -1012,13 +1101,29 @@ function tryFormBonds(sim: Sim3D, params: Params3D, dt: number) {
       else if (qq > 0) electroBias = 1 - 0.35 * biasStrength * mag;
     }
 
-    const formR = r0Single * FORM_FACTOR * getPairFormationBias(ai.el, aj.el) * electroBias;
+    const compA = mol.compByAtomId.get(ai.id);
+    const compB = mol.compByAtomId.get(aj.id);
+    const isHeavyA = ai.el !== "H";
+    const isHeavyB = aj.el !== "H";
+    const isHeavyPair = isHeavyA && isHeavyB;
+    const isHydrogenationPair = isHeavyA !== isHeavyB;
+    const heavyDefA = compA ? (heavyDeficitByComp.get(compA) ?? 0) : (isHeavyA ? valenceDeficit(ai) : 0);
+    const heavyDefB = compB ? (heavyDeficitByComp.get(compB) ?? 0) : (isHeavyB ? valenceDeficit(aj) : 0);
+    const heavyCountA = compA ? (heavyCountByComp.get(compA) ?? (isHeavyA ? 1 : 0)) : (isHeavyA ? 1 : 0);
+    const heavyCountB = compB ? (heavyCountByComp.get(compB) ?? (isHeavyB ? 1 : 0)) : (isHeavyB ? 1 : 0);
+    const aTrapComp =
+      heavyCountA >= trapHeavyMin && heavyCountA <= trapHeavyMax && heavyDefA <= 1.8;
+    const bTrapComp =
+      heavyCountB >= trapHeavyMin && heavyCountB <= trapHeavyMax && heavyDefB <= 1.8;
+
+    let formR = r0Single * FORM_FACTOR * getPairFormationBias(ai.el, aj.el) * electroBias;
+    if (adaptive && isHeavyPair && (aTrapComp || bTrapComp)) {
+      formR *= 1.08;
+    }
     if (pair.r2 > formR * formR) continue;
 
     const d = pair.r;
 
-    const compA = mol.compByAtomId.get(ai.id);
-    const compB = mol.compByAtomId.get(aj.id);
     const chargeA = compA ? (mol.chargeByComp.get(compA) ?? 0) : 0;
     const chargeB = compB ? (mol.chargeByComp.get(compB) ?? 0) : 0;
     const defAComp = compA ? (mol.deficitByComp.get(compA) ?? 0) : valenceDeficit(ai);
@@ -1053,12 +1158,36 @@ function tryFormBonds(sim: Sim3D, params: Params3D, dt: number) {
     const arrhenius = Math.exp(-(barriers.form * barrierScale) / temp);
     const deficitBoost = 1 + Math.min(1.2, 0.14 * (defAComp + defBComp));
     const neutralityBoost = 1 + Math.min(0.8, Math.max(0, neutralityGain) * 0.55);
+    let adaptiveFormationBias = 1.0;
+    if (adaptive) {
+      if (isHeavyPair) {
+        const heavyNeedBoost = 1 + Math.min(0.9, (heavyDefA + heavyDefB) * 0.18);
+        adaptiveFormationBias *= heavyNeedBoost;
+        if (aTrapComp || bTrapComp) adaptiveFormationBias *= 1.28;
+      } else if (isHydrogenationPair) {
+        const heavyCompForHydrogenation = isHeavyA ? compA : compB;
+        if (heavyCompForHydrogenation !== undefined) {
+          const heavyNeed = heavyDeficitByComp.get(heavyCompForHydrogenation) ?? 0;
+          const heavyCount = heavyCountByComp.get(heavyCompForHydrogenation) ?? 0;
+          if (heavyNeed >= 2.0) adaptiveFormationBias *= hydrogenationThrottle * 0.5;
+          else if (heavyNeed >= 1.0) adaptiveFormationBias *= hydrogenationThrottle;
+          if (
+            heavyCount >= trapHeavyMin &&
+            heavyCount <= trapHeavyMax &&
+            heavyNeed > 0.35
+          ) {
+            adaptiveFormationBias *= 0.7;
+          }
+        }
+      }
+    }
     const pForm = clamp(
       1 - Math.exp(
         -attemptRate *
           arrhenius *
           deficitBoost *
           neutralityBoost *
+          adaptiveFormationBias *
           stableFusionPenalty *
           dt *
           60,
