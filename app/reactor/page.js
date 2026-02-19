@@ -310,6 +310,8 @@ export default function ReactorPage() {
   const [protocolStatus, setProtocolStatus] = useState("idle");
   const [protocolTrendTags, setProtocolTrendTags] = useState("");
   const [protocolElapsedMs, setProtocolElapsedMs] = useState(0);
+  const [controlDeltaTags, setControlDeltaTags] = useState([]);
+  const [actionReadoutTags, setActionReadoutTags] = useState([]);
   const [modeOpen, setModeOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [hasEverLocalSave, setHasEverLocalSave] = useState(false);
@@ -405,6 +407,14 @@ export default function ReactorPage() {
   });
   const protocolAutoRunRef = useRef(protocolAutoRun);
   const protocolIncludeDosingRef = useRef(protocolIncludeDosing);
+  const prevControlReadoutRef = useRef({
+    temperatureK: DEFAULT_TEMPERATURE_K,
+    bondScale: DEFAULT_BOND_SCALE,
+    damping: DEFAULT_DAMPING,
+    boxHalfSize: DEFAULT_BOX_HALF_SIZE,
+  });
+  const controlDeltaClearTimerRef = useRef(null);
+  const actionReadoutClearTimerRef = useRef(null);
   const queuedScanTimerRef = useRef(null);
   const queuedScanPendingRef = useRef(false);
 
@@ -703,6 +713,43 @@ export default function ReactorPage() {
   const cataloguePlaceholderRowCount = Math.max(
     0,
     MIN_CATALOGUE_VISIBLE_ROWS - visibleCollection.length,
+  );
+
+  const showActionReadout = useCallback((label) => {
+    const text = String(label || "").trim();
+    if (!text) return;
+    if (actionReadoutClearTimerRef.current) {
+      window.clearTimeout(actionReadoutClearTimerRef.current);
+      actionReadoutClearTimerRef.current = null;
+    }
+    setActionReadoutTags([text]);
+    actionReadoutClearTimerRef.current = window.setTimeout(() => {
+      actionReadoutClearTimerRef.current = null;
+      setActionReadoutTags([]);
+    }, 650);
+  }, []);
+
+  const showSpawnReadout = useCallback(
+    (counts) => {
+      const rows = ELEMENTS.map((el) => ({
+        el,
+        count: Math.max(0, Math.floor(Number(counts?.[el]) || 0)),
+      })).filter((row) => row.count > 0);
+      if (rows.length <= 0) return;
+      if (rows.length === 1) {
+        const only = rows[0];
+        if (only.count === 1) {
+          showActionReadout(`Spawned ${only.el}`);
+          return;
+        }
+        showActionReadout(`Spawned [${only.el}:${only.count}]`);
+        return;
+      }
+      showActionReadout(
+        `Spawned [${rows.map((row) => `${row.el}:${row.count}`).join(" ")}]`,
+      );
+    },
+    [showActionReadout],
   );
 
   useEffect(() => {
@@ -1316,6 +1363,17 @@ export default function ReactorPage() {
         top: 10,
         pointerEvents: "auto",
         zIndex: 430,
+      },
+      trendTagShow: {
+        position: "absolute",
+        left: 10,
+        top: 56,
+        display: "grid",
+        justifyItems: "start",
+        gap: 2,
+        pointerEvents: "none",
+        zIndex: 425,
+        opacity: 0.2,
       },
       instructionsShow: {
         position: "absolute",
@@ -2343,8 +2401,10 @@ export default function ReactorPage() {
         ["O", 4],
         ["H", 8],
       ];
+      const actualSeedCounts = {};
       for (const [el, count] of initialCounts) {
         for (let i = 0; i < count; i += 1) {
+          const beforeCount = sim.atoms.length;
           addAtom3D(
             sim,
             (Math.random() - 0.5) * 4,
@@ -2354,8 +2414,12 @@ export default function ReactorPage() {
             elements,
             MAX_ATOMS,
           );
+          if (sim.atoms.length > beforeCount) {
+            actualSeedCounts[el] = (actualSeedCounts[el] || 0) + 1;
+          }
         }
       }
+      showSpawnReadout(actualSeedCounts);
     }
     scanCollectionProgress(sim);
 
@@ -2575,7 +2639,11 @@ export default function ReactorPage() {
         const ok = t.raycaster.ray.intersectPlane(placePlane, p);
         if (!ok) return;
 
+        const beforeCount = sim.atoms.length;
         addAtom3D(sim, p.x, p.y, p.z, placeElement, elements, MAX_ATOMS);
+        if (sim.atoms.length > beforeCount) {
+          showActionReadout(`Added ${placeElement}`);
+        }
         scanCollectionProgress(sim);
       }
     };
@@ -2611,6 +2679,7 @@ export default function ReactorPage() {
     scanCollectionProgress,
     catalogById,
     toggleLiveSelection,
+    showActionReadout,
   ]);
 
   useEffect(() => {
@@ -2635,8 +2704,10 @@ export default function ReactorPage() {
       ["O", 4],
       ["H", 8],
     ];
+    const actualSpawnCounts = {};
     for (const [el, count] of initialCounts) {
       for (let i = 0; i < count; i += 1) {
+        const beforeCount = sim.atoms.length;
         addAtom3D(
           sim,
           (Math.random() - 0.5) * 4,
@@ -2646,10 +2717,14 @@ export default function ReactorPage() {
           elements,
           MAX_ATOMS,
         );
+        if (sim.atoms.length > beforeCount) {
+          actualSpawnCounts[el] = (actualSpawnCounts[el] || 0) + 1;
+        }
       }
     }
+    showSpawnReadout(actualSpawnCounts);
     scanCollectionProgress(sim);
-  }, [elements, scanCollectionProgress]);
+  }, [elements, scanCollectionProgress, showSpawnReadout]);
 
   const onTutorialGetStarted = useCallback(
     (event) => {
@@ -2673,9 +2748,11 @@ export default function ReactorPage() {
   const spawnElementCounts = useCallback(
     (counts, jitter = 1.4, doShake = true) => {
       const sim = simRef.current;
+      const actualSpawnCounts = {};
       for (const el of ELEMENTS) {
         const count = Math.max(0, Math.floor(Number(counts?.[el]) || 0));
         for (let i = 0; i < count; i += 1) {
+          const beforeCount = sim.atoms.length;
           addAtom3D(
             sim,
             (Math.random() - 0.5) * jitter,
@@ -2685,12 +2762,16 @@ export default function ReactorPage() {
             elements,
             MAX_ATOMS,
           );
+          if (sim.atoms.length > beforeCount) {
+            actualSpawnCounts[el] = (actualSpawnCounts[el] || 0) + 1;
+          }
         }
       }
+      showSpawnReadout(actualSpawnCounts);
       if (doShake) nudgeAll(simRef.current, 1.8);
       scanCollectionProgress(sim);
     },
-    [elements, scanCollectionProgress],
+    [elements, scanCollectionProgress, showSpawnReadout],
   );
 
   const spawnAutomationFeed = useCallback(
@@ -2715,11 +2796,13 @@ export default function ReactorPage() {
   function spawnAtoms(count, mode = "selected") {
     const sim = simRef.current;
     const n = Math.max(1, Math.floor(Number(count) || 1));
+    const spawnedCounts = {};
     for (let i = 0; i < n; i++) {
       const el =
         mode === "random"
           ? ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)]
           : placeElement;
+      const beforeCount = sim.atoms.length;
       addAtom3D(
         sim,
         (Math.random() - 0.5) * 1.4,
@@ -2729,7 +2812,11 @@ export default function ReactorPage() {
         elements,
         MAX_ATOMS,
       );
+      if (sim.atoms.length > beforeCount) {
+        spawnedCounts[el] = (spawnedCounts[el] || 0) + 1;
+      }
     }
+    showSpawnReadout(spawnedCounts);
     shake();
     scanCollectionProgress(sim);
   }
@@ -2944,6 +3031,57 @@ export default function ReactorPage() {
       boxHalfSize,
     };
   }, [temperatureK, damping, bondScale, boxHalfSize]);
+
+  useEffect(() => {
+    const prev = prevControlReadoutRef.current;
+    const tags = [];
+    const pushTag = (code, delta, threshold) => {
+      if (delta > threshold) tags.push(`+${code}`);
+      else if (delta < -threshold) tags.push(`-${code}`);
+    };
+
+    pushTag("T", temperatureK - prev.temperatureK, 0.01);
+    pushTag("B", bondScale - prev.bondScale, 0.0005);
+    pushTag("D", damping - prev.damping, 0.00001);
+    pushTag("V", boxHalfSize - prev.boxHalfSize, 0.0005);
+
+    prevControlReadoutRef.current = {
+      temperatureK,
+      bondScale,
+      damping,
+      boxHalfSize,
+    };
+
+    setControlDeltaTags((current) => {
+      const currentKey = Array.isArray(current) ? current.join("|") : "";
+      const nextKey = tags.join("|");
+      return currentKey === nextKey ? current : tags;
+    });
+
+    if (controlDeltaClearTimerRef.current) {
+      window.clearTimeout(controlDeltaClearTimerRef.current);
+      controlDeltaClearTimerRef.current = null;
+    }
+    if (tags.length > 0) {
+      controlDeltaClearTimerRef.current = window.setTimeout(() => {
+        controlDeltaClearTimerRef.current = null;
+        setControlDeltaTags([]);
+      }, 320);
+    }
+  }, [temperatureK, bondScale, damping, boxHalfSize]);
+
+  useEffect(() => {
+    return () => {
+      if (controlDeltaClearTimerRef.current) {
+        window.clearTimeout(controlDeltaClearTimerRef.current);
+        controlDeltaClearTimerRef.current = null;
+      }
+      if (actionReadoutClearTimerRef.current) {
+        window.clearTimeout(actionReadoutClearTimerRef.current);
+        actionReadoutClearTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     protocolAutoRunRef.current = protocolAutoRun;
@@ -3308,6 +3446,10 @@ export default function ReactorPage() {
     ? String(protocolTrendTags || "").trim()
     : "";
   const protocolTrendRowHasContent = protocolTrendRowText.length > 0;
+  const statusReadoutRows = useMemo(
+    () => [...actionReadoutTags, ...controlDeltaTags],
+    [actionReadoutTags, controlDeltaTags],
+  );
   const activeProtocolDosingPanelText = useMemo(() => {
     if (!protocolIncludeDosing) {
       return "Dosing profile: disabled for automation cycles.";
@@ -3768,6 +3910,24 @@ export default function ReactorPage() {
             </button>
           </div>
         )}
+        {statusReadoutRows.length > 0 ? (
+          <div style={ui.trendTagShow}>
+            {statusReadoutRows.map((tag, idx) => (
+              <div
+                key={`trend-tag-stack-${idx}-${tag}`}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: REACTOR_OVERLAY_LIGHT_TEXT,
+                  lineHeight: 1.35,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {tag}
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         {/* Mode: top-right */}
         {modeOpen ? (
