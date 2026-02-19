@@ -246,7 +246,7 @@ function readSavedCatalogueIdsFromStorage() {
 }
 
 export default function ReactorPage() {
-  const MAX_ATOMS = 240;
+  const MAX_ATOMS = 200;
 
   // tool state
   const [tool, setTool] = useState(TOOL.PLACE);
