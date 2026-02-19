@@ -503,9 +503,9 @@ export default function ReactorPage() {
     const plotMaxY = Math.max(plotInsetTop + 1, height - plotInsetBottom);
     const nowMs = Date.now();
     const cutoffMs = nowMs - THERMO_HISTORY_WINDOW_MS;
-    const rows = (Array.isArray(liveThermoHistory) ? liveThermoHistory : []).filter(
-      (row) => Number(row?.atMs) >= cutoffMs,
-    );
+    const rows = (
+      Array.isArray(liveThermoHistory) ? liveThermoHistory : []
+    ).filter((row) => Number(row?.atMs) >= cutoffMs);
     const count = rows.length;
 
     if (count <= 1) {
@@ -543,8 +543,7 @@ export default function ReactorPage() {
     const pressureAxisMin = pressureMinRaw - pressureRangeRaw * 0.12;
     const pressureAxisMax = pressureMaxRaw + pressureRangeRaw * 0.12;
 
-    const xAt = (idx) =>
-      plotMinX + (idx / (count - 1)) * (plotMaxX - plotMinX);
+    const xAt = (idx) => plotMinX + (idx / (count - 1)) * (plotMaxX - plotMinX);
     const yFromRange = (value, min, max) =>
       plotMaxY -
       ((value - min) / Math.max(1e-9, max - min)) * (plotMaxY - plotMinY);
@@ -588,7 +587,8 @@ export default function ReactorPage() {
   const liveElementTotal = useMemo(
     () =>
       ELEMENTS.reduce(
-        (sum, el) => sum + Math.max(0, Math.floor(Number(liveElementCounts?.[el]) || 0)),
+        (sum, el) =>
+          sum + Math.max(0, Math.floor(Number(liveElementCounts?.[el]) || 0)),
         0,
       ),
     [liveElementCounts],
@@ -1966,8 +1966,7 @@ export default function ReactorPage() {
         thermalKinetic += 0.5 * mass * (dvx * dvx + dvy * dvy + dvz * dvz);
       }
       const dof = Math.max(1, 3 * atomCount - (atomCount > 1 ? 3 : 0));
-      const temperatureReduced =
-        atomCount > 0 ? (2 * thermalKinetic) / dof : 0;
+      const temperatureReduced = atomCount > 0 ? (2 * thermalKinetic) / dof : 0;
       const kBoltzmannReducedRaw = Number(
         paramsRef.current?.kBoltzmannReduced ?? 1 / 300,
       );
@@ -1998,7 +1997,9 @@ export default function ReactorPage() {
         ? pressureReducedRaw
         : 0;
 
-      const atomByIdForEnergy = new Map(sim.atoms.map((atom) => [atom.id, atom]));
+      const atomByIdForEnergy = new Map(
+        sim.atoms.map((atom) => [atom.id, atom]),
+      );
       const wrapMinImage = (delta) => {
         if (!usePeriodic) return delta;
         if (delta > boxHalfSizeNow) return delta - boxLength;
@@ -2055,7 +2056,9 @@ export default function ReactorPage() {
           elementCountsNext[atom.el] += 1;
         }
       }
-      const elementCountsKey = ELEMENTS.map((el) => elementCountsNext[el]).join("|");
+      const elementCountsKey = ELEMENTS.map((el) => elementCountsNext[el]).join(
+        "|",
+      );
       if (elementCountsKey !== liveElementCountsKeyRef.current) {
         liveElementCountsKeyRef.current = elementCountsKey;
         setLiveElementCounts(elementCountsNext);
@@ -2856,7 +2859,8 @@ export default function ReactorPage() {
         clamp(base.boxHalfSize * 1.12, 3.2, 12),
         t,
       ),
-      status: t >= 1 ? `${cyclePrefix}Anneal complete` : `${cyclePrefix}Annealing`,
+      status:
+        t >= 1 ? `${cyclePrefix}Anneal complete` : `${cyclePrefix}Annealing`,
       done: t >= 1,
     };
   }
@@ -2909,10 +2913,12 @@ export default function ReactorPage() {
       const nowMs = Date.now();
       const current = liveThermoEstimateRef.current;
       const hasAtoms = Number(current?.atomCount || 0) > 0;
-      const sampledTemperature =
-        hasAtoms ? Math.max(0, Number(current?.temperatureK) || 0) : 0;
-      const sampledPressure =
-        hasAtoms ? Number(current?.pressureReduced) || 0 : 0;
+      const sampledTemperature = hasAtoms
+        ? Math.max(0, Number(current?.temperatureK) || 0)
+        : 0;
+      const sampledPressure = hasAtoms
+        ? Number(current?.pressureReduced) || 0
+        : 0;
 
       setLiveThermoHistory((prev) => {
         const next = Array.isArray(prev) ? prev.slice() : [];
@@ -2925,7 +2931,8 @@ export default function ReactorPage() {
         while (next.length > 0 && Number(next[0]?.atMs) < cutoffMs) {
           next.shift();
         }
-        const maxPoints = Math.ceil(THERMO_HISTORY_WINDOW_MS / THERMO_SAMPLE_MS) + 2;
+        const maxPoints =
+          Math.ceil(THERMO_HISTORY_WINDOW_MS / THERMO_SAMPLE_MS) + 2;
         if (next.length > maxPoints) {
           next.splice(0, next.length - maxPoints);
         }
@@ -3209,7 +3216,9 @@ export default function ReactorPage() {
     CONTROL_PROTOCOLS.find((item) => item.id === protocolPreset) ||
     CONTROL_PROTOCOLS[0];
   const placeElementLabel = ELEMENT_NAMES[placeElement] || placeElement;
-  const protocolStatusKey = String(protocolStatus || "").trim().toLowerCase();
+  const protocolStatusKey = String(protocolStatus || "")
+    .trim()
+    .toLowerCase();
   const protocolStatusIsActive =
     protocolStatusKey !== "idle" && protocolStatusKey !== "stopped";
   const activeProtocolDurationMs = useMemo(
@@ -3233,7 +3242,9 @@ export default function ReactorPage() {
       : Math.min(protocolElapsedMs, activeProtocolDurationMs);
     const remainingMs = Math.max(0, activeProtocolDurationMs - cycleElapsedMs);
     const baseText = `${formatProtocolCountdown(remainingMs)} remaining`;
-    return protocolAutoRun ? `${baseText} in Cycle ${protocolCycleIndex}` : baseText;
+    return protocolAutoRun
+      ? `${baseText} in Cycle ${protocolCycleIndex}`
+      : baseText;
   }, [
     activeProtocolDurationMs,
     protocolCycleIndex,
@@ -3495,19 +3506,25 @@ export default function ReactorPage() {
                         fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      {protocolCountdownRowHasContent ? protocolCountdownRowText : "\u00A0"}
+                      {protocolCountdownRowHasContent
+                        ? protocolCountdownRowText
+                        : "\u00A0"}
                     </div>
                     <div
                       className="reactor-text-10-muted"
                       style={{
                         minHeight: 14,
-                        color: protocolTrendRowHasContent ? "#334155" : "#94a3b8",
+                        color: protocolTrendRowHasContent
+                          ? "#334155"
+                          : "#94a3b8",
                         fontWeight: 800,
                         letterSpacing: 0.2,
                         fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      {protocolTrendRowHasContent ? protocolTrendRowText : "\u00A0"}
+                      {protocolTrendRowHasContent
+                        ? protocolTrendRowText
+                        : "\u00A0"}
                     </div>
                     <div className="reactor-text-10-muted">
                       {activeProtocolMeta?.description}
@@ -3938,9 +3955,7 @@ export default function ReactorPage() {
                     <input
                       type="checkbox"
                       checked={showPeriodicRepeats}
-                      onChange={(e) =>
-                        setShowPeriodicRepeats(e.target.checked)
-                      }
+                      onChange={(e) => setShowPeriodicRepeats(e.target.checked)}
                     />
                   </label>
                 </div>
@@ -4379,55 +4394,55 @@ export default function ReactorPage() {
           </div>
         ) : (
           <div style={ui.catalogueShow}>
-              <div
+            <div
+              style={{
+                marginBottom: 6,
+                fontSize: 11,
+                color: REACTOR_OVERLAY_LIGHT_TEXT,
+                fontWeight: 800,
+                textAlign: "right",
+              }}
+            >
+              <span
                 style={{
-                  marginBottom: 6,
-                  fontSize: 11,
-                  color: REACTOR_OVERLAY_LIGHT_TEXT,
-                  fontWeight: 800,
-                  textAlign: "right",
+                  display: "inline-block",
+                  fontSize: `${11 + 15 * catalogCountGlowFactor}px`,
+                  fontWeight: 950,
+                  lineHeight: 1,
+                  transform: `scale(${catalogCountGlowScale})`,
+                  transformOrigin: "right center",
+                  color:
+                    catalogCountGlowFactor > 0
+                      ? `hsl(${45 - 8 * catalogCountGlowFactor} 96% ${78 - 28 * catalogCountGlowFactor}%)`
+                      : REACTOR_OVERLAY_LIGHT_TEXT,
+                  textShadow:
+                    catalogCountGlowFactor > 0
+                      ? `0 0 ${6 + 16 * catalogCountGlowFactor}px rgba(245,158,11,${0.22 + 0.48 * catalogCountGlowFactor})`
+                      : "none",
+                  transition:
+                    "font-size 66ms linear, transform 66ms linear, color 66ms linear, text-shadow 66ms linear",
+                  verticalAlign: "middle",
                 }}
               >
-                <span
-                  style={{
-                    display: "inline-block",
-                    fontSize: `${11 + 15 * catalogCountGlowFactor}px`,
-                    fontWeight: 950,
-                    lineHeight: 1,
-                    transform: `scale(${catalogCountGlowScale})`,
-                    transformOrigin: "right center",
-                    color:
-                      catalogCountGlowFactor > 0
-                        ? `hsl(${45 - 8 * catalogCountGlowFactor} 96% ${78 - 28 * catalogCountGlowFactor}%)`
-                        : REACTOR_OVERLAY_LIGHT_TEXT,
-                    textShadow:
-                      catalogCountGlowFactor > 0
-                        ? `0 0 ${6 + 16 * catalogCountGlowFactor}px rgba(245,158,11,${0.22 + 0.48 * catalogCountGlowFactor})`
-                        : "none",
-                    transition:
-                      "font-size 66ms linear, transform 66ms linear, color 66ms linear, text-shadow 66ms linear",
-                    verticalAlign: "middle",
-                  }}
-                >
-                  {collectedIds.length}
-                </span>
-                <span>{`/${MOLECULE_CATALOG.length} catalogued (${collectionCompletionPct}%)`}</span>
-              </div>
-              <div
-                style={{
-                  marginBottom: 8,
-                  fontSize: 11,
-                  color: REACTOR_OVERLAY_LIGHT_TEXT,
-                  fontWeight: 800,
-                  textAlign: "right",
-                }}
-              >
-                {`last catalogued: ${lastCataloguedLabel}`}
-              </div>
-              <button onClick={() => setCatalogueOpen(true)} style={ui.btnLight}>
-                Show catalogue
-              </button>
+                {collectedIds.length}
+              </span>
+              <span>{`/${MOLECULE_CATALOG.length} catalogued (${collectionCompletionPct}%)`}</span>
             </div>
+            <div
+              style={{
+                marginBottom: 8,
+                fontSize: 11,
+                color: REACTOR_OVERLAY_LIGHT_TEXT,
+                fontWeight: 800,
+                textAlign: "right",
+              }}
+            >
+              {`last catalogued: ${lastCataloguedLabel}`}
+            </div>
+            <button onClick={() => setCatalogueOpen(true)} style={ui.btnLight}>
+              Show catalogue
+            </button>
+          </div>
         )}
 
         <div style={ui.thermoShow}>
@@ -4500,14 +4515,22 @@ export default function ReactorPage() {
             <text
               x="2"
               y="8"
-              style={{ fill: REACTOR_PLOT_TEMP_COLOR, fontSize: 7, fontWeight: 800 }}
+              style={{
+                fill: REACTOR_PLOT_TEMP_COLOR,
+                fontSize: 7,
+                fontWeight: 800,
+              }}
             >
               {Math.round(Math.max(0, Number(thermoPlot.tempMax) || 0))}
             </text>
             <text
               x="2"
               y={thermoPlot.height - 2}
-              style={{ fill: REACTOR_PLOT_TEMP_COLOR, fontSize: 7, fontWeight: 800 }}
+              style={{
+                fill: REACTOR_PLOT_TEMP_COLOR,
+                fontSize: 7,
+                fontWeight: 800,
+              }}
             >
               {Math.round(Math.max(0, Number(thermoPlot.tempMin) || 0))}
             </text>
