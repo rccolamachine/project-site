@@ -1331,7 +1331,7 @@ export default function ReactorPage() {
         boxShadow: "0 10px 24px rgba(15,23,42,0.14)",
         padding: "10px 10px",
         pointerEvents: "auto",
-        zIndex: 445,
+        zIndex: 470,
       },
       tutorialShow: {
         position: "absolute",
@@ -1339,7 +1339,7 @@ export default function ReactorPage() {
         top: 10,
         transform: "translateX(-50%)",
         pointerEvents: "auto",
-        zIndex: 435,
+        zIndex: 470,
       },
       catalogue: {
         position: "absolute",
@@ -4064,16 +4064,20 @@ export default function ReactorPage() {
               </button>
             </div>
             <div style={ui.hintText} className="reactor-grid-gap-4">
+              <div>Put atoms in reactor. Mix. See what you made.</div>
               <div>
-                1. Put elements into reactor (click inside reactor or Spawn).
+                1. Put atoms in reactor. Click inside reactor to place (Mode
+                menu: Place).
               </div>
               <div>
-                3. Change temperature, bond strength, and reactor volume in
-                Controls. Different conditions cause different molecules to
-                form.
+                2. Mix; Change temperature, bond strength, and reactor volume
+                (Controls menu). Different conditions cause different molecules
+                to form.
               </div>
-              <div>4. Open Molecule Catalogue to see discovered molecules.</div>
-              <div>5. Goal: make all the molecules in the catalogue.</div>
+              <div>
+                3. See what you made (Catalogue menu). Molecules made in the
+                reactor will automatically be added to your catalogue.
+              </div>
             </div>
           </div>
         ) : (
