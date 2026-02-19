@@ -1175,6 +1175,7 @@ export default function ReactorPage() {
         background: "rgba(255,255,255,0.12)",
         boxShadow: "0 6px 18px rgba(15,23,42,0.06)",
         position: "relative",
+        isolation: "isolate",
         overflow: "hidden",
       },
       controls: {
@@ -1374,7 +1375,8 @@ export default function ReactorPage() {
         display: "grid",
         justifyItems: "start",
         pointerEvents: "none",
-        zIndex: 419,
+        zIndex: 8,
+        opacity: 0.2,
       },
       thermoShow: {
         position: "absolute",
@@ -1385,7 +1387,8 @@ export default function ReactorPage() {
         justifyItems: "end",
         gap: 6,
         pointerEvents: "none",
-        zIndex: 419,
+        zIndex: 8,
+        opacity: 0.2,
       },
       liveHud: {
         position: "absolute",
@@ -4816,6 +4819,8 @@ export default function ReactorPage() {
         <div
           ref={mountRef}
           style={{
+            position: "relative",
+            zIndex: 60,
             width: "100%",
             height: "min(660px, 72vh)", // smaller vertically so you can see everything
             minHeight: 320,
