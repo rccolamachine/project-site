@@ -312,6 +312,8 @@ export default function ReactorPage() {
   const [protocolElapsedMs, setProtocolElapsedMs] = useState(0);
   const [modeOpen, setModeOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [hasEverLocalSave, setHasEverLocalSave] = useState(false);
+  const [starterSeedUsed, setStarterSeedUsed] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [collectionFilter, setCollectionFilter] = useState("all");
   const [collectionSort, setCollectionSort] = useState("number");
@@ -369,7 +371,6 @@ export default function ReactorPage() {
   const liveHighlightKeyRef = useRef("");
   const discoveryGlowUntilRef = useRef(new Map());
   const liveAtomToCatalogIdRef = useRef(new Map());
-  const hasLocalSaveOnLoadRef = useRef(false);
   const resetInProgressRef = useRef(false);
   const selectedLiveIdsRef = useRef(new Set());
   const selectedLiveIndexByIdRef = useRef(new Map());
@@ -706,7 +707,9 @@ export default function ReactorPage() {
 
   useEffect(() => {
     const valid = readSavedCatalogueIdsFromStorage();
-    hasLocalSaveOnLoadRef.current = valid.length > 0;
+    const hasSavedCatalogue = valid.length > 0;
+    setHasEverLocalSave(hasSavedCatalogue);
+    setStarterSeedUsed(hasSavedCatalogue);
     setCollectedIds(valid);
     setLastCataloguedId(valid.length > 0 ? valid[valid.length - 1] : null);
     if (valid.length > 0) {
@@ -725,6 +728,10 @@ export default function ReactorPage() {
     if (!catalogueHydrated || resetInProgressRef.current) return;
     localStorage.setItem(CATALOGUE_STORAGE_KEY, JSON.stringify(collectedIds));
   }, [collectedIds, catalogueHydrated]);
+
+  useEffect(() => {
+    if (collectedIds.length > 0) setHasEverLocalSave(true);
+  }, [collectedIds]);
 
   useEffect(() => {
     collectedSetRef.current = new Set(collectedIds);
@@ -2327,27 +2334,27 @@ export default function ReactorPage() {
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
-    // default seed cluster starts lower for tutorial-first users; centered for returning users with saved catalogue progress
     const sim = simRef.current;
     clearSim3D(sim);
-    const initialCounts = [
-      ["O", 4],
-      ["H", 8],
-    ];
-    const spawnCenteredFromSave = hasLocalSaveOnLoadRef.current;
-    for (const [el, count] of initialCounts) {
-      for (let i = 0; i < count; i++) {
-        addAtom3D(
-          sim,
-          (Math.random() - 0.5) * 4,
-          spawnCenteredFromSave
-            ? (Math.random() - 0.5) * 2.0
-            : -1.8 + (Math.random() - 0.5) * 2.0,
-          (Math.random() - 0.5) * 3,
-          el,
-          elements,
-          MAX_ATOMS,
-        );
+    const hasSavedCatalogueAtInit =
+      readSavedCatalogueIdsFromStorage().length > 0;
+    if (hasSavedCatalogueAtInit) {
+      const initialCounts = [
+        ["O", 4],
+        ["H", 8],
+      ];
+      for (const [el, count] of initialCounts) {
+        for (let i = 0; i < count; i += 1) {
+          addAtom3D(
+            sim,
+            (Math.random() - 0.5) * 4,
+            (Math.random() - 0.5) * 2.0,
+            (Math.random() - 0.5) * 3,
+            el,
+            elements,
+            MAX_ATOMS,
+          );
+        }
       }
     }
     scanCollectionProgress(sim);
@@ -2621,6 +2628,47 @@ export default function ReactorPage() {
   function shake() {
     nudgeAll(simRef.current, 1.8);
   }
+
+  const spawnTutorialStarterAtoms = useCallback(() => {
+    const sim = simRef.current;
+    const initialCounts = [
+      ["O", 4],
+      ["H", 8],
+    ];
+    for (const [el, count] of initialCounts) {
+      for (let i = 0; i < count; i += 1) {
+        addAtom3D(
+          sim,
+          (Math.random() - 0.5) * 4,
+          -1.8 + (Math.random() - 0.5) * 2.0,
+          (Math.random() - 0.5) * 3,
+          el,
+          elements,
+          MAX_ATOMS,
+        );
+      }
+    }
+    scanCollectionProgress(sim);
+  }, [elements, scanCollectionProgress]);
+
+  const onTutorialGetStarted = useCallback(
+    (event) => {
+      event?.stopPropagation?.();
+      if (hasEverLocalSave || starterSeedUsed) {
+        setTutorialOpen(false);
+        return;
+      }
+      spawnTutorialStarterAtoms();
+      setStarterSeedUsed(true);
+      setTutorialOpen(false);
+    },
+    [
+      hasEverLocalSave,
+      starterSeedUsed,
+      spawnTutorialStarterAtoms,
+      setTutorialOpen,
+    ],
+  );
 
   const spawnElementCounts = useCallback(
     (counts, jitter = 1.4, doShake = true) => {
@@ -4052,7 +4100,6 @@ export default function ReactorPage() {
             id="tutorial-overlay"
             style={{ ...ui.tutorial, cursor: "pointer" }}
             onClick={() => setTutorialOpen(false)}
-            title="Click anywhere to close tutorial."
           >
             <div style={ui.headerRow}>
               <div style={ui.title}>Tutorial</div>
@@ -4079,6 +4126,19 @@ export default function ReactorPage() {
                 reactor will automatically be added to your catalogue.
               </div>
             </div>
+            {!hasEverLocalSave && !starterSeedUsed ? (
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "grid",
+                  justifyItems: "center",
+                }}
+              >
+                <button onClick={onTutorialGetStarted} style={ui.btnDark}>
+                  Get Started: [O:4 H:8]
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div id="tutorial-show" style={ui.tutorialShow}>
