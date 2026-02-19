@@ -711,7 +711,7 @@ export default function ReactorPage() {
     setLastCataloguedId(valid.length > 0 ? valid[valid.length - 1] : null);
     if (valid.length > 0) {
       setTutorialOpen(false);
-      setCatalogueOpen(true);
+      setCatalogueOpen(false);
       setCollectionFilter("live");
     } else {
       setTutorialOpen(true);
@@ -2321,21 +2321,21 @@ export default function ReactorPage() {
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
-    // default seed cluster starts lower for tutorial-first users; upper when catalogue opens from save
+    // default seed cluster starts lower for tutorial-first users; centered for returning users with saved catalogue progress
     const sim = simRef.current;
     clearSim3D(sim);
     const initialCounts = [
       ["O", 4],
       ["H", 8],
     ];
-    const spawnInTopHalf = hasLocalSaveOnLoadRef.current;
+    const spawnCenteredFromSave = hasLocalSaveOnLoadRef.current;
     for (const [el, count] of initialCounts) {
       for (let i = 0; i < count; i++) {
         addAtom3D(
           sim,
           (Math.random() - 0.5) * 4,
-          spawnInTopHalf
-            ? 1.8 + (Math.random() - 0.5) * 2.0
+          spawnCenteredFromSave
+            ? (Math.random() - 0.5) * 2.0
             : -1.8 + (Math.random() - 0.5) * 2.0,
           (Math.random() - 0.5) * 3,
           el,
