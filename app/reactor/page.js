@@ -207,6 +207,17 @@ function formatProtocolCountdown(remainingMs) {
 
 const CATALOG_ID_SET = new Set(MOLECULE_CATALOG.map((entry) => entry.id));
 
+function formatThermoScalar(value) {
+  const n = Number(value) || 0;
+  const abs = Math.abs(n);
+  if (abs >= 1000) return n.toFixed(0);
+  if (abs >= 100) return n.toFixed(1);
+  if (abs >= 10) return n.toFixed(2);
+  if (abs >= 1) return n.toFixed(3);
+  if (abs >= 0.01) return n.toFixed(4);
+  return n.toPrecision(2);
+}
+
 function readSavedCatalogueIdsFromStorage() {
   if (typeof window === "undefined") return [];
   try {
@@ -320,6 +331,9 @@ export default function ReactorPage() {
     atomCount: 0,
     temperatureK: 0,
     pressureReduced: 0,
+    entropyReduced: 0,
+    enthalpyReduced: 0,
+    totalEnergyReduced: 0,
   });
   const [liveThermoHistory, setLiveThermoHistory] = useState([]);
   const [hoverLiveTooltip, setHoverLiveTooltip] = useState(null);
@@ -348,6 +362,9 @@ export default function ReactorPage() {
     atomCount: 0,
     temperatureK: 0,
     pressureReduced: 0,
+    entropyReduced: 0,
+    enthalpyReduced: 0,
+    totalEnergyReduced: 0,
   });
   const liveHighlightKeyRef = useRef("");
   const discoveryGlowUntilRef = useRef(new Map());
@@ -454,6 +471,18 @@ export default function ReactorPage() {
   const liveThermoPressureLabel = useMemo(() => {
     if ((liveThermoEstimate?.atomCount ?? 0) <= 0) return "--";
     return `${(Number(liveThermoEstimate.pressureReduced) || 0).toFixed(3)}`;
+  }, [liveThermoEstimate]);
+  const liveThermoEntropyLabel = useMemo(() => {
+    if ((liveThermoEstimate?.atomCount ?? 0) <= 0) return "--";
+    return formatThermoScalar(liveThermoEstimate.entropyReduced);
+  }, [liveThermoEstimate]);
+  const liveThermoEnthalpyLabel = useMemo(() => {
+    if ((liveThermoEstimate?.atomCount ?? 0) <= 0) return "--";
+    return formatThermoScalar(liveThermoEstimate.enthalpyReduced);
+  }, [liveThermoEstimate]);
+  const liveThermoTotalEnergyLabel = useMemo(() => {
+    if ((liveThermoEstimate?.atomCount ?? 0) <= 0) return "--";
+    return formatThermoScalar(liveThermoEstimate.totalEnergyReduced);
   }, [liveThermoEstimate]);
   const thermoPlot = useMemo(() => {
     const formatPressureTick = (value) => {
@@ -1952,6 +1981,7 @@ export default function ReactorPage() {
       );
       const boxLength = boxHalfSizeNow * 2;
       const volume = Math.max(1e-6, boxLength * boxLength * boxLength);
+      const usePeriodic = Boolean(paramsRef.current?.usePeriodicBoundary);
       let virialSum = 0;
       for (const atom of sim.atoms) {
         const rx = atom.x - xCom;
@@ -1967,13 +1997,55 @@ export default function ReactorPage() {
       const pressureReduced = Number.isFinite(pressureReducedRaw)
         ? pressureReducedRaw
         : 0;
-      const thermoKey = `${atomCount}|${temperatureK.toFixed(1)}|${pressureReduced.toFixed(4)}`;
+
+      const atomByIdForEnergy = new Map(sim.atoms.map((atom) => [atom.id, atom]));
+      const wrapMinImage = (delta) => {
+        if (!usePeriodic) return delta;
+        if (delta > boxHalfSizeNow) return delta - boxLength;
+        if (delta < -boxHalfSizeNow) return delta + boxLength;
+        return delta;
+      };
+      let bondPotential = 0;
+      for (const bond of sim.bonds) {
+        const a = atomByIdForEnergy.get(bond.aId);
+        const b = atomByIdForEnergy.get(bond.bId);
+        if (!a || !b) continue;
+        const dx = wrapMinImage(b.x - a.x);
+        const dy = wrapMinImage(b.y - a.y);
+        const dz = wrapMinImage(b.z - a.z);
+        const r = Math.max(1e-6, Math.sqrt(dx * dx + dy * dy + dz * dz) || 0);
+        const dr = r - (Number(bond.r0) || 0);
+        const k = Math.max(0, Number(bond.k) || 0);
+        bondPotential += 0.5 * k * dr * dr;
+      }
+
+      const totalEnergyReducedRaw = thermalKinetic + bondPotential;
+      const totalEnergyReduced = Number.isFinite(totalEnergyReducedRaw)
+        ? totalEnergyReducedRaw
+        : 0;
+      const enthalpyReducedRaw = totalEnergyReduced + pressureReduced * volume;
+      const enthalpyReduced = Number.isFinite(enthalpyReducedRaw)
+        ? enthalpyReducedRaw
+        : 0;
+      const entropyReducedRaw =
+        atomCount > 0
+          ? Math.log(Math.max(1e-6, volume / atomCount)) +
+            1.5 * Math.log(Math.max(1e-6, temperatureReduced))
+          : 0;
+      const entropyReduced = Number.isFinite(entropyReducedRaw)
+        ? entropyReducedRaw
+        : 0;
+
+      const thermoKey = `${atomCount}|${temperatureK.toFixed(1)}|${pressureReduced.toFixed(4)}|${entropyReduced.toFixed(3)}|${enthalpyReduced.toFixed(2)}|${totalEnergyReduced.toFixed(2)}`;
       if (thermoKey !== liveThermoKeyRef.current) {
         liveThermoKeyRef.current = thermoKey;
         setLiveThermoEstimate({
           atomCount,
           temperatureK,
           pressureReduced,
+          entropyReduced,
+          enthalpyReduced,
+          totalEnergyReduced,
         });
       }
 
@@ -4370,6 +4442,9 @@ export default function ReactorPage() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
+            <div>{`${liveThermoEntropyLabel} S`}</div>
+            <div>{`${liveThermoEnthalpyLabel} H`}</div>
+            <div>{`${liveThermoTotalEnergyLabel} E`}</div>
             <div>
               {`${liveThermoTemperatureLabel} `}
               <span style={{ color: REACTOR_PLOT_TEMP_COLOR }}>T</span>
