@@ -156,3 +156,8 @@
   text-align: center;
   min-width: 0;
 }
+
+.reactor-slider {
+  width: 100%;
+  accent-color: var(--accent);
+}

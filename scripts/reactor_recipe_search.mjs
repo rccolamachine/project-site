@@ -6,6 +6,7 @@ import {
   DEFAULT_ELEMENTS_3D,
   DEFAULT_LJ,
   addAtom3D,
+  clearSim3D,
   createSim3D,
   nudgeAll,
   stepSim3D,
@@ -130,6 +131,42 @@ function countsKey(counts) {
   return ELEMENTS.map((el) => `${el}${counts[el] || 0}`).join("-");
 }
 
+function sanitizeCounts(counts) {
+  const out = { S: 0, P: 0, O: 0, N: 0, C: 0, H: 0 };
+  for (const el of ELEMENTS) {
+    const v = Number(counts?.[el] || 0);
+    out[el] = Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
+  }
+  return out;
+}
+
+function fitCountsToBudget(counts, budget) {
+  const out = sanitizeCounts(counts);
+  const cap = Math.max(0, Math.floor(budget || 0));
+  let total = totalAtoms(out);
+  if (total <= cap) return out;
+  if (cap <= 0) return { S: 0, P: 0, O: 0, N: 0, C: 0, H: 0 };
+
+  const scale = cap / Math.max(1, total);
+  for (const el of ELEMENTS) out[el] = Math.max(0, Math.floor(out[el] * scale));
+  total = totalAtoms(out);
+
+  const trimOrder = ["H", "C", "N", "O", "P", "S"];
+  while (total > cap) {
+    let changed = false;
+    for (const el of trimOrder) {
+      if (out[el] > 0) {
+        out[el] -= 1;
+        total -= 1;
+        changed = true;
+        if (total <= cap) break;
+      }
+    }
+    if (!changed) break;
+  }
+  return out;
+}
+
 function normalizeControls(setting) {
   return {
     temperatureK: clamp(Number(setting.temperatureK), 50, 1400),
@@ -201,22 +238,77 @@ function buildParams(setting) {
   };
 }
 
-function spawnFeedstock(sim, counts, maxAtoms, rng) {
+function spawnCounts(sim, counts, maxAtoms, rng, jitter = 1.4) {
+  const j = Math.max(0.4, Number(jitter || 1.4));
   for (const el of ELEMENTS) {
     const count = Math.max(0, Math.floor(counts[el] || 0));
     for (let i = 0; i < count; i += 1) {
       addAtom3D(
         sim,
-        (rng() - 0.5) * 1.4,
-        (rng() - 0.5) * 1.4,
-        (rng() - 0.5) * 1.4,
+        (rng() - 0.5) * j,
+        (rng() - 0.5) * j,
+        (rng() - 0.5) * j,
         el,
         DEFAULT_ELEMENTS_3D,
         maxAtoms,
       );
     }
   }
+}
+
+function spawnFeedstock(sim, counts, maxAtoms, rng) {
+  spawnCounts(sim, counts, maxAtoms, rng, 1.4);
   nudgeAll(sim, 1.8);
+}
+
+function shuffleInPlace(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    const t = arr[i];
+    arr[i] = arr[j];
+    arr[j] = t;
+  }
+}
+
+function recomputeValenceUsage(sim) {
+  const atomById = new Map();
+  for (const atom of sim.atoms) {
+    atom.valenceUsed = 0;
+    atomById.set(atom.id, atom);
+  }
+  const kept = [];
+  for (const bond of sim.bonds) {
+    const a = atomById.get(bond.aId);
+    const b = atomById.get(bond.bId);
+    if (!a || !b || a.id === b.id) continue;
+    const order = Math.max(1, Math.min(3, Math.round(Number(bond.order) || 1)));
+    a.valenceUsed += order;
+    b.valenceUsed += order;
+    kept.push({ ...bond, order });
+  }
+  sim.bonds = kept;
+}
+
+function deleteAtomsByMode(sim, mode, fraction, rng) {
+  const f = clamp(Number(fraction ?? 0), 0, 1);
+  if (mode === "clear-all") {
+    clearSim3D(sim);
+    return;
+  }
+  const matches = sim.atoms.filter((atom) => {
+    if (mode === "trim-h") return atom.el === "H";
+    if (mode === "trim-heavy") return atom.el !== "H";
+    return true;
+  });
+  if (matches.length <= 0) return;
+  const nDelete = Math.max(1, Math.floor(matches.length * Math.max(0.01, f)));
+  shuffleInPlace(matches, rng);
+  const removeIds = new Set(matches.slice(0, nDelete).map((a) => a.id));
+  sim.atoms = sim.atoms.filter((atom) => !removeIds.has(atom.id));
+  sim.bonds = sim.bonds.filter(
+    (bond) => !removeIds.has(bond.aId) && !removeIds.has(bond.bId),
+  );
+  recomputeValenceUsage(sim);
 }
 
 function firstHitStep(sim, targetFingerprint) {
@@ -231,6 +323,8 @@ function simulateAttempt({
   seed,
   targetFingerprint,
   feedstockCounts,
+  spawnPulses,
+  deleteActions,
   setting,
   maxAtoms,
   steps,
@@ -239,6 +333,33 @@ function simulateAttempt({
   return withSeed(seed, (rng) => {
     const sim = createSim3D();
     spawnFeedstock(sim, feedstockCounts, maxAtoms, rng);
+    const pulses = Array.isArray(spawnPulses) ? spawnPulses : [];
+    const deletes = Array.isArray(deleteActions) ? deleteActions : [];
+    const pulseQueue = pulses
+      .map((pulse) => ({
+        type: "pulse",
+        atStep: clamp(
+          Math.floor(steps * clamp(Number(pulse?.atFrac ?? 0.5), 0, 1)),
+          1,
+          Math.max(1, steps - 1),
+        ),
+        counts: sanitizeCounts(pulse?.counts),
+        jitter: clamp(Number(pulse?.jitter ?? 1.35), 0.6, 2.2),
+      }))
+      .concat(
+        deletes.map((action) => ({
+          type: "delete",
+          atStep: clamp(
+            Math.floor(steps * clamp(Number(action?.atFrac ?? 0.5), 0, 1)),
+            1,
+            Math.max(1, steps - 1),
+          ),
+          mode: String(action?.mode || "trim-any"),
+          fraction: clamp(Number(action?.fraction ?? 0.25), 0, 1),
+        })),
+      )
+      .sort((a, b) => a.atStep - b.atStep);
+    let pulseIdx = 0;
     const startControls = normalizeControls(setting);
     const endControls = setting?.annealTo ? normalizeControls(setting.annealTo) : null;
     const annealStartFrac = clamp(Number(setting?.annealStartFrac ?? 0.35), 0, 0.95);
@@ -257,6 +378,19 @@ function simulateAttempt({
         params.bondScale = lerp(startControls.bondScale, endControls.bondScale, t);
         params.boxHalfSize = lerp(startControls.boxHalfSize, endControls.boxHalfSize, t);
       }
+
+      while (pulseIdx < pulseQueue.length && step >= pulseQueue[pulseIdx].atStep) {
+        const event = pulseQueue[pulseIdx];
+        if (event.type === "pulse") {
+          spawnCounts(sim, event.counts, maxAtoms, rng, event.jitter);
+          nudgeAll(sim, 1.2);
+        } else {
+          deleteAtomsByMode(sim, event.mode, event.fraction, rng);
+          nudgeAll(sim, 1.1);
+        }
+        pulseIdx += 1;
+      }
+
       stepSim3D(sim, params, DT);
       if (step % scanEvery === 0) {
         if (firstHitStep(sim, targetFingerprint)) {
@@ -474,9 +608,103 @@ function buildFeedstockCandidates(entry, maxAtoms, searchAtomCap) {
 
   const unique = new Map();
   for (const cand of candidates) {
-    unique.set(countsKey(cand.counts), cand);
+    unique.set(countsKey(cand.counts), { label: cand.label, counts: sanitizeCounts(cand.counts) });
   }
   return [...unique.values()];
+}
+
+function buildInterventionPlans(entry, maxAtoms, feedstockCounts) {
+  const atomCount = Math.max(1, Number(entry.atomCount || 0));
+  const heavyCount = Math.max(1, Number(entry.heavyAtomCount || 0));
+  const baseCounts = elementCountsFromStructure(entry.structure);
+  const heavyBase = { ...baseCounts, H: 0 };
+  const feedstock = sanitizeCounts(feedstockCounts);
+
+  const heavyBudget = clamp(
+    Math.round(Math.min(maxAtoms * 0.3, Math.max(8, heavyCount * 3.5))),
+    8,
+    Math.max(8, Math.floor(maxAtoms * 0.45)),
+  );
+  const hBudget = clamp(
+    Math.round(Math.min(maxAtoms * 0.3, Math.max(8, heavyCount * 2.8))),
+    8,
+    Math.max(8, Math.floor(maxAtoms * 0.45)),
+  );
+  const mixBudget = clamp(
+    Math.round(Math.min(maxAtoms * 0.26, Math.max(8, atomCount * 1.4))),
+    8,
+    Math.max(8, Math.floor(maxAtoms * 0.4)),
+  );
+
+  const heavyPulse = fitCountsToBudget(scaleCounts(heavyBase, 2), heavyBudget);
+  const heavyPulseLite = fitCountsToBudget(scaleCounts(heavyBase, 1), Math.max(6, Math.floor(heavyBudget * 0.65)));
+  const hPulse = fitCountsToBudget({ H: Math.max(6, hBudget), C: 0, N: 0, O: 0, P: 0, S: 0 }, hBudget);
+  const mixedPulse = fitCountsToBudget(
+    {
+      C: Math.max(2, Math.round((feedstock.C || 0) * 0.45)),
+      N: Math.max(0, Math.round((feedstock.N || 0) * 0.45)),
+      O: Math.max(0, Math.round((feedstock.O || 0) * 0.45)),
+      P: Math.max(0, Math.round((feedstock.P || 0) * 0.45)),
+      S: Math.max(0, Math.round((feedstock.S || 0) * 0.45)),
+      H: Math.max(4, Math.round((feedstock.H || 0) * 0.4)),
+    },
+    mixBudget,
+  );
+
+  return [
+    { label: "no-intervention", pulses: [], deletes: [] },
+    {
+      label: "pulse-heavy-then-h",
+      pulses: [
+        { atFrac: 0.14, counts: heavyPulse, jitter: 1.6 },
+        { atFrac: 0.52, counts: hPulse, jitter: 1.35 },
+      ],
+      deletes: [],
+    },
+    {
+      label: "pulse-scaffold-bursts",
+      pulses: [
+        { atFrac: 0.1, counts: heavyPulseLite, jitter: 1.7 },
+        { atFrac: 0.3, counts: heavyPulse, jitter: 1.55 },
+        { atFrac: 0.64, counts: hPulse, jitter: 1.3 },
+      ],
+      deletes: [],
+    },
+    {
+      label: "pulse-mixed-jolt",
+      pulses: [{ atFrac: 0.24, counts: mixedPulse, jitter: 1.5 }],
+      deletes: [],
+    },
+    {
+      label: "pulse-late-h",
+      pulses: [{ atFrac: 0.6, counts: hPulse, jitter: 1.25 }],
+      deletes: [],
+    },
+    {
+      label: "trim-h-then-cap",
+      pulses: [
+        { atFrac: 0.16, counts: heavyPulse, jitter: 1.6 },
+        { atFrac: 0.64, counts: hPulse, jitter: 1.3 },
+      ],
+      deletes: [{ atFrac: 0.48, mode: "trim-h", fraction: 0.35 }],
+    },
+    {
+      label: "trim-any-rebuild",
+      pulses: [
+        { atFrac: 0.2, counts: mixedPulse, jitter: 1.45 },
+        { atFrac: 0.68, counts: hPulse, jitter: 1.28 },
+      ],
+      deletes: [{ atFrac: 0.46, mode: "trim-any", fraction: 0.22 }],
+    },
+    {
+      label: "clear-reseed",
+      pulses: [
+        { atFrac: 0.56, counts: heavyPulse, jitter: 1.62 },
+        { atFrac: 0.74, counts: hPulse, jitter: 1.3 },
+      ],
+      deletes: [{ atFrac: 0.5, mode: "clear-all", fraction: 1 }],
+    },
+  ];
 }
 
 function buildCandidatePairs(entry, options) {
@@ -485,26 +713,92 @@ function buildCandidatePairs(entry, options) {
   const pairs = [];
 
   const primaryFeedstocks = feedstocks.slice(0, Math.min(feedstocks.length, 3));
-  for (const setting of settings) {
+  for (let sIdx = 0; sIdx < settings.length; sIdx += 1) {
+    const setting = settings[sIdx];
     for (const feedstock of primaryFeedstocks) {
-      pairs.push({
-        setting,
-        feedstock,
-        label: `${settingKey(setting)}|${feedstock.label}`,
-      });
+      const interventionPlans = buildInterventionPlans(
+        entry,
+        options.maxAtoms,
+        feedstock.counts,
+      );
+      const selectedPlans =
+        sIdx < 2 ? interventionPlans.slice(0, 6) : interventionPlans.slice(0, 2);
+      for (const plan of selectedPlans) {
+        const stepCount = estimateStepCount(
+          setting,
+          feedstock.counts,
+          plan.pulses,
+          plan.deletes,
+        );
+        if (options.maxRecipeSteps > 0 && stepCount > options.maxRecipeSteps) continue;
+        pairs.push({
+          setting,
+          feedstock,
+          spawnPulses: plan.pulses,
+          deleteActions: plan.deletes,
+          interventionLabel: plan.label,
+          stepCount,
+          label: `${settingKey(setting)}|${feedstock.label}|${plan.label}`,
+        });
+      }
     }
   }
 
   if (feedstocks.length > 3) {
     const extra = feedstocks[feedstocks.length - 1];
+    const interventionPlans = buildInterventionPlans(entry, options.maxAtoms, extra.counts);
+    for (const plan of interventionPlans.slice(0, 3)) {
+      const stepCount = estimateStepCount(
+        settings[0],
+        extra.counts,
+        plan.pulses,
+        plan.deletes,
+      );
+      if (options.maxRecipeSteps > 0 && stepCount > options.maxRecipeSteps) continue;
+      pairs.push({
+        setting: settings[0],
+        feedstock: extra,
+        spawnPulses: plan.pulses,
+        deleteActions: plan.deletes,
+        interventionLabel: plan.label,
+        stepCount,
+        label: `${settingKey(settings[0])}|${extra.label}|${plan.label}`,
+      });
+    }
+  }
+
+  if (pairs.length <= 0 && settings.length > 0 && feedstocks.length > 0) {
+    const fallbackPlan = buildInterventionPlans(entry, options.maxAtoms, feedstocks[0].counts)[0] || {
+      label: "no-intervention",
+      pulses: [],
+      deletes: [],
+    };
     pairs.push({
       setting: settings[0],
-      feedstock: extra,
-      label: `${settingKey(settings[0])}|${extra.label}`,
+      feedstock: feedstocks[0],
+      spawnPulses: fallbackPlan.pulses || [],
+      deleteActions: fallbackPlan.deletes || [],
+      interventionLabel: fallbackPlan.label || "no-intervention",
+      stepCount: estimateStepCount(
+        settings[0],
+        feedstocks[0].counts,
+        fallbackPlan.pulses || [],
+        fallbackPlan.deletes || [],
+      ),
+      label: `${settingKey(settings[0])}|${feedstocks[0].label}|${fallbackPlan.label || "no-intervention"}`,
     });
   }
 
   return pairs.slice(0, options.maxCandidates);
+}
+
+function estimateStepCount(setting, feedstockCounts, spawnPulses, deleteActions) {
+  const hasInitialAdd = totalAtoms(feedstockCounts || {}) > 0;
+  const events =
+    (Array.isArray(spawnPulses) ? spawnPulses.length : 0) +
+    (Array.isArray(deleteActions) ? deleteActions.length : 0);
+  const hasControlShift = Boolean(setting?.annealTo);
+  return 1 + (hasInitialAdd ? 1 : 0) + events + (hasControlShift ? 1 : 0);
 }
 
 function summarizeCandidateResult(result) {
@@ -517,6 +811,17 @@ function summarizeCandidateResult(result) {
     label: result.label,
     setting: result.setting,
     feedstock: result.feedstock,
+    spawnPulses: Array.isArray(result.spawnPulses) ? result.spawnPulses : [],
+    deleteActions: Array.isArray(result.deleteActions) ? result.deleteActions : [],
+    interventionLabel: result.interventionLabel || "no-intervention",
+    stepCount: Number.isFinite(result.stepCount)
+      ? result.stepCount
+      : estimateStepCount(
+          result.setting,
+          result.feedstock?.counts || {},
+          result.spawnPulses || [],
+          result.deleteActions || [],
+        ),
     attempts: result.attempts,
     hits: result.hits,
     hitRate,
@@ -525,12 +830,180 @@ function summarizeCandidateResult(result) {
   };
 }
 
-function scoreCandidate(summary) {
+function scoreCandidate(summary, options) {
   if (!summary) return -1e9;
   const hitRate = Number(summary.hitRate || 0);
   const speedTerm = summary.avgHitStep === null ? 0 : 1 / (1 + summary.avgHitStep);
-  const atomPenalty = totalAtoms(summary.feedstock.counts) * 0.0015;
-  return hitRate * 1000 + speedTerm * 50 - atomPenalty;
+  const pulseAtoms = (summary.spawnPulses || []).reduce(
+    (sum, pulse) => sum + totalAtoms(pulse.counts || {}),
+    0,
+  );
+  const atomPenalty = (totalAtoms(summary.feedstock.counts) + pulseAtoms) * 0.0024;
+
+  let simplicityPenalty = 0;
+  if (options?.preferSimpleRecipes) {
+    const deleteActions = Array.isArray(summary.deleteActions) ? summary.deleteActions : [];
+    const clearAllCount = deleteActions.filter(
+      (d) => String(d?.mode || "") === "clear-all",
+    ).length;
+    const trimDeleteCount = deleteActions.length - clearAllCount;
+    const eventCount =
+      (summary.spawnPulses?.length || 0) + (summary.deleteActions?.length || 0);
+    const stepCount = Number(summary.stepCount || 0);
+    const targetMaxSteps = Math.max(1, Number(options.maxRecipeSteps || 6));
+
+    simplicityPenalty += Math.max(0, eventCount - 2) * 2.1;
+    simplicityPenalty += clearAllCount * 8.0;
+    simplicityPenalty += trimDeleteCount * 2.3;
+    simplicityPenalty += Math.max(0, stepCount - targetMaxSteps) * 6.0;
+    if (summary.setting?.annealTo) simplicityPenalty += 1.2;
+  }
+
+  return hitRate * 1000 + speedTerm * 50 - atomPenalty - simplicityPenalty;
+}
+
+function formatCountParts(counts) {
+  const order = ["C", "H", "N", "O", "P", "S"];
+  const out = [];
+  for (const el of order) {
+    const n = Math.max(0, Math.floor(Number(counts?.[el] || 0)));
+    if (n > 0) out.push(`${el}${n > 1 ? ` x${n}` : ""}`);
+  }
+  return out;
+}
+
+function formatControlsInline(ctrl) {
+  return [
+    `T: ${Math.round(Number(ctrl.temperatureK || 0))}`,
+    `D: ${Number(ctrl.damping || 0).toFixed(4)}`,
+    `B: ${Number(ctrl.bondScale || 0).toFixed(2)}`,
+    `V: ${Number(ctrl.boxHalfSize || 0).toFixed(2)}`,
+  ].join(", ");
+}
+
+function toPct(frac) {
+  return `${Math.round(clamp(Number(frac || 0), 0, 1) * 100)}%`;
+}
+
+function buildStepwiseRecipe(rec) {
+  if (!rec) return [];
+  const steps = [];
+  steps.push(formatControlsInline(rec.initialControls));
+
+  const initialParts = formatCountParts(rec.feedstockCounts);
+  if (initialParts.length > 0) {
+    steps.push(`Add ${initialParts.join(", ")} (random spawn positions).`);
+  }
+
+  const events = [];
+  for (const pulse of rec.spawnPulses || []) {
+    events.push({
+      kind: "pulse",
+      atFrac: clamp(Number(pulse?.atFrac ?? 0), 0, 1),
+      counts: pulse?.counts || {},
+    });
+  }
+  for (const del of rec.deleteActions || []) {
+    events.push({
+      kind: "delete",
+      atFrac: clamp(Number(del?.atFrac ?? 0), 0, 1),
+      mode: String(del?.mode || "trim-any"),
+      fraction: clamp(Number(del?.fraction ?? 0), 0, 1),
+    });
+  }
+  events.sort((a, b) => a.atFrac - b.atFrac);
+
+  for (const event of events) {
+    if (event.kind === "pulse") {
+      const parts = formatCountParts(event.counts);
+      if (parts.length <= 0) continue;
+      steps.push(`At ~${toPct(event.atFrac)}: add ${parts.join(", ")}.`);
+      continue;
+    }
+    if (event.mode === "clear-all") {
+      steps.push(`At ~${toPct(event.atFrac)}: delete all atoms (clear reactor).`);
+      continue;
+    }
+    const pct = Math.round(event.fraction * 100);
+    if (event.mode === "trim-h") {
+      steps.push(`At ~${toPct(event.atFrac)}: delete ~${pct}% of H atoms.`);
+      continue;
+    }
+    if (event.mode === "trim-heavy") {
+      steps.push(`At ~${toPct(event.atFrac)}: delete ~${pct}% of non-H atoms.`);
+      continue;
+    }
+    steps.push(`At ~${toPct(event.atFrac)}: delete ~${pct}% of all atoms.`);
+  }
+
+  if (rec.controlTransition?.target) {
+    steps.push(
+      `From ~${toPct(rec.controlTransition.startFrac)} onward, gradually shift to ${formatControlsInline(
+        rec.controlTransition.target,
+      )}.`,
+    );
+  }
+
+  return steps;
+}
+
+function toRecipeCandidate(item) {
+  const initialControls = normalizeControls(item.setting || DEFAULTS);
+  const controlTransition = item?.setting?.annealTo
+    ? {
+        startFrac: clamp(Number(item.setting.annealStartFrac ?? 0.35), 0, 1),
+        target: normalizeControls(item.setting.annealTo),
+      }
+    : null;
+  const spawnPulses = Array.isArray(item.spawnPulses) ? item.spawnPulses : [];
+  const deleteActions = Array.isArray(item.deleteActions) ? item.deleteActions : [];
+  const out = {
+    temperatureK: Math.round(initialControls.temperatureK),
+    damping: Number(initialControls.damping.toFixed(4)),
+    bondScale: Number(initialControls.bondScale.toFixed(3)),
+    boxHalfSize: Number(initialControls.boxHalfSize.toFixed(2)),
+    initialControls: {
+      temperatureK: Math.round(initialControls.temperatureK),
+      damping: Number(initialControls.damping.toFixed(4)),
+      bondScale: Number(initialControls.bondScale.toFixed(3)),
+      boxHalfSize: Number(initialControls.boxHalfSize.toFixed(2)),
+    },
+    controlTransition: controlTransition
+      ? {
+          startFrac: Number(controlTransition.startFrac.toFixed(3)),
+          target: {
+            temperatureK: Math.round(controlTransition.target.temperatureK),
+            damping: Number(controlTransition.target.damping.toFixed(4)),
+            bondScale: Number(controlTransition.target.bondScale.toFixed(3)),
+            boxHalfSize: Number(controlTransition.target.boxHalfSize.toFixed(2)),
+          },
+        }
+      : null,
+    feedstockCounts: item.feedstock.counts,
+    spawnPulses,
+    deleteActions,
+    totalSpawnAtoms:
+      totalAtoms(item.feedstock.counts) +
+      spawnPulses.reduce((sum, pulse) => sum + totalAtoms(pulse.counts || {}), 0),
+    recipeLabel: item.label,
+    interventionLabel: item.interventionLabel || "no-intervention",
+    hitRate: Number(item.hitRate.toFixed(3)),
+    avgHitSeconds:
+      typeof item.avgHitSeconds === "number"
+        ? Number(item.avgHitSeconds.toFixed(3))
+        : null,
+    attempts: item.attempts,
+    hits: item.hits,
+    estimatedStepCount: estimateStepCount(
+      item.setting,
+      item.feedstock?.counts || {},
+      spawnPulses,
+      deleteActions,
+    ),
+  };
+  out.stepwiseRecipe = buildStepwiseRecipe(out);
+  out.stepCount = out.stepwiseRecipe.length;
+  return out;
 }
 
 function evaluateMolecule(entry, options) {
@@ -554,6 +1027,8 @@ function evaluateMolecule(entry, options) {
         seed: nextSeed(),
         targetFingerprint: entry.fingerprint,
         feedstockCounts: run.feedstock.counts,
+        spawnPulses: run.spawnPulses,
+        deleteActions: run.deleteActions,
         setting: run.setting,
         maxAtoms: options.maxAtoms,
         steps: options.quickSteps,
@@ -568,7 +1043,7 @@ function evaluateMolecule(entry, options) {
   }
 
   let summaries = candidateRuns.map(summarizeCandidateResult);
-  summaries.sort((a, b) => scoreCandidate(b) - scoreCandidate(a));
+  summaries.sort((a, b) => scoreCandidate(b, options) - scoreCandidate(a, options));
 
   const rescueCount = Math.min(options.rescueCandidates, summaries.length);
   for (let i = 0; i < rescueCount; i += 1) {
@@ -580,6 +1055,8 @@ function evaluateMolecule(entry, options) {
         seed: nextSeed(),
         targetFingerprint: entry.fingerprint,
         feedstockCounts: run.feedstock.counts,
+        spawnPulses: run.spawnPulses,
+        deleteActions: run.deleteActions,
         setting: run.setting,
         maxAtoms: options.maxAtoms,
         steps: options.rescueSteps,
@@ -594,7 +1071,7 @@ function evaluateMolecule(entry, options) {
   }
 
   summaries = candidateRuns.map(summarizeCandidateResult);
-  summaries.sort((a, b) => scoreCandidate(b) - scoreCandidate(a));
+  summaries.sort((a, b) => scoreCandidate(b, options) - scoreCandidate(a, options));
   const best = summaries[0] || null;
 
   if (best && best.hits > 0 && options.refineAttempts > 0) {
@@ -605,6 +1082,8 @@ function evaluateMolecule(entry, options) {
           seed: nextSeed(),
           targetFingerprint: entry.fingerprint,
           feedstockCounts: run.feedstock.counts,
+          spawnPulses: run.spawnPulses,
+          deleteActions: run.deleteActions,
           setting: run.setting,
           maxAtoms: options.maxAtoms,
           steps: options.refineSteps,
@@ -618,7 +1097,7 @@ function evaluateMolecule(entry, options) {
       }
     }
     summaries = candidateRuns.map(summarizeCandidateResult);
-    summaries.sort((a, b) => scoreCandidate(b) - scoreCandidate(a));
+    summaries.sort((a, b) => scoreCandidate(b, options) - scoreCandidate(a, options));
   }
 
   const finalBest = summaries[0] || null;
@@ -632,40 +1111,10 @@ function evaluateMolecule(entry, options) {
     ringCount: entry.ringCount,
     maxBondOrder: entry.maxBondOrder,
     found,
-    recommended: finalBest
-      ? {
-          temperatureK: Math.round(finalBest.setting.temperatureK),
-          damping: Number(finalBest.setting.damping.toFixed(4)),
-          bondScale: Number(finalBest.setting.bondScale.toFixed(3)),
-          boxHalfSize: Number(finalBest.setting.boxHalfSize.toFixed(2)),
-          feedstockCounts: finalBest.feedstock.counts,
-          totalSpawnAtoms: totalAtoms(finalBest.feedstock.counts),
-          recipeLabel: finalBest.label,
-          hitRate: Number(finalBest.hitRate.toFixed(3)),
-          avgHitSeconds:
-            typeof finalBest.avgHitSeconds === "number"
-              ? Number(finalBest.avgHitSeconds.toFixed(3))
-              : null,
-          attempts: finalBest.attempts,
-          hits: finalBest.hits,
-        }
-      : null,
-    topCandidates: summaries.slice(0, Math.min(3, summaries.length)).map((item) => ({
-      recipeLabel: item.label,
-      temperatureK: Math.round(item.setting.temperatureK),
-      damping: Number(item.setting.damping.toFixed(4)),
-      bondScale: Number(item.setting.bondScale.toFixed(3)),
-      boxHalfSize: Number(item.setting.boxHalfSize.toFixed(2)),
-      feedstockCounts: item.feedstock.counts,
-      totalSpawnAtoms: totalAtoms(item.feedstock.counts),
-      hitRate: Number(item.hitRate.toFixed(3)),
-      avgHitSeconds:
-        typeof item.avgHitSeconds === "number"
-          ? Number(item.avgHitSeconds.toFixed(3))
-          : null,
-      attempts: item.attempts,
-      hits: item.hits,
-    })),
+    recommended: finalBest ? toRecipeCandidate(finalBest) : null,
+    topCandidates: summaries
+      .slice(0, Math.min(3, summaries.length))
+      .map((item) => toRecipeCandidate(item)),
   };
 }
 
@@ -698,6 +1147,8 @@ function formatRecipeLine(entry, rec) {
     `bond=${rec.bondScale}`,
     `box=${rec.boxHalfSize}`,
     `spawn=${JSON.stringify(rec.feedstockCounts)}`,
+    `events=${(rec.spawnPulses || []).length + (rec.deleteActions || []).length}`,
+    `steps=${rec.stepCount ?? rec.estimatedStepCount ?? "-"}`,
     `hitRate=${rec.hitRate}`,
     `avgHitS=${rec.avgHitSeconds ?? "-"}`,
   ].join(" | ");
@@ -717,12 +1168,20 @@ function writeMarkdown(filePath, results, summary, options) {
   lines.push("- sigma/epsilon: defaults (unchanged)");
   lines.push("- controls varied: temperature, damping, bondScale, boxHalfSize");
   lines.push(`- max atoms spawned: ${options.maxAtoms}`);
+  lines.push(`- max recipe steps target: ${options.maxRecipeSteps}`);
+  lines.push(`- prefer simple recipes: ${options.preferSimpleRecipes}`);
   lines.push("");
   lines.push("Per-molecule recommendation:");
   lines.push("");
   lines.push("`id | name | formula | temperature | damping | bond | box | spawn counts | hitRate | avgHitS`");
   lines.push("");
-  for (const entry of results) lines.push(`- ${formatRecipeLine(entry, entry.recommended)}`);
+  for (const entry of results) {
+    lines.push(`- ${formatRecipeLine(entry, entry.recommended)}`);
+    const steps = entry?.recommended?.stepwiseRecipe || [];
+    for (let i = 0; i < steps.length; i += 1) {
+      lines.push(`  ${i + 1}. ${steps[i]}`);
+    }
+  }
   lines.push("");
 
   const abs = path.resolve(filePath);
@@ -749,6 +1208,12 @@ function main() {
     }
   }
 
+  const preferSimpleRaw = args.preferSimpleRecipes;
+  const preferSimpleRecipes =
+    preferSimpleRaw === undefined
+      ? true
+      : !["0", "false", "no", "off"].includes(String(preferSimpleRaw).toLowerCase());
+
   const options = {
     out: args.out || "data/reactor_recipe_guide.json",
     mdOut: args.mdOut || "data/reactor_recipe_guide.md",
@@ -765,6 +1230,8 @@ function main() {
     refineAttempts: readIntArg(args, "refineAttempts", 1),
     refineSteps: readIntArg(args, "refineSteps", 900),
     maxCandidates: readIntArg(args, "maxCandidates", 10),
+    maxRecipeSteps: readIntArg(args, "maxRecipeSteps", 6),
+    preferSimpleRecipes,
     scanEvery: readIntArg(args, "scanEvery", 6),
     seed: readIntArg(args, "seed", 20260217),
     printEvery: readIntArg(args, "printEvery", 20),
@@ -819,6 +1286,8 @@ function main() {
       refineAttempts: options.refineAttempts,
       refineSteps: options.refineSteps,
       maxCandidates: options.maxCandidates,
+      maxRecipeSteps: options.maxRecipeSteps,
+      preferSimpleRecipes: options.preferSimpleRecipes,
       scanEvery: options.scanEvery,
       minHitRate: options.minHitRate,
     },

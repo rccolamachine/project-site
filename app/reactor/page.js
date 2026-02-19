@@ -54,19 +54,27 @@ const ELEMENT_NAMES = Object.freeze({
   C: "Carbon",
   H: "Hydrogen",
 });
+const EMPTY_ELEMENT_COUNTS = Object.freeze(
+  Object.fromEntries(ELEMENTS.map((el) => [el, 0])),
+);
 const ROOM_TEMP_K = 300;
 const FIXED_CUTOFF = 4.2;
 const DEFAULT_TEMPERATURE_K = 520;
 const DEFAULT_DAMPING = 0.993;
 const DEFAULT_BOND_SCALE = 3.5;
 const DEFAULT_BOX_HALF_SIZE = 4.8;
+const PERIODIC_REPEAT_MARGIN = 1.6;
 const CATALOGUE_STORAGE_KEY = "reactor-molecule-catalogue-v1";
 const LEGACY_COLLECTION_STORAGE_KEY = "reactor-molecule-collection-v1";
 const COLLECTION_SCAN_INTERVAL_STEPS = 8;
+const THERMO_HISTORY_WINDOW_MS = 60_000;
+const THERMO_SAMPLE_MS = 1_000;
 const COLLECTION_PAGE_SIZE = 36;
 const FIRST_DISCOVERY_CALLOUT_MS = 5200;
 const FIRST_DISCOVERY_CALLOUT_FADE_MS = 1700;
 const REACTOR_OVERLAY_LIGHT_TEXT = "#e2e8f0";
+const REACTOR_PLOT_TEMP_COLOR = "#ff4fd8";
+const REACTOR_PLOT_PRESSURE_COLOR = "#2de2e6";
 const MIN_CATALOGUE_VISIBLE_ROWS = 3;
 const LIVE_SELECTION_PALETTE = Object.freeze([
   {
@@ -147,6 +155,12 @@ const CONTROL_PROTOCOLS = Object.freeze([
   },
 ]);
 
+const CONTROL_PROTOCOL_DURATION_MS = Object.freeze({
+  "trap-cycle": 32_000,
+  "scaffold-then-cap": 42_000,
+  "gentle-anneal": 36_000,
+});
+
 const AUTOMATION_FEEDS = Object.freeze({
   trapBalanced: {
     label: "Trap feed",
@@ -176,6 +190,19 @@ function formatFeedAtomBreakdown(counts = {}) {
     .filter((row) => row.count > 0)
     .map((row) => `${row.el}:${row.count}`);
   return parts.join(" ");
+}
+
+function getProtocolDurationMs(preset) {
+  const duration = CONTROL_PROTOCOL_DURATION_MS[String(preset || "")];
+  if (!Number.isFinite(duration) || duration <= 0) return 0;
+  return duration;
+}
+
+function formatProtocolCountdown(remainingMs) {
+  const safeRemainingMs = Number.isFinite(remainingMs)
+    ? Math.max(0, remainingMs)
+    : 0;
+  return `${(safeRemainingMs / 1000).toFixed(1)}s`;
 }
 
 const CATALOG_ID_SET = new Set(MOLECULE_CATALOG.map((entry) => entry.id));
@@ -235,7 +262,7 @@ export default function ReactorPage() {
   const pausedRef = useRef(false);
   useEffect(() => void (pausedRef.current = paused), [paused]);
 
-  // Kelvin 0..1000
+  // temperature control
   const [temperatureK, setTemperatureK] = useState(DEFAULT_TEMPERATURE_K);
   const [damping, setDamping] = useState(DEFAULT_DAMPING);
   const [bondScale, setBondScale] = useState(DEFAULT_BOND_SCALE);
@@ -243,6 +270,12 @@ export default function ReactorPage() {
   // box size (half-size)
   const [boxHalfSize, setBoxHalfSize] = useState(DEFAULT_BOX_HALF_SIZE);
   const [showBoxEdges, setShowBoxEdges] = useState(true);
+  const [showPeriodicRepeats, setShowPeriodicRepeats] = useState(false);
+  const showPeriodicRepeatsRef = useRef(false);
+  useEffect(
+    () => void (showPeriodicRepeatsRef.current = showPeriodicRepeats),
+    [showPeriodicRepeats],
+  );
   const [adaptiveForceField, setAdaptiveForceField] = useState(true);
 
   // per-element LJ
@@ -280,6 +313,15 @@ export default function ReactorPage() {
   const [liveMoleculeSummary, setLiveMoleculeSummary] = useState([]);
   const [liveMatchedIds, setLiveMatchedIds] = useState([]);
   const [liveBrightIds, setLiveBrightIds] = useState([]);
+  const [liveElementCounts, setLiveElementCounts] = useState(() => ({
+    ...EMPTY_ELEMENT_COUNTS,
+  }));
+  const [liveThermoEstimate, setLiveThermoEstimate] = useState({
+    atomCount: 0,
+    temperatureK: 0,
+    pressureReduced: 0,
+  });
+  const [liveThermoHistory, setLiveThermoHistory] = useState([]);
   const [hoverLiveTooltip, setHoverLiveTooltip] = useState(null);
   const [discoveryCallouts, setDiscoveryCallouts] = useState([]);
   const [calloutEpoch, setCalloutEpoch] = useState(0);
@@ -300,6 +342,13 @@ export default function ReactorPage() {
   const liveMoleculeSummaryKeyRef = useRef("");
   const liveMatchedIdsKeyRef = useRef("");
   const liveBrightIdsKeyRef = useRef("");
+  const liveElementCountsKeyRef = useRef("");
+  const liveThermoKeyRef = useRef("");
+  const liveThermoEstimateRef = useRef({
+    atomCount: 0,
+    temperatureK: 0,
+    pressureReduced: 0,
+  });
   const liveHighlightKeyRef = useRef("");
   const discoveryGlowUntilRef = useRef(new Map());
   const liveAtomToCatalogIdRef = useRef(new Map());
@@ -338,6 +387,8 @@ export default function ReactorPage() {
   });
   const protocolAutoRunRef = useRef(protocolAutoRun);
   const protocolIncludeDosingRef = useRef(protocolIncludeDosing);
+  const queuedScanTimerRef = useRef(null);
+  const queuedScanPendingRef = useRef(false);
 
   const threeRef = useRef({
     renderer: null,
@@ -347,6 +398,8 @@ export default function ReactorPage() {
     raycaster: null,
     pointerNDC: new THREE.Vector2(),
     atomGroup: null,
+    repeatAtomGroup: null,
+    repeatAtomSprites: [],
     bondGroup: null,
     bondMeshes: [],
     glowSprites: new Map(),
@@ -394,6 +447,123 @@ export default function ReactorPage() {
     return map;
   }, [selectedLiveIds]);
   const liveBrightSet = useMemo(() => new Set(liveBrightIds), [liveBrightIds]);
+  const liveThermoTemperatureLabel = useMemo(() => {
+    if ((liveThermoEstimate?.atomCount ?? 0) <= 0) return "--";
+    return `${Math.round(Math.max(0, Number(liveThermoEstimate.temperatureK) || 0))}`;
+  }, [liveThermoEstimate]);
+  const liveThermoPressureLabel = useMemo(() => {
+    if ((liveThermoEstimate?.atomCount ?? 0) <= 0) return "--";
+    return `${(Number(liveThermoEstimate.pressureReduced) || 0).toFixed(3)}`;
+  }, [liveThermoEstimate]);
+  const thermoPlot = useMemo(() => {
+    const formatPressureTick = (value) => {
+      const v = Number(value) || 0;
+      const abs = Math.abs(v);
+      if (abs >= 1) return v.toFixed(2);
+      if (abs >= 0.01) return v.toFixed(3);
+      return v.toPrecision(2);
+    };
+    const width = 168;
+    const height = 54;
+    const plotInsetX = 6;
+    const plotInsetTop = 10;
+    const plotInsetBottom = 10;
+    const plotMinX = plotInsetX;
+    const plotMaxX = Math.max(plotInsetX + 1, width - plotInsetX);
+    const plotMinY = plotInsetTop;
+    const plotMaxY = Math.max(plotInsetTop + 1, height - plotInsetBottom);
+    const nowMs = Date.now();
+    const cutoffMs = nowMs - THERMO_HISTORY_WINDOW_MS;
+    const rows = (Array.isArray(liveThermoHistory) ? liveThermoHistory : []).filter(
+      (row) => Number(row?.atMs) >= cutoffMs,
+    );
+    const count = rows.length;
+
+    if (count <= 1) {
+      return {
+        width,
+        height,
+        tempPath: "",
+        pressurePath: "",
+        tempMin: 0,
+        tempMax: 0,
+        pressureMin: 0,
+        pressureMax: 0,
+        lastX: null,
+        tempLastY: null,
+        pressureLastY: null,
+        pressureTopLabel: "0",
+        pressureBottomLabel: "0",
+      };
+    }
+
+    const tempValues = rows.map((row) =>
+      Math.max(0, Number(row?.temperatureK) || 0),
+    );
+    const pressureValues = rows.map((row) => Number(row?.pressureReduced) || 0);
+
+    const tempMinRaw = Math.min(...tempValues);
+    const tempMaxRaw = Math.max(...tempValues);
+    const pressureMinRaw = Math.min(...pressureValues);
+    const pressureMaxRaw = Math.max(...pressureValues);
+
+    const tempRangeRaw = Math.max(1, tempMaxRaw - tempMinRaw);
+    const pressureRangeRaw = Math.max(1e-6, pressureMaxRaw - pressureMinRaw);
+    const tempAxisMin = Math.max(0, tempMinRaw - tempRangeRaw * 0.08);
+    const tempAxisMax = tempMaxRaw + tempRangeRaw * 0.08;
+    const pressureAxisMin = pressureMinRaw - pressureRangeRaw * 0.12;
+    const pressureAxisMax = pressureMaxRaw + pressureRangeRaw * 0.12;
+
+    const xAt = (idx) =>
+      plotMinX + (idx / (count - 1)) * (plotMaxX - plotMinX);
+    const yFromRange = (value, min, max) =>
+      plotMaxY -
+      ((value - min) / Math.max(1e-9, max - min)) * (plotMaxY - plotMinY);
+    const buildPath = (values, min, max) =>
+      values
+        .map((value, idx) => {
+          const x = xAt(idx).toFixed(2);
+          const y = yFromRange(value, min, max).toFixed(2);
+          return `${idx === 0 ? "M" : "L"} ${x} ${y}`;
+        })
+        .join(" ");
+
+    return {
+      width,
+      height,
+      tempPath: buildPath(tempValues, tempAxisMin, tempAxisMax),
+      pressurePath: buildPath(pressureValues, pressureAxisMin, pressureAxisMax),
+      tempMin: tempMinRaw,
+      tempMax: tempMaxRaw,
+      pressureMin: pressureMinRaw,
+      pressureMax: pressureMaxRaw,
+      lastX: xAt(count - 1),
+      tempLastY: yFromRange(tempValues[count - 1], tempAxisMin, tempAxisMax),
+      pressureLastY: yFromRange(
+        pressureValues[count - 1],
+        pressureAxisMin,
+        pressureAxisMax,
+      ),
+      pressureTopLabel: formatPressureTick(pressureMaxRaw),
+      pressureBottomLabel: formatPressureTick(pressureMinRaw),
+    };
+  }, [liveThermoHistory]);
+  const presentElementRows = useMemo(
+    () =>
+      ELEMENTS.map((el) => ({
+        el,
+        count: Math.max(0, Math.floor(Number(liveElementCounts?.[el]) || 0)),
+      })).filter((row) => row.count > 0),
+    [liveElementCounts],
+  );
+  const liveElementTotal = useMemo(
+    () =>
+      ELEMENTS.reduce(
+        (sum, el) => sum + Math.max(0, Math.floor(Number(liveElementCounts?.[el]) || 0)),
+        0,
+      ),
+    [liveElementCounts],
+  );
   const molecularWeightById = useMemo(() => {
     const map = new Map();
     for (const entry of MOLECULE_CATALOG) {
@@ -1167,6 +1337,27 @@ export default function ReactorPage() {
         pointerEvents: "auto",
         zIndex: 420,
       },
+      atomCountsShow: {
+        position: "absolute",
+        left: 10,
+        top: "50%",
+        transform: "translateY(-50%)",
+        display: "grid",
+        justifyItems: "start",
+        pointerEvents: "none",
+        zIndex: 419,
+      },
+      thermoShow: {
+        position: "absolute",
+        right: 10,
+        top: "50%",
+        transform: "translateY(-50%)",
+        display: "grid",
+        justifyItems: "end",
+        gap: 6,
+        pointerEvents: "none",
+        zIndex: 419,
+      },
       liveHud: {
         position: "absolute",
         left: 10,
@@ -1370,6 +1561,87 @@ export default function ReactorPage() {
     return spr;
   }
 
+  function ensureRepeatSprite(idx, atomEl) {
+    const t = threeRef.current;
+    while (t.repeatAtomSprites.length <= idx) {
+      const mat = new THREE.SpriteMaterial({
+        transparent: true,
+        opacity: 0.44,
+        depthWrite: false,
+        depthTest: true,
+      });
+      const spr = new THREE.Sprite(mat);
+      spr.userData.isRepeat = true;
+      spr.renderOrder = 0;
+      t.repeatAtomGroup.add(spr);
+      t.repeatAtomSprites.push(spr);
+    }
+    const spr = t.repeatAtomSprites[idx];
+    if (spr.userData.atomEl !== atomEl) {
+      const baseMat = getSpriteMaterial(atomEl);
+      spr.material.map = baseMat.map;
+      spr.material.color.set("#ffffff");
+      spr.material.needsUpdate = true;
+      spr.userData.atomEl = atomEl;
+    }
+    return spr;
+  }
+
+  function syncPeriodicRepeatSprites() {
+    const t = threeRef.current;
+    const sim = simRef.current;
+    const params = paramsRef.current;
+    const usePeriodic = Boolean(params?.usePeriodicBoundary);
+    const showRepeats = showPeriodicRepeatsRef.current;
+    if (!t.repeatAtomGroup) return;
+
+    if (!showRepeats || !usePeriodic) {
+      t.repeatAtomGroup.visible = false;
+      for (const spr of t.repeatAtomSprites) spr.visible = false;
+      return;
+    }
+
+    t.repeatAtomGroup.visible = true;
+    const halfBox = params?.boxHalfSize ?? boxHalfSize;
+    const boxSize = halfBox * 2;
+    const margin = Math.min(PERIODIC_REPEAT_MARGIN, halfBox);
+    let idx = 0;
+
+    for (const atom of sim.atoms) {
+      const xShifts = [0];
+      const yShifts = [0];
+      const zShifts = [0];
+      if (atom.x > halfBox - margin) xShifts.push(-1);
+      if (atom.x < -halfBox + margin) xShifts.push(1);
+      if (atom.y > halfBox - margin) yShifts.push(-1);
+      if (atom.y < -halfBox + margin) yShifts.push(1);
+      if (atom.z > halfBox - margin) zShifts.push(-1);
+      if (atom.z < -halfBox + margin) zShifts.push(1);
+
+      for (const sx of xShifts) {
+        for (const sy of yShifts) {
+          for (const sz of zShifts) {
+            if (sx === 0 && sy === 0 && sz === 0) continue;
+            const spr = ensureRepeatSprite(idx, atom.el);
+            const x = atom.x + sx * boxSize;
+            const y = atom.y + sy * boxSize;
+            const z = atom.z + sz * boxSize;
+            const depth = 1 + z * 0.02;
+            const s = atom.r * 2.0 * Math.max(0.6, depth);
+            spr.position.set(x, y, z);
+            spr.scale.set(s, s, 1);
+            spr.visible = true;
+            idx += 1;
+          }
+        }
+      }
+    }
+
+    for (; idx < t.repeatAtomSprites.length; idx += 1) {
+      t.repeatAtomSprites[idx].visible = false;
+    }
+  }
+
   function removeMissingSprites() {
     const sim = simRef.current;
     const map = atomSpritesRef.current;
@@ -1553,7 +1825,7 @@ export default function ReactorPage() {
         (Math.abs(b.x - a.x - dx) > 1e-5 ||
           Math.abs(b.y - a.y - dy) > 1e-5 ||
           Math.abs(b.z - a.z - dz) > 1e-5);
-      if (crossesBoundary) {
+      if (crossesBoundary && !showPeriodicRepeatsRef.current) {
         for (let k = 0; k < 3; k++) t.bondMeshes[baseIdx + k].visible = false;
         continue;
       }
@@ -1626,6 +1898,97 @@ export default function ReactorPage() {
     (sim) => {
       if (resetInProgressRef.current) return;
       const nowMs = Date.now();
+
+      const atomCount = sim.atoms.length;
+      let totalMass = 0;
+      let px = 0;
+      let py = 0;
+      let pz = 0;
+      for (const atom of sim.atoms) {
+        const mass = Math.max(0.1, Number(atom.mass) || 0.1);
+        totalMass += mass;
+        px += mass * atom.vx;
+        py += mass * atom.vy;
+        pz += mass * atom.vz;
+      }
+      const vxCom = totalMass > 0 ? px / totalMass : 0;
+      const vyCom = totalMass > 0 ? py / totalMass : 0;
+      const vzCom = totalMass > 0 ? pz / totalMass : 0;
+      let xCom = 0;
+      let yCom = 0;
+      let zCom = 0;
+      if (totalMass > 0) {
+        for (const atom of sim.atoms) {
+          const mass = Math.max(0.1, Number(atom.mass) || 0.1);
+          xCom += mass * atom.x;
+          yCom += mass * atom.y;
+          zCom += mass * atom.z;
+        }
+        xCom /= totalMass;
+        yCom /= totalMass;
+        zCom /= totalMass;
+      }
+      let thermalKinetic = 0;
+      for (const atom of sim.atoms) {
+        const mass = Math.max(0.1, Number(atom.mass) || 0.1);
+        const dvx = atom.vx - vxCom;
+        const dvy = atom.vy - vyCom;
+        const dvz = atom.vz - vzCom;
+        thermalKinetic += 0.5 * mass * (dvx * dvx + dvy * dvy + dvz * dvz);
+      }
+      const dof = Math.max(1, 3 * atomCount - (atomCount > 1 ? 3 : 0));
+      const temperatureReduced =
+        atomCount > 0 ? (2 * thermalKinetic) / dof : 0;
+      const kBoltzmannReducedRaw = Number(
+        paramsRef.current?.kBoltzmannReduced ?? 1 / 300,
+      );
+      const kBoltzmannReduced = Number.isFinite(kBoltzmannReducedRaw)
+        ? Math.max(1e-6, kBoltzmannReducedRaw)
+        : 1 / 300;
+      const temperatureK = temperatureReduced / kBoltzmannReduced;
+      const boxHalfSizeNow = Math.max(
+        0.5,
+        Number(controlValuesRef.current?.boxHalfSize ?? DEFAULT_BOX_HALF_SIZE),
+      );
+      const boxLength = boxHalfSizeNow * 2;
+      const volume = Math.max(1e-6, boxLength * boxLength * boxLength);
+      let virialSum = 0;
+      for (const atom of sim.atoms) {
+        const rx = atom.x - xCom;
+        const ry = atom.y - yCom;
+        const rz = atom.z - zCom;
+        virialSum +=
+          rx * (Number(atom.fx) || 0) +
+          ry * (Number(atom.fy) || 0) +
+          rz * (Number(atom.fz) || 0);
+      }
+      const pressureReducedRaw =
+        atomCount > 0 ? (2 * thermalKinetic + virialSum) / (3 * volume) : 0;
+      const pressureReduced = Number.isFinite(pressureReducedRaw)
+        ? pressureReducedRaw
+        : 0;
+      const thermoKey = `${atomCount}|${temperatureK.toFixed(1)}|${pressureReduced.toFixed(4)}`;
+      if (thermoKey !== liveThermoKeyRef.current) {
+        liveThermoKeyRef.current = thermoKey;
+        setLiveThermoEstimate({
+          atomCount,
+          temperatureK,
+          pressureReduced,
+        });
+      }
+
+      const elementCountsNext = { ...EMPTY_ELEMENT_COUNTS };
+      for (const atom of sim.atoms) {
+        if (Object.hasOwn(elementCountsNext, atom.el)) {
+          elementCountsNext[atom.el] += 1;
+        }
+      }
+      const elementCountsKey = ELEMENTS.map((el) => elementCountsNext[el]).join("|");
+      if (elementCountsKey !== liveElementCountsKeyRef.current) {
+        liveElementCountsKeyRef.current = elementCountsKey;
+        setLiveElementCounts(elementCountsNext);
+      }
+
       const components = analyzeMoleculeComponents(sim.atoms, sim.bonds)
         .filter((m) => m.atomCount >= 2)
         .sort((a, b) => {
@@ -1807,6 +2170,17 @@ export default function ReactorPage() {
     [catalogByFingerprint, catalogById],
   );
 
+  const queueCollectionScan = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (queuedScanPendingRef.current) return;
+    queuedScanPendingRef.current = true;
+    queuedScanTimerRef.current = window.setTimeout(() => {
+      queuedScanPendingRef.current = false;
+      queuedScanTimerRef.current = null;
+      scanCollectionProgress(simRef.current);
+    }, 0);
+  }, [scanCollectionProgress]);
+
   // ---------- init ----------
   useEffect(() => {
     const mount = mountRef.current;
@@ -1829,6 +2203,9 @@ export default function ReactorPage() {
 
     const atomGroup = new THREE.Group();
     scene.add(atomGroup);
+
+    const repeatAtomGroup = new THREE.Group();
+    scene.add(repeatAtomGroup);
 
     const bondGroup = new THREE.Group();
     scene.add(bondGroup);
@@ -1853,6 +2230,8 @@ export default function ReactorPage() {
     three.controls = controls;
     three.raycaster = raycaster;
     three.atomGroup = atomGroup;
+    three.repeatAtomGroup = repeatAtomGroup;
+    three.repeatAtomSprites = [];
     three.bondGroup = bondGroup;
     three.bondMeshes = [];
     refreshBoxVisuals();
@@ -1924,7 +2303,7 @@ export default function ReactorPage() {
           scanStepAccumulator += steps;
           if (scanStepAccumulator >= COLLECTION_SCAN_INTERVAL_STEPS) {
             scanStepAccumulator = 0;
-            scanCollectionProgress(simRef.current);
+            queueCollectionScan();
           }
         }
       } else {
@@ -1943,6 +2322,7 @@ export default function ReactorPage() {
       }
       removeMissingSprites();
       syncLiveAtomGlow(now);
+      syncPeriodicRepeatSprites();
 
       syncBondCylinders();
       renderer.render(scene, camera);
@@ -1952,6 +2332,11 @@ export default function ReactorPage() {
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (queuedScanTimerRef.current) {
+        clearTimeout(queuedScanTimerRef.current);
+        queuedScanTimerRef.current = null;
+      }
+      queuedScanPendingRef.current = false;
       ro.disconnect();
       mount.removeChild(renderer.domElement);
 
@@ -1963,6 +2348,11 @@ export default function ReactorPage() {
         mat.dispose?.();
       }
       three.spriteMaterials.clear();
+      for (const spr of three.repeatAtomSprites) {
+        three.repeatAtomGroup?.remove(spr);
+        spr.material?.dispose?.();
+      }
+      three.repeatAtomSprites = [];
 
       for (const mesh of three.bondMeshes) {
         mesh.geometry?.dispose?.();
@@ -2268,7 +2658,6 @@ export default function ReactorPage() {
     const mix = (a, b, t) => a + (b - a) * t;
     if (preset === "trap-cycle") {
       const cycleMs = 32000;
-      const trapCycleIndex = autoRun ? Math.floor(elapsedMs / cycleMs) + 1 : 1;
       const phase = autoRun
         ? (elapsedMs % cycleMs) / cycleMs
         : clamp(elapsedMs / cycleMs, 0, 1);
@@ -2286,9 +2675,7 @@ export default function ReactorPage() {
             t,
           ),
           boxHalfSize: mix(base.boxHalfSize, compressedBox, t),
-          status: autoRun
-            ? `Cycle ${trapCycleIndex}: compress + energize`
-            : "Compress + energize",
+          status: "Step 1: compress + energize",
           done: false,
         };
       }
@@ -2298,9 +2685,7 @@ export default function ReactorPage() {
           damping: 0.9995,
           bondScale: Math.max(2.1, base.bondScale - 0.5),
           boxHalfSize: compressedBox,
-          status: autoRun
-            ? `Cycle ${trapCycleIndex}: collision mixing`
-            : "Collision mixing",
+          status: "Step 2: collision mixing",
           done: false,
         };
       }
@@ -2321,9 +2706,7 @@ export default function ReactorPage() {
           t,
         ),
         boxHalfSize: steppedBox,
-        status: autoRun
-          ? `Cycle ${trapCycleIndex}: expand in 15% steps`
-          : "Trap cycle: expand in 15% steps",
+        status: "Step 3: expand in 15% steps",
         done: !autoRun && elapsedMs >= cycleMs,
       };
     }
@@ -2442,6 +2825,46 @@ export default function ReactorPage() {
   useEffect(() => {
     protocolIncludeDosingRef.current = protocolIncludeDosing;
   }, [protocolIncludeDosing]);
+
+  useEffect(() => {
+    liveThermoEstimateRef.current = liveThermoEstimate;
+  }, [liveThermoEstimate]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const sample = () => {
+      const nowMs = Date.now();
+      const current = liveThermoEstimateRef.current;
+      const hasAtoms = Number(current?.atomCount || 0) > 0;
+      const sampledTemperature =
+        hasAtoms ? Math.max(0, Number(current?.temperatureK) || 0) : 0;
+      const sampledPressure =
+        hasAtoms ? Number(current?.pressureReduced) || 0 : 0;
+
+      setLiveThermoHistory((prev) => {
+        const next = Array.isArray(prev) ? prev.slice() : [];
+        next.push({
+          atMs: nowMs,
+          temperatureK: sampledTemperature,
+          pressureReduced: sampledPressure,
+        });
+        const cutoffMs = nowMs - THERMO_HISTORY_WINDOW_MS;
+        while (next.length > 0 && Number(next[0]?.atMs) < cutoffMs) {
+          next.shift();
+        }
+        const maxPoints = Math.ceil(THERMO_HISTORY_WINDOW_MS / THERMO_SAMPLE_MS) + 2;
+        if (next.length > maxPoints) {
+          next.splice(0, next.length - maxPoints);
+        }
+        return next;
+      });
+    };
+
+    sample();
+    const intervalId = window.setInterval(sample, THERMO_SAMPLE_MS);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (!protocolRunning) return undefined;
@@ -2633,6 +3056,7 @@ export default function ReactorPage() {
 
     setBoxHalfSize(DEFAULT_BOX_HALF_SIZE);
     setShowBoxEdges(true);
+    setShowPeriodicRepeats(false);
     setAdaptiveForceField(true);
 
     setShowBonds(true);
@@ -2716,6 +3140,40 @@ export default function ReactorPage() {
   const protocolStatusKey = String(protocolStatus || "").trim().toLowerCase();
   const protocolStatusIsActive =
     protocolStatusKey !== "idle" && protocolStatusKey !== "stopped";
+  const activeProtocolDurationMs = useMemo(
+    () => getProtocolDurationMs(protocolPreset),
+    [protocolPreset],
+  );
+  const protocolCycleIndex = useMemo(() => {
+    if (!protocolRunning || activeProtocolDurationMs <= 0) return 1;
+    if (!protocolAutoRun) return 1;
+    return Math.floor(protocolElapsedMs / activeProtocolDurationMs) + 1;
+  }, [
+    activeProtocolDurationMs,
+    protocolAutoRun,
+    protocolElapsedMs,
+    protocolRunning,
+  ]);
+  const protocolCountdownRowText = useMemo(() => {
+    if (!protocolRunning || activeProtocolDurationMs <= 0) return "";
+    const cycleElapsedMs = protocolAutoRun
+      ? protocolElapsedMs % activeProtocolDurationMs
+      : Math.min(protocolElapsedMs, activeProtocolDurationMs);
+    const remainingMs = Math.max(0, activeProtocolDurationMs - cycleElapsedMs);
+    const baseText = `${formatProtocolCountdown(remainingMs)} remaining`;
+    return protocolAutoRun ? `${baseText} in Cycle ${protocolCycleIndex}` : baseText;
+  }, [
+    activeProtocolDurationMs,
+    protocolCycleIndex,
+    protocolAutoRun,
+    protocolElapsedMs,
+    protocolRunning,
+  ]);
+  const protocolCountdownRowHasContent = protocolCountdownRowText.length > 0;
+  const protocolTrendRowText = protocolRunning
+    ? String(protocolTrendTags || "").trim()
+    : "";
+  const protocolTrendRowHasContent = protocolTrendRowText.length > 0;
   const activeProtocolDosingPanelText = useMemo(() => {
     if (!protocolIncludeDosing) {
       return "Dosing profile: disabled for automation cycles.";
@@ -2743,6 +3201,7 @@ export default function ReactorPage() {
           "Drag: rotate view",
           "Scroll / pinch: zoom",
           "Right-drag / two-finger drag: pan",
+          "Use periodic repeats to inspect edge-wrapped molecules.",
         ],
       };
     }
@@ -2860,7 +3319,7 @@ export default function ReactorPage() {
               <div className="reactor-text-11-title">Reactor controls</div>
 
               <MiniSlider
-                label="Temp (K)"
+                label="Temperature"
                 value={temperatureK}
                 min={0}
                 max={1800}
@@ -2900,11 +3359,9 @@ export default function ReactorPage() {
             <div style={ui.section}>
               <div style={ui.row}>
                 <button
-                  onClick={() =>
-                    setAutomationOpen((open) => (open ? false : open))
-                  }
+                  onClick={() => setAutomationOpen((open) => !open)}
                   style={ui.sectionTitleBtn}
-                  title="Click to close Reactor automation cycles."
+                  title="Show or hide Reactor automation cycle controls."
                 >
                   Reactor automation cycles
                 </button>
@@ -2952,7 +3409,33 @@ export default function ReactorPage() {
                         fontWeight: protocolStatusIsActive ? 800 : 700,
                       }}
                     >
-                      {`Status: ${protocolStatus}${protocolRunning ? ` (${(protocolElapsedMs / 1000).toFixed(1)}s)` : ""}${protocolRunning && protocolTrendTags ? ` ${protocolTrendTags}` : ""}`}
+                      {`Status: ${protocolStatus}`}
+                    </div>
+                    <div
+                      className="reactor-text-10-muted"
+                      style={{
+                        minHeight: 14,
+                        color: protocolCountdownRowHasContent
+                          ? "#334155"
+                          : "#94a3b8",
+                        fontWeight: 800,
+                        letterSpacing: 0.2,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {protocolCountdownRowHasContent ? protocolCountdownRowText : "\u00A0"}
+                    </div>
+                    <div
+                      className="reactor-text-10-muted"
+                      style={{
+                        minHeight: 14,
+                        color: protocolTrendRowHasContent ? "#334155" : "#94a3b8",
+                        fontWeight: 800,
+                        letterSpacing: 0.2,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {protocolTrendRowHasContent ? protocolTrendRowText : "\u00A0"}
                     </div>
                     <div className="reactor-text-10-muted">
                       {activeProtocolMeta?.description}
@@ -3041,9 +3524,9 @@ export default function ReactorPage() {
             <div style={ui.section}>
               <div style={ui.row}>
                 <button
-                  onClick={() => setWellsOpen((open) => (open ? false : open))}
+                  onClick={() => setWellsOpen((open) => !open)}
                   style={ui.sectionTitleBtn}
-                  title="Click to close Electronics controls."
+                  title="Show or hide electronics controls."
                 >
                   Electronics controls
                 </button>
@@ -3374,6 +3857,18 @@ export default function ReactorPage() {
                       type="checkbox"
                       checked={showBonds}
                       onChange={(e) => setShowBonds(e.target.checked)}
+                    />
+                  </label>
+                  <label style={ui.row}>
+                    <span className="reactor-text-12-strong">
+                      View Periodic Repeats
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showPeriodicRepeats}
+                      onChange={(e) =>
+                        setShowPeriodicRepeats(e.target.checked)
+                      }
                     />
                   </label>
                 </div>
@@ -3812,56 +4307,216 @@ export default function ReactorPage() {
           </div>
         ) : (
           <div style={ui.catalogueShow}>
-            <div
-              style={{
-                marginBottom: 6,
-                fontSize: 11,
-                color: REACTOR_OVERLAY_LIGHT_TEXT,
-                fontWeight: 800,
-                textAlign: "right",
-              }}
-            >
-              <span
+              <div
                 style={{
-                  display: "inline-block",
-                  fontSize: `${11 + 15 * catalogCountGlowFactor}px`,
-                  fontWeight: 950,
-                  lineHeight: 1,
-                  transform: `scale(${catalogCountGlowScale})`,
-                  transformOrigin: "right center",
-                  color:
-                    catalogCountGlowFactor > 0
-                      ? `hsl(${45 - 8 * catalogCountGlowFactor} 96% ${78 - 28 * catalogCountGlowFactor}%)`
-                      : REACTOR_OVERLAY_LIGHT_TEXT,
-                  textShadow:
-                    catalogCountGlowFactor > 0
-                      ? `0 0 ${6 + 16 * catalogCountGlowFactor}px rgba(245,158,11,${0.22 + 0.48 * catalogCountGlowFactor})`
-                      : "none",
-                  transition:
-                    "font-size 66ms linear, transform 66ms linear, color 66ms linear, text-shadow 66ms linear",
-                  verticalAlign: "middle",
+                  marginBottom: 6,
+                  fontSize: 11,
+                  color: REACTOR_OVERLAY_LIGHT_TEXT,
+                  fontWeight: 800,
+                  textAlign: "right",
                 }}
               >
-                {collectedIds.length}
-              </span>
-              <span>{`/${MOLECULE_CATALOG.length} catalogued (${collectionCompletionPct}%)`}</span>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: `${11 + 15 * catalogCountGlowFactor}px`,
+                    fontWeight: 950,
+                    lineHeight: 1,
+                    transform: `scale(${catalogCountGlowScale})`,
+                    transformOrigin: "right center",
+                    color:
+                      catalogCountGlowFactor > 0
+                        ? `hsl(${45 - 8 * catalogCountGlowFactor} 96% ${78 - 28 * catalogCountGlowFactor}%)`
+                        : REACTOR_OVERLAY_LIGHT_TEXT,
+                    textShadow:
+                      catalogCountGlowFactor > 0
+                        ? `0 0 ${6 + 16 * catalogCountGlowFactor}px rgba(245,158,11,${0.22 + 0.48 * catalogCountGlowFactor})`
+                        : "none",
+                    transition:
+                      "font-size 66ms linear, transform 66ms linear, color 66ms linear, text-shadow 66ms linear",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  {collectedIds.length}
+                </span>
+                <span>{`/${MOLECULE_CATALOG.length} catalogued (${collectionCompletionPct}%)`}</span>
+              </div>
+              <div
+                style={{
+                  marginBottom: 8,
+                  fontSize: 11,
+                  color: REACTOR_OVERLAY_LIGHT_TEXT,
+                  fontWeight: 800,
+                  textAlign: "right",
+                }}
+              >
+                {`last catalogued: ${lastCataloguedLabel}`}
+              </div>
+              <button onClick={() => setCatalogueOpen(true)} style={ui.btnLight}>
+                Show catalogue
+              </button>
             </div>
-            <div
+        )}
+
+        <div style={ui.thermoShow}>
+          <div
+            style={{
+              marginBottom: 0,
+              fontSize: 11,
+              color: REACTOR_OVERLAY_LIGHT_TEXT,
+              fontWeight: 800,
+              textAlign: "right",
+              lineHeight: 1.35,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            <div>
+              {`${liveThermoTemperatureLabel} `}
+              <span style={{ color: REACTOR_PLOT_TEMP_COLOR }}>T</span>
+            </div>
+            <div>
+              {`${liveThermoPressureLabel} `}
+              <span style={{ color: REACTOR_PLOT_PRESSURE_COLOR }}>P</span>
+            </div>
+          </div>
+          <svg
+            viewBox={`0 0 ${thermoPlot.width} ${thermoPlot.height}`}
+            preserveAspectRatio="none"
+            style={{
+              width: 168,
+              height: 54,
+              borderRadius: 8,
+              border: "1px solid rgba(226,232,240,0.26)",
+              background: "rgba(15,23,42,0.25)",
+            }}
+          >
+            <line
+              x1="0"
+              x2={thermoPlot.width}
+              y1="0"
+              y2="0"
+              stroke="rgba(226,232,240,0.14)"
+              strokeWidth="1"
+            />
+            <line
+              x1="0"
+              x2={thermoPlot.width}
+              y1={thermoPlot.height}
+              y2={thermoPlot.height}
+              stroke="rgba(226,232,240,0.22)"
+              strokeWidth="1"
+            />
+            <line
+              x1="0"
+              x2="0"
+              y1="0"
+              y2={thermoPlot.height}
+              stroke={REACTOR_PLOT_TEMP_COLOR}
+              strokeWidth="1"
+            />
+            <line
+              x1={thermoPlot.width}
+              x2={thermoPlot.width}
+              y1="0"
+              y2={thermoPlot.height}
+              stroke={REACTOR_PLOT_PRESSURE_COLOR}
+              strokeWidth="1"
+            />
+            <text
+              x="2"
+              y="8"
+              style={{ fill: REACTOR_PLOT_TEMP_COLOR, fontSize: 7, fontWeight: 800 }}
+            >
+              {Math.round(Math.max(0, Number(thermoPlot.tempMax) || 0))}
+            </text>
+            <text
+              x="2"
+              y={thermoPlot.height - 2}
+              style={{ fill: REACTOR_PLOT_TEMP_COLOR, fontSize: 7, fontWeight: 800 }}
+            >
+              {Math.round(Math.max(0, Number(thermoPlot.tempMin) || 0))}
+            </text>
+            <text
+              x={thermoPlot.width - 2}
+              y="8"
+              textAnchor="end"
               style={{
-                marginBottom: 8,
-                fontSize: 11,
-                color: REACTOR_OVERLAY_LIGHT_TEXT,
+                fill: REACTOR_PLOT_PRESSURE_COLOR,
+                fontSize: 7,
                 fontWeight: 800,
-                textAlign: "right",
               }}
             >
-              {`last catalogued: ${lastCataloguedLabel}`}
-            </div>
-            <button onClick={() => setCatalogueOpen(true)} style={ui.btnLight}>
-              Show catalogue
-            </button>
+              {thermoPlot.pressureTopLabel}
+            </text>
+            <text
+              x={thermoPlot.width - 2}
+              y={thermoPlot.height - 2}
+              textAnchor="end"
+              style={{
+                fill: REACTOR_PLOT_PRESSURE_COLOR,
+                fontSize: 7,
+                fontWeight: 800,
+              }}
+            >
+              {thermoPlot.pressureBottomLabel}
+            </text>
+            {thermoPlot.tempPath ? (
+              <path
+                d={thermoPlot.tempPath}
+                fill="none"
+                stroke={REACTOR_PLOT_TEMP_COLOR}
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ) : null}
+            {Number.isFinite(thermoPlot.tempLastY) ? (
+              <circle
+                cx={thermoPlot.lastX}
+                cy={thermoPlot.tempLastY}
+                r="1.9"
+                fill={REACTOR_PLOT_TEMP_COLOR}
+              />
+            ) : null}
+            {thermoPlot.pressurePath ? (
+              <path
+                d={thermoPlot.pressurePath}
+                fill="none"
+                stroke={REACTOR_PLOT_PRESSURE_COLOR}
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ) : null}
+            {Number.isFinite(thermoPlot.pressureLastY) ? (
+              <circle
+                cx={thermoPlot.lastX}
+                cy={thermoPlot.pressureLastY}
+                r="1.9"
+                fill={REACTOR_PLOT_PRESSURE_COLOR}
+              />
+            ) : null}
+          </svg>
+        </div>
+        <div style={ui.atomCountsShow}>
+          <div
+            style={{
+              marginBottom: 8,
+              fontSize: 11,
+              color: REACTOR_OVERLAY_LIGHT_TEXT,
+              fontWeight: 800,
+              textAlign: "left",
+              lineHeight: 1.35,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {presentElementRows.map((row) => (
+              <div key={`present-el-${row.el}`}>{`${row.count} ${row.el}`}</div>
+            ))}
+            <div>--</div>
+            <div style={{ fontWeight: 900 }}>{liveElementTotal}</div>
           </div>
-        )}
+        </div>
 
         <div id="live-molecules-overlay" style={ui.liveHud}>
           <div style={ui.liveHudControls}>
@@ -4096,6 +4751,7 @@ function MiniSlider({ label, value, min, max, step, onChange, tooltip = "" }) {
         </span>
       </div>
       <input
+        className="reactor-slider"
         type="range"
         value={value}
         min={min}
