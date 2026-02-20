@@ -68,21 +68,22 @@ export default function ResumePage() {
         right: "Jul 2021 – Jun 2025 · Remote",
         bullets: [
           "Led backend quality strategy across five product teams and mentored eight engineers",
-          "Designed RBAC validation framework covering authentication and authorization systems",
+          "Designed RBAC validation framework for authentication and authorization systems",
           "Validated OpenAPI documentation and integrations (SSO, OAuth2, Workato)",
-          "Executed MongoDB performance benchmarking during schema migrations",
+          "Benchmarked MongoDB performance during schema migrations",
           "Used Datadog telemetry to diagnose distributed backend failures",
           "Architected testing strategy for new GenAI product",
         ],
       },
       {
         company: "Research & Computational Systems",
-        title: "ORNL · UTK · Virginia Tech",
+        title:
+          "Oak Ridge National Laboratory · The University of Tennessee, Knoxville · Virginia Tech",
         right: "2012 – 2021",
         bullets: [
-          "Executed large-scale simulations on national supercomputing infrastructure",
-          "Built scripting pipelines to automate computational workflows",
-          "Published peer-reviewed research in complex systems modeling",
+          "Built and ran multi-scale atomistic/molecular models on national supercomputing infrastructure",
+          "Automated simulation pipelines to turn raw outputs into reproducible analyses",
+          "Published peer-reviewed work translating theory into experimentally actionable insight",
         ],
       },
     ],
@@ -265,7 +266,7 @@ export default function ResumePage() {
         .resumePaper a:hover,
         .resumePaper a:focus-visible {
           color: #8fe8ff; /* icy blue */
-          text-decoration: underline; /* optional: remove if you want zero underline always */
+          text-decoration: underline;
           text-decoration-thickness: 1px;
           text-underline-offset: 2px;
         }
