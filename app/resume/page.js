@@ -346,13 +346,13 @@ export default function ResumePage() {
 
         <Section title="Professional Summary">
           <p className="resumeP">
-            JavaScript full-stack software engineer with deep expertise in
-            automation architecture, API validation, CI/CD systems, and
-            distributed platform quality. Experienced partnering with
-            engineering teams to design resilient systems, de-risk architectural
-            changes, and ship reliable SaaS products. Integrates AI-assisted
-            development tools into daily workflows to accelerate feature
-            delivery while maintaining engineering rigor and system integrity.
+            Software Developer with expertise in automation architecture, API
+            design and validation, CI/CD systems, and distributed platform
+            quality. Experienced collaborating across engineering teams to
+            design resilient systems, de-risk architectural changes, and ship
+            reliable SaaS products. Integrates AI-assisted development tools
+            into daily workflows to accelerate delivery while maintaining strong
+            engineering judgment and system integrity.
           </p>
         </Section>
 
