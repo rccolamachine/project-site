@@ -4,12 +4,6 @@ import React, { useEffect, useMemo, useRef } from "react";
 
 const SECTION_GAP = 16;
 
-/**
- * ResumePage
- * - Single-file, self-contained resume renderer + print-to-PDF workflow.
- * - Data-driven: edit arrays below (LINKS / EXPERIENCE / PROJECTS) instead of JSX.
- * - Style preserved: matches your existing “resume paper” look + print-only mode.
- */
 export default function ResumePage() {
   const paperRef = useRef(null);
 
@@ -57,9 +51,9 @@ export default function ResumePage() {
         title: "Senior Test Automation Engineer",
         right: "Jun 2025 – Sep 2025 · Remote",
         bullets: [
-          "Developed Playwright automation for GraphQL and REST workflows",
-          "Improved CI-driven release stability through API validation",
-          "Contributed to reusable automation abstractions and code reviews",
+          "Developed Playwright (TypeScript) automation for complex GraphQL and REST workflows",
+          "Improved CI-driven release stability through deterministic API validation and end-to-end test design",
+          "Leveraged AI-assisted development tools to accelerate locator strategy, test generation, and debugging",
         ],
       },
       {
@@ -68,11 +62,11 @@ export default function ResumePage() {
         right: "Jul 2021 – Jun 2025 · Remote",
         bullets: [
           "Led backend quality strategy across five product teams and mentored eight engineers",
-          "Designed RBAC validation framework for authentication and authorization systems",
-          "Validated OpenAPI documentation and integrations (SSO, OAuth2, Workato)",
-          "Benchmarked MongoDB performance during schema migrations",
-          "Used Datadog telemetry to diagnose distributed backend failures",
-          "Architected testing strategy for new GenAI product",
+          "Designed RBAC validation framework for authentication, authorization, and role expansion",
+          "Validated OpenAPI contracts and integrations (SSO, OAuth2, Workato)",
+          "Benchmarked MongoDB performance during schema migrations and data restructuring",
+          "Diagnosed distributed backend failures using Datadog logs and telemetry",
+          "Architected validation strategy for new GenAI product prior to release",
         ],
       },
       {
@@ -81,9 +75,9 @@ export default function ResumePage() {
         title: "Computational Chemist & Postdoctoral Research Associate",
         right: "2012 – 2021",
         bullets: [
-          "Built and executed multi-scale atomistic/molecular models on national supercomputing infrastructure",
-          "Automated simulation pipelines to convert raw outputs into reproducible analyses",
-          "Published peer-reviewed research translating theory into experimentally actionable insight",
+          "Designed and executed multi-scale atomistic and molecular simulation models on national supercomputing infrastructure",
+          "Automated high-throughput computational pipelines for reproducible data transformation and analysis",
+          "Published peer-reviewed research translating theoretical models into experimentally actionable insight",
         ],
       },
       {
@@ -106,9 +100,9 @@ export default function ResumePage() {
         href: "https://rccolamachine.com/photobooth",
         printText: "rccolamachine.com/photobooth",
         bullets: [
-          "Built full-stack camera application with client-side image processing",
-          "Designed API routes for persistence, validation, and structured contracts",
-          "Balanced UX responsiveness with server-side storage trade-offs",
+          "Built full-stack camera application with client-side image processing and server-side persistence",
+          "Designed RESTful API routes with validation safeguards and structured response contracts",
+          "Balanced client-side responsiveness with backend storage and performance trade-offs",
         ],
       },
       {
@@ -118,7 +112,7 @@ export default function ResumePage() {
         printText: "rccolamachine.com/reactor",
         bullets: [
           "Implemented browser-based reactive system modeling interacting entities",
-          "Evaluated algorithmic trade-offs between realism and performance",
+          "Evaluated algorithmic trade-offs between physical realism and real-time performance",
         ],
       },
     ],
@@ -236,7 +230,6 @@ export default function ResumePage() {
           font-weight: 600;
           font-size: 12.5px;
           opacity: 0.92;
-          margin-top: 1px;
         }
 
         .roleRight {
@@ -251,10 +244,6 @@ export default function ResumePage() {
           padding-left: 18px;
           font-size: 12.5px;
           line-height: 1.5;
-        }
-
-        .roleBullets li {
-          margin: 0 0 4px;
         }
 
         .resumePaper a {
@@ -298,11 +287,9 @@ export default function ResumePage() {
           .noPrint {
             display: none !important;
           }
-
           .role {
             break-inside: avoid-page;
           }
-
           a[href]::after {
             content: "" !important;
           }
@@ -321,13 +308,13 @@ export default function ResumePage() {
         </button>
       </header>
 
-      <article className="resumePaper" ref={paperRef} aria-label="Resume">
+      <article className="resumePaper" ref={paperRef}>
         <header className="resumeHeader">
           <div>
             <div className="resumeName">Rob Chapleski Jr., Ph.D.</div>
             <div className="resumeTitle">
-              Senior Software Engineer · Quality Architecture · Full-Stack
-              Systems
+              Senior Software Engineer · JavaScript Full-Stack · Quality &
+              Automation
             </div>
           </div>
 
@@ -359,25 +346,26 @@ export default function ResumePage() {
 
         <Section title="Professional Summary">
           <p className="resumeP">
-            Senior Software Engineer specializing in automation architecture,
-            API validation, CI/CD integration, and full-stack JavaScript
-            systems. Partnered with engineering leadership to improve release
-            reliability, design resilient access control models, and strengthen
-            platform quality across distributed SaaS environments. Combines
-            strong technical depth with systems thinking and pragmatic delivery.
+            JavaScript full-stack software engineer with deep expertise in
+            automation architecture, API validation, CI/CD systems, and
+            distributed platform quality. Experienced partnering with
+            engineering teams to design resilient systems, de-risk architectural
+            changes, and ship reliable SaaS products. Integrates AI-assisted
+            development tools into daily workflows to accelerate feature
+            delivery while maintaining engineering rigor and system integrity.
           </p>
         </Section>
 
         <Section title="Core Competencies">
           <ul className="competencies">
-            <li>Automation framework design</li>
-            <li>Full-stack JavaScript systems</li>
-            <li>API validation (REST, GraphQL)</li>
-            <li>RBAC & access control modeling</li>
-            <li>CI/CD integration</li>
+            <li>Full-stack JavaScript (React, Node.js)</li>
+            <li>Automation framework architecture</li>
+            <li>API validation (REST, GraphQL, OpenAPI)</li>
+            <li>RBAC & access control systems</li>
+            <li>CI/CD integration & release gating</li>
             <li>Performance & load testing</li>
             <li>Distributed system debugging</li>
-            <li>Technical mentorship & leadership</li>
+            <li>AI-assisted engineering workflows</li>
           </ul>
         </Section>
 
@@ -403,14 +391,13 @@ export default function ResumePage() {
                 <>
                   <span className="screenOnly">
                     <a href={p.href} target="_blank" rel="noreferrer noopener">
-                      {toPrettyHostPath(p.href)}
+                      {p.printText}
                     </a>
                   </span>
                   <span className="printOnly">{p.printText}</span>
                 </>
               }
               bullets={p.bullets}
-              compactTop
             />
           ))}
         </Section>
@@ -419,7 +406,7 @@ export default function ResumePage() {
           <p className="resumeP">
             JavaScript · TypeScript · Node.js · React · GraphQL · REST · MongoDB
             · Playwright · Selenium · CodeceptJS · Postman · K6 · GitLab CI ·
-            Datadog · Jira · AI-assisted development tools
+            Datadog · Jira · AI-assisted development tools (ChatGPT, Codex)
           </p>
         </Section>
 
@@ -438,7 +425,6 @@ export default function ResumePage() {
   );
 }
 
-/** Small presentational wrappers for consistency */
 function Section({ title, children }) {
   return (
     <section style={{ marginTop: SECTION_GAP }}>
@@ -448,9 +434,9 @@ function Section({ title, children }) {
   );
 }
 
-function Role({ company, title, right, bullets, compactTop = false }) {
+function Role({ company, title, right, bullets }) {
   return (
-    <div className="role" style={compactTop ? { marginTop: 8 } : undefined}>
+    <div className="role">
       <div className="roleTop">
         <div>
           <div className="roleCompany">{company}</div>
@@ -458,24 +444,11 @@ function Role({ company, title, right, bullets, compactTop = false }) {
         </div>
         <div className="roleRight">{right}</div>
       </div>
-      {bullets?.length && (
-        <ul className="roleBullets">
-          {bullets.map((b, i) => (
-            <li key={`${company}-${i}`}>{b}</li>
-          ))}
-        </ul>
-      )}
+      <ul className="roleBullets">
+        {bullets.map((b, i) => (
+          <li key={`${company}-${i}`}>{b}</li>
+        ))}
+      </ul>
     </div>
   );
-}
-
-function toPrettyHostPath(url) {
-  try {
-    const u = new URL(url);
-    const host = u.host.replace(/^www\./, "");
-    const path = (u.pathname || "/").replace(/\/$/, "");
-    return `${host}${path}`;
-  } catch {
-    return url;
-  }
 }
