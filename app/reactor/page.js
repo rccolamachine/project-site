@@ -4325,7 +4325,9 @@ export default function ReactorPage() {
                 }}
               >
                 <button onClick={onTutorialGetStarted} style={ui.btnDark}>
-                  Get Started: [O:4 H:8]
+                  Get Started:
+                  <br />
+                  Spawn 4 oxygens and 8 hydrogens
                 </button>
               </div>
             ) : null}
