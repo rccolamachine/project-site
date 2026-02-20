@@ -202,7 +202,8 @@ export default function AboutPage() {
               <span>
                 {" "}
                 When you find something difficult, there’s usually a lesson
-                embedded within. Overcoming will make you grow stronger.
+                embedded within. Overcoming will make you grow stronger. Solve
+                harder problems to grow more.
               </span>
             </li>
             <li>
