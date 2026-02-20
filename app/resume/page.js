@@ -76,14 +76,22 @@ export default function ResumePage() {
         ],
       },
       {
-        company: "Research & Computational Systems",
-        title:
+        company:
           "Oak Ridge National Laboratory · The University of Tennessee, Knoxville · Virginia Tech",
+        title: "Computational Chemist & Postdoctoral Research Associate",
         right: "2012 – 2021",
         bullets: [
-          "Built and ran multi-scale atomistic/molecular models on national supercomputing infrastructure",
-          "Automated simulation pipelines to turn raw outputs into reproducible analyses",
-          "Published peer-reviewed work translating theory into experimentally actionable insight",
+          "Built and executed multi-scale atomistic/molecular models on national supercomputing infrastructure",
+          "Automated simulation pipelines to convert raw outputs into reproducible analyses",
+          "Published peer-reviewed research translating theory into experimentally actionable insight",
+        ],
+      },
+      {
+        company: "Carroll County Public Schools",
+        title: "High School Teacher: Physics & Chemistry",
+        right: "2007 – 2012 · Westminster, MD",
+        bullets: [
+          "Taught high school physics and chemistry, designing rigorous curriculum and communicating complex technical concepts clearly",
         ],
       },
     ],
@@ -119,9 +127,7 @@ export default function ResumePage() {
 
   return (
     <section className="page resumePage">
-      {/* Local, page-only styles (includes print rules) */}
       <style jsx global>{`
-        /* ---------- Screen layout helpers ---------- */
         .resumeTopBar {
           display: flex;
           justify-content: space-between;
@@ -131,13 +137,13 @@ export default function ResumePage() {
           flex-wrap: wrap;
         }
 
-        /* Explicit screen/print toggles */
         .screenOnly {
           display: inline;
         }
         .printOnly {
           display: none;
         }
+
         @media print {
           .screenOnly {
             display: none !important;
@@ -147,7 +153,6 @@ export default function ResumePage() {
           }
         }
 
-        /* ---------- Resume paper styles (screen) ---------- */
         .resumePaper {
           background: #fff;
           color: #000;
@@ -168,9 +173,9 @@ export default function ResumePage() {
         .resumeName {
           font-size: 22px;
           font-weight: 800;
-          letter-spacing: 0.2px;
           margin-bottom: 2px;
         }
+
         .resumeTitle {
           font-size: 13px;
           font-weight: 600;
@@ -192,7 +197,6 @@ export default function ResumePage() {
         .resumeH2 {
           margin: 0 0 8px;
           font-size: 13px;
-          letter-spacing: 0.2px;
           text-transform: uppercase;
           font-weight: 800;
         }
@@ -211,31 +215,30 @@ export default function ResumePage() {
           font-size: 12.5px;
           line-height: 1.5;
         }
-        .competencies li {
-          break-inside: avoid;
-          margin: 0 0 4px;
-        }
 
-        /* ---------- Role block ---------- */
         .role {
           margin-top: 14px;
         }
+
         .roleTop {
           display: flex;
           justify-content: space-between;
           gap: 12px;
           align-items: baseline;
         }
+
         .roleCompany {
           font-weight: 800;
           font-size: 13px;
         }
+
         .roleTitle {
           font-weight: 600;
           font-size: 12.5px;
           opacity: 0.92;
           margin-top: 1px;
         }
+
         .roleRight {
           text-align: right;
           font-size: 12px;
@@ -249,33 +252,23 @@ export default function ResumePage() {
           font-size: 12.5px;
           line-height: 1.5;
         }
+
         .roleBullets li {
           margin: 0 0 4px;
         }
 
-        /* Links: clean by default, icy-blue on hover/focus (no highlight) */
         .resumePaper a {
           color: inherit;
           text-decoration: none;
-          transition:
-            color 120ms ease,
-            opacity 120ms ease,
-            text-decoration-color 120ms ease;
+          transition: color 120ms ease;
         }
 
         .resumePaper a:hover,
         .resumePaper a:focus-visible {
-          color: #8fe8ff; /* icy blue */
+          color: #8fe8ff;
           text-decoration: underline;
-          text-decoration-thickness: 1px;
-          text-underline-offset: 2px;
         }
 
-        .resumePaper a:active {
-          opacity: 0.9;
-        }
-
-        /* ---------- Print: ONLY resume contents ---------- */
         @media print {
           html,
           body {
@@ -283,18 +276,15 @@ export default function ResumePage() {
             color: #000 !important;
           }
 
-          /* Hide everything by default */
           body.print-resume * {
             visibility: hidden !important;
           }
 
-          /* Show only the resume paper */
           body.print-resume .resumePaper,
           body.print-resume .resumePaper * {
             visibility: visible !important;
           }
 
-          /* Position resume paper at top-left and remove borders */
           body.print-resume .resumePaper {
             position: absolute !important;
             left: 0 !important;
@@ -302,21 +292,17 @@ export default function ResumePage() {
             width: 100% !important;
             border: none !important;
             border-radius: 0 !important;
-            padding: 0.6in !important; /* printable margin */
-            box-shadow: none !important;
+            padding: 0.6in !important;
           }
 
-          /* Hide the download button / top bar in print */
           .noPrint {
             display: none !important;
           }
 
-          /* Reduce risk of awkward page breaks */
           .role {
             break-inside: avoid-page;
           }
 
-          /* Prevent browser printing URL after links if it tries */
           a[href]::after {
             content: "" !important;
           }
@@ -336,7 +322,6 @@ export default function ResumePage() {
       </header>
 
       <article className="resumePaper" ref={paperRef} aria-label="Resume">
-        {/* HEADER */}
         <header className="resumeHeader">
           <div>
             <div className="resumeName">Rob Chapleski Jr., Ph.D.</div>
@@ -348,8 +333,6 @@ export default function ResumePage() {
 
           <div className="resumeContact">
             <div>United States · Remote</div>
-
-            {/* Screen: clickable; Print: raw URLs */}
             <div>
               <span className="screenOnly">
                 {LINKS.map((l, idx) => (
@@ -357,9 +340,7 @@ export default function ResumePage() {
                     <a href={l.href} target="_blank" rel="noreferrer noopener">
                       {l.label}
                     </a>
-                    {idx < LINKS.length - 1 ? (
-                      <span className="dot">•</span>
-                    ) : null}
+                    {idx < LINKS.length - 1 && <span className="dot">•</span>}
                   </React.Fragment>
                 ))}
               </span>
@@ -368,9 +349,7 @@ export default function ResumePage() {
                 {LINKS.map((l, idx) => (
                   <React.Fragment key={l.printText}>
                     {l.printText}
-                    {idx < LINKS.length - 1 ? (
-                      <span className="dot">•</span>
-                    ) : null}
+                    {idx < LINKS.length - 1 && <span className="dot">•</span>}
                   </React.Fragment>
                 ))}
               </span>
@@ -378,20 +357,17 @@ export default function ResumePage() {
           </div>
         </header>
 
-        {/* SUMMARY */}
         <Section title="Professional Summary">
           <p className="resumeP">
-            Senior Software Engineer with expertise in automation architecture,
+            Senior Software Engineer specializing in automation architecture,
             API validation, CI/CD integration, and full-stack JavaScript
-            systems. Experienced collaborating with engineering leadership to
-            improve release reliability, design resilient access control models,
-            and strengthen platform quality across distributed SaaS
-            environments. Combines strong technical depth with systems thinking
-            and pragmatic delivery.
+            systems. Partnered with engineering leadership to improve release
+            reliability, design resilient access control models, and strengthen
+            platform quality across distributed SaaS environments. Combines
+            strong technical depth with systems thinking and pragmatic delivery.
           </p>
         </Section>
 
-        {/* CORE COMPETENCIES */}
         <Section title="Core Competencies">
           <ul className="competencies">
             <li>Automation framework design</li>
@@ -405,7 +381,6 @@ export default function ResumePage() {
           </ul>
         </Section>
 
-        {/* EXPERIENCE */}
         <Section title="Experience">
           {EXPERIENCE.map((r) => (
             <Role
@@ -418,7 +393,6 @@ export default function ResumePage() {
           ))}
         </Section>
 
-        {/* PROJECTS */}
         <Section title="Selected Projects">
           {PROJECTS.map((p) => (
             <Role
@@ -441,7 +415,6 @@ export default function ResumePage() {
           ))}
         </Section>
 
-        {/* SKILLS */}
         <Section title="Technical Skills">
           <p className="resumeP">
             JavaScript · TypeScript · Node.js · React · GraphQL · REST · MongoDB
@@ -450,7 +423,6 @@ export default function ResumePage() {
           </p>
         </Section>
 
-        {/* EDUCATION */}
         <Section title="Education">
           <p className="resumeP">
             Software Developer Certificate – Fullstack Academy / Virginia Tech
@@ -486,18 +458,17 @@ function Role({ company, title, right, bullets, compactTop = false }) {
         </div>
         <div className="roleRight">{right}</div>
       </div>
-      {bullets?.length ? (
+      {bullets?.length && (
         <ul className="roleBullets">
           {bullets.map((b, i) => (
             <li key={`${company}-${i}`}>{b}</li>
           ))}
         </ul>
-      ) : null}
+      )}
     </div>
   );
 }
 
-/** rccolamachine.com/xyz pretty printing */
 function toPrettyHostPath(url) {
   try {
     const u = new URL(url);
