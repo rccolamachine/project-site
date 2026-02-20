@@ -4,6 +4,7 @@ export default function Footer() {
       <div className="footerInner">
         <span>© {new Date().getFullYear()} Rob Chapleski</span>
         <span className="dot">•</span>
+
         <a
           href="https://www.rccolamachine.com"
           target="_blank"
@@ -11,7 +12,9 @@ export default function Footer() {
         >
           rccolamachine
         </a>
+
         <span className="dot">•</span>
+
         <a
           href="https://github.com/rccolamachine"
           target="_blank"
@@ -19,7 +22,9 @@ export default function Footer() {
         >
           GitHub
         </a>
+
         <span className="dot">•</span>
+
         <a
           href="https://www.linkedin.com/in/robert-chapleski"
           target="_blank"
@@ -27,6 +32,10 @@ export default function Footer() {
         >
           LinkedIn
         </a>
+
+        <span className="dot">•</span>
+
+        <a href="mailto:robert.chapleski@gmail.com">Email</a>
       </div>
     </footer>
   );

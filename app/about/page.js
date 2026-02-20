@@ -56,9 +56,15 @@ const EXTERNAL_LINKS = [
   },
   {
     label: "MySite",
-    value: "linkedin.com/in/robert-chapleski",
+    value: "rccolamachine.com",
     href: "https://rccolamachine.com",
     note: "You are here",
+  },
+  {
+    label: "EmailMe",
+    value: "robert.chapleski@gmail.com",
+    href: "mailto:robert.chapleski@gmail.com",
+    note: "Direct contact",
   },
 ];
 
