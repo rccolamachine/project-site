@@ -198,11 +198,11 @@ export default function AboutPage() {
               </span>
             </li>
             <li>
-              <strong>Frustration is part of learning.</strong>
+              <strong>The path to learning is through frustration.</strong>
               <span>
                 {" "}
-                If something is hard, there’s usually something worth learning
-                inside it.
+                When you find something difficult, there’s usually a lesson
+                embedded within. Overcoming will make you grow stronger.
               </span>
             </li>
             <li>
