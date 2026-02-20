@@ -92,7 +92,7 @@ const ITEMS = [
     priority: "P2",
     status: "todo",
     notes:
-      "Add albums/content for the Pictures page. Take and add pictures. Add Pixel art gallery? Make it easy to add new photos/albums over time.",
+      "Add albums/content for the Pictures page. Take and add pictures. Add Pixel art gallery? Make it easy to add new photos/albums over time. Add pictures page to Home and About.",
     links: [{ label: "Open Pictures", href: "/pictures" }],
   },
   {

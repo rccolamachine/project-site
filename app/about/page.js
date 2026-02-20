@@ -33,11 +33,7 @@ const INTERNAL_LINKS = [
     href: "/guestbook",
     desc: "Snapshots from the pixel booth.",
   },
-  {
-    title: "Pictures",
-    href: "/pictures",
-    desc: "Photography experiments and process.",
-  },
+
   {
     title: "Resume",
     href: "/resume",
