@@ -417,7 +417,8 @@ export default function ResumePage() {
             <br />
             Ph.D. Chemistry – Virginia Tech (2017)
             <br />
-            B.S. Chemistry – Towson University, Summa cum laude (2007)
+            B.S. Chemistry – Towson University Honors College, Summa cum laude
+            (2007)
           </p>
         </Section>
       </article>
