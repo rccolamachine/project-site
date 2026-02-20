@@ -1,177 +1,315 @@
+import "./about.css";
+import Link from "next/link";
+
 export const metadata = {
   title: "About · rccolamachine",
-  description: "A personal about page for Rob and the rccolamachine site.",
+  description:
+    "About Rob — systems thinker, builder, and fan of simple rules creating surprising order.",
 };
+
+const INTERNAL_LINKS = [
+  {
+    title: "Farm Idle Sim",
+    href: "/farm",
+    desc: "A quiet loop where numbers slowly go up.",
+  },
+  {
+    title: "Molecular Reactor",
+    href: "/reactor",
+    desc: "Atoms, sliders, and curiosity in a box.",
+  },
+  {
+    title: "Button MMORPG",
+    href: "/button",
+    desc: "A strange shared counter experiment.",
+  },
+  {
+    title: "Pixelbooth",
+    href: "/pixelbooth",
+    desc: "Camera → canvas → pixel grid.",
+  },
+  {
+    title: "Guestbook",
+    href: "/guestbook",
+    desc: "Snapshots from the pixel booth.",
+  },
+  {
+    title: "Pictures",
+    href: "/pictures",
+    desc: "Photography experiments and process.",
+  },
+  {
+    title: "Resume",
+    href: "/resume",
+    desc: "Professional details and work history.",
+  },
+];
+
+const EXTERNAL_LINKS = [
+  {
+    label: "GitHub",
+    value: "github.com/rccolamachine",
+    href: "https://github.com/rccolamachine",
+    note: "Code + experiments",
+  },
+  {
+    label: "LinkedIn",
+    value: "linkedin.com/in/robert-chapleski",
+    href: "https://www.linkedin.com/in/robert-chapleski",
+    note: "Career timeline",
+  },
+  {
+    label: "MySite",
+    value: "linkedin.com/in/robert-chapleski",
+    href: "https://rccolamachine.com",
+    note: "You are here",
+  },
+];
 
 export default function AboutPage() {
   return (
     <section className="page">
-      <header style={{ marginBottom: 16 }}>
+      <header className="aboutHeader">
         <h1>About</h1>
         <p className="lede">
-          I’m Rob. This site is part portfolio, part playground, part “what
-          happens if I just build it?”
+          I’m Rob. I like building small systems that feel complete.
+          <span className="aboutLedeBreak">
+            This site is where I experiment, tinker, and occasionally
+            over-engineer things for fun.
+          </span>
         </p>
       </header>
 
       <div className="aboutGrid">
+        {/* Who I Am */}
         <div className="card aboutCard">
           <h2>Who I am</h2>
-          <p>
-            I’m a QA automation and test engineering person who likes systems,
-            structure, and clean feedback loops. I’ve worked in fast moving SaaS
-            environments where quality can drift unless somebody cares enough to
-            keep the bar high.
-          </p>
-          <p>
-            Before software, I spent years doing computational chemistry
-            research. That background shaped how I think: I like experiments,
-            reproducibility, and using evidence to make decisions.
-          </p>
-          <p>
-            rccolamachine is my place to mix those instincts with fun. If
-            something seems a little “game-like” or delightfully
-            over-engineered, that’s on purpose.
+
+          <p className="aboutTight">
+            I’m drawn to emergence — when simple rules create behavior that
+            feels bigger than the parts. It’s the same vibe as temperature
+            emerging from chaotic molecular motion, or a system suddenly
+            “clicking” into something coherent.
           </p>
 
-          <div className="aboutTags" aria-label="Highlights">
-            <span className="tag">Curious builder</span>
-            <span className="tag">Detail obsessed</span>
-            <span className="tag">Systems thinker</span>
-            <span className="tag">Calm under pressure</span>
-            <span className="tag">Actually ships</span>
+          <p className="aboutTight">
+            That’s why I like making interactive things. If I can turn an idea
+            into something you can poke, observe, and iterate on, it gets
+            clearer fast. I learn best by doing — and usually by getting stuck
+            for a while first.
+          </p>
+
+          <p className="aboutTight">
+            rccolamachine is my sandbox for that: playful on the surface,
+            structured underneath. (Sometimes it even feels like a salmon lox
+            bagel: ingredients that shouldn’t work together somehow becoming a
+            perfect whole.)
+          </p>
+
+          <div className="aboutButtons">
+            <Link className="btn" href="/reactor">
+              Reactor
+            </Link>
+            <Link className="btn" href="/farm">
+              Farm Sim
+            </Link>
+            <Link className="btn" href="/pixelbooth">
+              Pixelbooth
+            </Link>
           </div>
         </div>
 
+        {/* Why QA */}
         <div className="card aboutCard">
-          <h2>What I’m into</h2>
+          <h2>Why QA?</h2>
+
+          <p className="aboutTight">
+            I spent years doing computational chemistry research, modeling
+            reactive systems like the breakdown of chemical warfare agents and
+            the formation of buckyballs.
+          </p>
+
+          <p className="aboutTight">
+            I genuinely loved the science — especially the elegance of simple
+            physical rules giving rise to complex, coherent behavior. I’m drawn
+            to emergence: temperature from chaotic molecular motion, structure
+            from randomness, systems that make more sense together than they do
+            apart.
+          </p>
+
+          <p className="aboutTight">
+            Along the way, I realized that what excited me most wasn’t just the
+            chemistry itself, but the logic and computational systems behind it:
+            writing code, building simulations, designing experiments that could
+            be reproduced and trusted.
+          </p>
+
+          <p className="aboutTight">
+            I also found that I enjoyed explaining those systems — mentoring
+            teammates, breaking down complicated ideas, and helping people see
+            how the pieces fit together.
+          </p>
+
+          <p className="aboutTight">
+            Moving into quality engineering felt less like leaving science and
+            more like applying the same mindset in a different environment. I
+            still build structured systems and reliable feedback loops — just in
+            software instead of molecular dynamics and quantum mechanics.
+          </p>
+
+          <p className="aboutTight">
+            Science is still something I explore, but now it’s driven by
+            curiosity rather than obligation.
+          </p>
+
+          <div className="aboutButtons">
+            <Link className="btn" href="/resume">
+              Resume
+            </Link>
+            <Link className="btn" href="/guestbook">
+              Guestbook
+            </Link>
+            <Link className="btn" href="/pictures">
+              Pictures
+            </Link>
+          </div>
+        </div>
+
+        {/* How I Think */}
+        <div className="card aboutCard aboutWide">
+          <h2>How I think</h2>
 
           <ul className="aboutList">
             <li>
-              <strong>Retro games and cozy grind loops</strong>
+              <strong>I trust feedback.</strong>
+              <span> Systems should tell you what they’re doing.</span>
+            </li>
+            <li>
+              <strong>I prefer reproducibility over cleverness.</strong>
+              <span> If it works once, it should work again.</span>
+            </li>
+            <li>
+              <strong>I learn by building.</strong>
               <span>
                 {" "}
-                The kind where numbers go up, inventory fills, stats improve,
-                and hours vanish.
+                Turning an idea into something interactive forces clarity.
               </span>
             </li>
             <li>
-              <strong>Pixel art, weird UI, and nostalgic vibes</strong>
+              <strong>Frustration is part of learning.</strong>
               <span>
                 {" "}
-                I like interfaces that feel like a tiny toy, not a corporate
-                dashboard.
+                If something is hard, there’s usually something worth learning
+                inside it.
               </span>
             </li>
             <li>
-              <strong>Photography experiments</strong>
+              <strong>I like emergence.</strong>
               <span>
                 {" "}
-                I’m into the process more than perfection. Cheap cameras, manual
-                control, and figuring it out.
-              </span>
-            </li>
-            <li>
-              <strong>
-                Home media servers and “how far can I push this?” tinkering
-              </strong>
-              <span>
-                {" "}
-                Jellyfin, transcoding settings, hardware decoding, upscaling old
-                rips, the whole rabbit hole.
-              </span>
-            </li>
-            <li>
-              <strong>Precious metals and little artifacts</strong>
-              <span>
-                {" "}
-                Platinum, palladium, silver, hallmarks, weights, history. It’s
-                half collecting, half detective work.
-              </span>
-            </li>
-            <li>
-              <strong>Genealogy and family history</strong>
-              <span>
-                {" "}
-                I love chasing records and connecting dots across time.
+                Simple rules producing behavior that feels surprisingly
+                coherent.
               </span>
             </li>
           </ul>
-
-          <div className="aboutCTA">
-            <a className="btn" href="/pixelbooth">
-              Try Pixelbooth
-            </a>
-            <a className="btn" href="/guestbook">
-              Guestbook
-            </a>
-            <a className="btn" href="/resume">
-              Resume
-            </a>
-          </div>
         </div>
 
+        {/* Personal Philosophy */}
         <div className="card aboutCard aboutWide">
-          <h2>Why this site exists</h2>
-          <p style={{ marginTop: 0 }}>
-            I wanted a personal site that feels alive. Not a static template,
-            not a “hello world” portfolio, and not a social feed I don’t
-            control.
-          </p>
-          <p>
-            So this is where I test ideas: pixel UI experiments,
-            camera-to-canvas tricks, saving data to a tiny backend, and building
-            pages that feel cohesive. It’s also a nice way to prove I can build
-            full features end to end.
+          <h2>Personal philosophy</h2>
+
+          <p className="aboutTight">
+            I don’t have a rigid end goal for my career. I care more about
+            direction than destination. As long as I’m moving forward in a
+            positive direction — building on what I’ve learned and applying it
+            in useful ways — I’m doing well.
           </p>
 
-          <div className="miniGrid" aria-label="Site themes">
-            <div className="miniCard">
-              <div className="miniTitle">Play</div>
-              <div className="miniText">
-                Retro UI, tiny interactions, weird little delights.
-              </div>
-            </div>
-            <div className="miniCard">
-              <div className="miniTitle">Build</div>
-              <div className="miniText">
-                Next.js pages, APIs, data storage, real functionality.
-              </div>
-            </div>
-            <div className="miniCard">
-              <div className="miniTitle">Ship</div>
-              <div className="miniText">
-                Make it work, make it stable, make it understandable.
-              </div>
-            </div>
+          <p className="aboutTight">
+            One thing I value deeply is the unusual mix of skills I’ve picked up
+            along the way: scientific modeling, analytical and testing
+            methodologies, teaching, systems thinking, automation architecture,
+            debugging, and building interactive experiments. Individually
+            they’re useful. Together, they compound.
+          </p>
+
+          <p className="aboutTight">
+            I’ve learned that transferable skills are where the real leverage
+            is. The domain changes — chemistry, education, software — but the
+            underlying instincts carry forward.
+          </p>
+
+          <p className="aboutTight">
+            The things I’m happiest building tend to share the same pattern: a
+            few clear rules, good feedback, and room for surprising behavior to
+            emerge. That could be a test suite, a small idle loop, a physics
+            toy, or a camera pipeline that turns light into pixel grids.
+          </p>
+
+          <p className="aboutTight">
+            If something has internal consistency and a bit of “this shouldn’t
+            work, but it does,” I’m probably going to enjoy it.
+          </p>
+
+          <div className="aboutButtons">
+            <Link className="btn" href="/reactor">
+              Try the Reactor
+            </Link>
+            <Link className="btn" href="/pixelbooth">
+              Try Pixelbooth
+            </Link>
+            <Link className="btn" href="/button">
+              Button MMORPG
+            </Link>
           </div>
         </div>
 
+        {/* Explore */}
+        <div className="card aboutCard aboutWide">
+          <h2>Explore</h2>
+          <p className="aboutSubtle" style={{ marginTop: 0 }}>
+            The site is one cohesive toybox. Here are the main rooms:
+          </p>
+
+          <div className="aboutFeatureGrid">
+            {INTERNAL_LINKS.map((x) => (
+              <Link key={x.href} className="featureCard" href={x.href}>
+                <div className="featureTitle">{x.title}</div>
+                <div className="featureDesc">{x.desc}</div>
+                <div className="featureHint">Open →</div>
+              </Link>
+            ))}
+          </div>
+
+          <p className="lede" style={{ marginTop: 12 }}>
+            Part portfolio, part lab, part snackable little universe.
+          </p>
+        </div>
+
+        {/* Links */}
         <div className="card aboutCard aboutWide">
           <h2>Links</h2>
-          <p style={{ marginTop: 0 }}>If you want to poke around more:</p>
 
-          <div className="aboutLinks">
-            <div className="aboutLinkRow">
-              <span className="aboutLinkLabel">GitHub</span>
-              <span className="aboutLinkValue">github.com/rccolamachine</span>
-            </div>
-            <div className="aboutLinkRow">
-              <span className="aboutLinkLabel">LinkedIn</span>
-              <span className="aboutLinkValue">
-                linkedin.com/in/robert-chapleski
-              </span>
-            </div>
-            <div className="aboutLinkRow">
-              <span className="aboutLinkLabel">Portfolio</span>
-              <span className="aboutLinkValue">rccolamachine.com</span>
-            </div>
+          <div className="aboutLinks" role="list">
+            {EXTERNAL_LINKS.map((x) => (
+              <div className="aboutLinkRow" role="listitem" key={x.label}>
+                <div className="aboutLinkLabel">{x.label}</div>
+                <div className="aboutLinkValue">
+                  <a
+                    className="aboutLinkAnchor"
+                    href={x.href}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {x.value}
+                  </a>
+                  {x.note ? (
+                    <span className="aboutLinkNote">{x.note}</span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
           </div>
-
-          <p className="lede" style={{ marginTop: 14 }}>
-            I keep email private here. The guestbook stores it for me, not for
-            public display.
-          </p>
         </div>
       </div>
     </section>

@@ -1,0 +1,232 @@
+/* app/about/about.css */
+/* About-specific layout + components. Keeps global arcade vibe, fixes structure. */
+
+.aboutHeader {
+  margin-bottom: 14px;
+}
+
+.aboutLedeBreak {
+  display: block;
+  margin-top: 6px;
+}
+
+/* Grid */
+.aboutGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.aboutCard {
+  grid-column: span 6;
+}
+
+.aboutWide {
+  grid-column: 1 / -1;
+}
+
+/* Text spacing */
+.aboutTight {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+.aboutSubtle {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.9;
+  margin: 0 0 12px;
+}
+
+/* Tag chips */
+.aboutTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 10, 25, 0.38);
+  color: rgba(243, 244, 255, 0.82);
+  font-size: 10px;
+  letter-spacing: 0px;
+}
+
+/* Button row */
+.aboutButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Mini theme cards */
+.miniGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.miniCard {
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) - 6px);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px;
+}
+
+.miniTitle {
+  font-size: 10px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.miniText {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.85;
+}
+
+/* Explore feature grid */
+.aboutFeatureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.featureCard {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) - 6px);
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(45, 226, 230, 0.45);
+  background: rgba(45, 226, 230, 0.06);
+}
+
+.featureTitle {
+  color: var(--text);
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.featureDesc {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.85;
+}
+
+.featureHint {
+  margin-top: 10px;
+  font-size: 10px;
+  color: rgba(243, 244, 255, 0.6);
+}
+
+/* Interests list cleanup */
+.aboutList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.aboutList li {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: calc(var(--radius) - 6px);
+  padding: 10px 12px;
+}
+
+.aboutList strong {
+  display: inline-block;
+  color: var(--text);
+  font-size: 10px;
+  margin-right: 6px;
+}
+
+.aboutList span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+/* Links section */
+.aboutLinks {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.aboutLinkRow {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: calc(var(--radius) - 6px);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.aboutLinkLabel {
+  color: rgba(243, 244, 255, 0.8);
+  font-size: 10px;
+}
+
+.aboutLinkValue {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.aboutLinkAnchor {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(45, 226, 230, 0.45);
+  width: fit-content;
+}
+
+.aboutLinkAnchor:hover {
+  color: var(--accent);
+  border-bottom-color: rgba(255, 79, 216, 0.45);
+}
+
+.aboutLinkNote {
+  color: rgba(243, 244, 255, 0.55);
+  font-size: 10px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .aboutCard {
+    grid-column: 1 / -1;
+  }
+  .miniGrid {
+    grid-template-columns: 1fr;
+  }
+  .aboutFeatureGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .aboutLinkRow {
+    grid-template-columns: 1fr;
+  }
+}
