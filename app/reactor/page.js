@@ -752,6 +752,24 @@ export default function ReactorPage() {
     [showActionReadout],
   );
 
+  const showDeletedReadout = useCallback(
+    (counts, forceBracket = false) => {
+      const rows = ELEMENTS.map((el) => ({
+        el,
+        count: Math.max(0, Math.floor(Number(counts?.[el]) || 0)),
+      })).filter((row) => row.count > 0);
+      if (rows.length <= 0) return;
+      if (!forceBracket && rows.length === 1 && rows[0].count === 1) {
+        showActionReadout(`Deleted ${rows[0].el}`);
+        return;
+      }
+      showActionReadout(
+        `Deleted [${rows.map((row) => `${row.el}:${row.count}`).join(" ")}]`,
+      );
+    },
+    [showActionReadout],
+  );
+
   useEffect(() => {
     const valid = readSavedCatalogueIdsFromStorage();
     const hasSavedCatalogue = valid.length > 0;
@@ -2612,7 +2630,10 @@ export default function ReactorPage() {
       const id = raycastAtom();
 
       if (toolRef.current === TOOL.DELETE && id) {
+        const atom = sim.atoms.find((a) => a.id === id) || null;
+        const counts = atom ? { [atom.el]: 1 } : null;
         removeAtom3D(sim, id);
+        if (counts) showDeletedReadout(counts);
         scanCollectionProgress(sim);
         return;
       }
@@ -2680,6 +2701,7 @@ export default function ReactorPage() {
     catalogById,
     toggleLiveSelection,
     showActionReadout,
+    showDeletedReadout,
   ]);
 
   useEffect(() => {
@@ -2690,9 +2712,17 @@ export default function ReactorPage() {
 
   // actions
   function clearAll() {
-    clearSim3D(simRef.current);
+    const sim = simRef.current;
+    const counts = { ...EMPTY_ELEMENT_COUNTS };
+    for (const atom of sim.atoms) {
+      if (Object.hasOwn(counts, atom.el)) counts[atom.el] += 1;
+    }
+    const hasAny = ELEMENTS.some((el) => (counts[el] || 0) > 0);
+
+    clearSim3D(sim);
+    if (hasAny) showDeletedReadout(counts);
     setHoverLiveTooltip(null);
-    scanCollectionProgress(simRef.current);
+    scanCollectionProgress(sim);
   }
   function shake() {
     nudgeAll(simRef.current, 1.8);
