@@ -35,7 +35,7 @@ export default function Footer() {
 
         <span className="dot">•</span>
 
-        <a href="mailto:robert.chapleski@gmail.com">Email</a>
+        <a href="mailto:rob@mail.rccolamachine.com">Email</a>
       </div>
     </footer>
   );

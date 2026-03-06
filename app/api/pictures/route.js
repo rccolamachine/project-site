@@ -262,7 +262,7 @@ export async function POST(req) {
       .join("\n");
 
     const from = process.env.RESEND_FROM || DEFAULT_RESEND_FROM;
-    const toRob = "robert.chapleski@gmail.com";
+    const toRob = "rob@mail.rccolamachine.com";
 
     const emailWarnings = [];
 

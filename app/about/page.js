@@ -62,8 +62,8 @@ const EXTERNAL_LINKS = [
   },
   {
     label: "EmailMe",
-    value: "robert.chapleski@gmail.com",
-    href: "mailto:robert.chapleski@gmail.com",
+    value: "rob@mail.rccolamachine.com",
+    href: "mailto:rob@mail.rccolamachine.com",
     note: "Direct contact",
   },
 ];
