@@ -4,6 +4,7 @@ import { Resend } from "resend";
 import { put, list, del } from "@vercel/blob";
 
 export const runtime = "nodejs";
+const DEFAULT_RESEND_FROM = "Pixelbooth <hello@mail.rccolamachine.com>";
 
 // ---------- helpers ----------
 function isValidEmail(s) {
@@ -15,6 +16,16 @@ function safeTrim(v) {
 }
 function safeAuthor(s) {
   return safeTrim(s) || "Guest";
+}
+
+async function sendEmailOrThrow(resend, payload, label) {
+  const result = await resend.emails.send(payload);
+  if (result?.error) {
+    throw new Error(
+      `${label}: ${result.error.message || result.error.name || "Email failed."}`,
+    );
+  }
+  return result?.data || null;
 }
 
 async function putJson(pathname, obj, { token }) {
@@ -250,31 +261,55 @@ export async function POST(req) {
       .filter(Boolean)
       .join("\n");
 
-    const from =
-      process.env.RESEND_FROM || "Pixelbooth <onboarding@resend.dev>";
+    const from = process.env.RESEND_FROM || DEFAULT_RESEND_FROM;
     const toRob = "robert.chapleski@gmail.com";
 
-    let emailWarning = null;
+    const emailWarnings = [];
 
     if (!resend) {
-      emailWarning =
-        "RESEND_API_KEY not set; upload saved but no emails were sent.";
+      emailWarnings.push(
+        "RESEND_API_KEY not set; upload saved but no emails were sent.",
+      );
     } else {
       try {
-        await resend.emails.send({ from, to: [toRob], subject, text: details });
-
-        if (emailSelf && isValidEmail(email)) {
-          await resend.emails.send({
+        await sendEmailOrThrow(
+          resend,
+          {
             from,
-            to: [email],
-            subject: "Your Pixelbooth submission",
-            text: `Here’s a copy of what you submitted:\n\n${details}`,
-          });
+            to: [toRob],
+            subject,
+            text: details,
+            replyTo: email,
+          },
+          "Admin notification failed",
+        );
+      } catch (error) {
+        console.error("Pixelbooth admin email failed", error);
+        emailWarnings.push(error?.message || String(error));
+      }
+
+      if (emailSelf && isValidEmail(email)) {
+        try {
+          await sendEmailOrThrow(
+            resend,
+            {
+              from,
+              to: [email],
+              subject: "Your Pixelbooth submission",
+              text: `Here's a copy of what you submitted:\n\n${details}`,
+            },
+            "Guest copy failed",
+          );
+        } catch (error) {
+          console.error("Pixelbooth guest copy email failed", error);
+          emailWarnings.push(error?.message || String(error));
         }
-      } catch (e) {
-        emailWarning = e?.message || String(e);
       }
     }
+
+    const emailWarning = emailWarnings.length
+      ? emailWarnings.join(" ")
+      : null;
 
     return NextResponse.json(
       { id, url: imgBlob.url, ...(emailWarning ? { emailWarning } : {}) },

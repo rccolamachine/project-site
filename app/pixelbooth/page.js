@@ -106,7 +106,7 @@ export default function Page() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [saveSuccessUrl, setSaveSuccessUrl] = useState("");
+  const [saveResult, setSaveResult] = useState(null);
 
   const [lead, setLead] = useState({
     name: "",
@@ -729,7 +729,7 @@ export default function Page() {
     const snapSmall = snapSmallRef.current;
     if (!off || !snapSmall) return;
 
-    setSaveSuccessUrl("");
+    setSaveResult(null);
     setSaveError("");
 
     snapPixelSizeRef.current = pixelSizeRef.current;
@@ -755,7 +755,7 @@ export default function Page() {
     setSnapped(true);
   };
 
-  const handleBackToLive = () => {
+  const handleBackToLive = ({ clearSaveResult = true } = {}) => {
     hoverCellRef.current = null;
     hoverBgCellRef.current = null;
     dragRef.current.isDown = false;
@@ -768,14 +768,14 @@ export default function Page() {
     bgNeedRedrawRef.current = true;
 
     setShowSaveModal(false);
-    setSaveSuccessUrl("");
+    if (clearSaveResult) setSaveResult(null);
     setSaveError("");
     setSnapped(false);
   };
 
   const openSaveModal = () => {
     setSaveError("");
-    setSaveSuccessUrl("");
+    setSaveResult(null);
     setShowSaveModal(true);
   };
 
@@ -832,12 +832,18 @@ export default function Page() {
       }
       const json = await res.json(); // { id, url }
 
-      setSaveSuccessUrl(json.url);
+      setSaveResult({
+        url: json.url || "",
+        tone: json.emailWarning ? "warning" : "success",
+        message:
+          json.emailWarning ||
+          "Saved to guestbook. Notification email sent.",
+      });
 
       // ✅ IMPORTANT FIX: only after success, revert to Live view
       setShowSaveModal(false);
       setSaving(false);
-      handleBackToLive();
+      handleBackToLive({ clearSaveResult: false });
     } catch (e) {
       setSaveError(e?.message || String(e));
       setSaving(false);
@@ -980,11 +986,18 @@ export default function Page() {
           </div>
         </div>
 
-        {saveSuccessUrl ? (
-          <div style={{ marginBottom: 12, fontSize: 12, opacity: 0.9 }}>
-            Saved!{" "}
-            <a href={saveSuccessUrl} target="_blank" rel="noreferrer">
-              {saveSuccessUrl}
+        {saveResult ? (
+          <div
+            style={{
+              marginBottom: 12,
+              fontSize: 12,
+              opacity: 0.95,
+              color: saveResult.tone === "warning" ? "#ffd27d" : "#c7ffd1",
+            }}
+          >
+            {saveResult.message}{" "}
+            <a href={saveResult.url} target="_blank" rel="noreferrer">
+              {saveResult.url}
             </a>
           </div>
         ) : null}
