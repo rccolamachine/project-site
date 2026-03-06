@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -45,9 +46,21 @@ export default function SiteHeader() {
           href="/"
           style={{ "--brand-font-size": `${brandFontSize}px` }}
         >
-          <span className="frame">rc</span>
-          <span className="mid">{middle}</span>
-          <span className="frame">machine</span>
+          <span className="brandArt" aria-hidden="true">
+            <Image
+              src="/brand/pixel-rob.png"
+              alt=""
+              className="brandAvatar"
+              width={48}
+              height={48}
+              priority
+            />
+          </span>
+          <span className="brandText">
+            <span className="frame">rc</span>
+            <span className="mid">{middle}</span>
+            <span className="frame">machine</span>
+          </span>
         </Link>
 
         <nav className="links" aria-label="Primary">
@@ -79,6 +92,12 @@ export default function SiteHeader() {
             href="/button"
           >
             Button
+          </Link>
+          <Link
+            className={pathname.startsWith("/mixtape") ? "active" : ""}
+            href="/mixtape"
+          >
+            Mixtape
           </Link>
           <Link
             className={pathname.startsWith("/about") ? "active" : ""}

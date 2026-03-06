@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import DesktopBadge from "../components/DesktopBadge";
 
@@ -31,6 +32,13 @@ const sections = [
           "Click the button for everyone. Or reset it and reveal your shame.",
         href: "/button",
         cta: "Play now",
+      },
+      {
+        title: "Mixtape",
+        description:
+          "New: Songs that are in my head when I wake up in the morning.",
+        href: "/mixtape",
+        cta: "Hear the voices",
       },
     ],
   },
@@ -89,8 +97,12 @@ function renderDescriptionWithNewBadge(description) {
   const after = description.slice(idx + marker.length).trimStart();
   return (
     <>
-      {before}
-      <br />
+      {before ? (
+        <>
+          {before}
+          <br />
+        </>
+      ) : null}
       <span style={newBadgeStyle}>NEW</span> {after}
     </>
   );
@@ -109,12 +121,24 @@ export default function Home() {
 
   return (
     <section className="page">
-      <header style={{ marginBottom: 16 }}>
-        <h1>Hi, I&apos;m Rob.</h1>
-        <p className="lede">
-          Personal site for photos, projects, and whatever I&apos;m building
-          next.
-        </p>
+      <header className="homeHero">
+        <div className="homeHeroCopy">
+          <h1>Hi, I&apos;m Rob.</h1>
+          <p className="lede">
+            Personal site for photos, projects, and whatever I&apos;m building
+            next.
+          </p>
+        </div>
+        <div className="homeHeroArt" aria-hidden="true">
+          <Image
+            src="/brand/pixel-rob.png"
+            alt=""
+            className="homeHeroAvatar"
+            width={144}
+            height={144}
+            priority
+          />
+        </div>
       </header>
 
       {sections.map((section) => (

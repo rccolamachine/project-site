@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 export const metadata = {
   title: "Rob Chapleski | Quality Engineering & Creative Code",
   description: "Lead SDET. Automation Architect. Vaporwave builder.",
+  icons: {
+    icon: [{ url: "/brand/pixel-rob.png", type: "image/png" }],
+    shortcut: [{ url: "/brand/pixel-rob.png", type: "image/png" }],
+    apple: [{ url: "/brand/pixel-rob.png", type: "image/png" }],
+  },
   openGraph: {
     title: "Rob Chapleski",
     description: "Automation engineering meets arcade aesthetics.",

@@ -1,0 +1,563 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-03-05T22:22:03.845Z",
+  "source": "spotify-public-playlist-page",
+  "sourceUrl": "https://open.spotify.com/playlist/4X8HWeNNCCc1sdVQA4NQOo",
+  "playlistId": "4X8HWeNNCCc1sdVQA4NQOo",
+  "playlistName": "Random Rob Shit",
+  "total": 30,
+  "declaredTotal": 260,
+  "partial": true,
+  "items": [
+    {
+      "id": "0kPeymTUiaidv48eRrMISu",
+      "spotifyTrackId": "0kPeymTUiaidv48eRrMISu",
+      "spotifyTrackUri": "spotify:track:0kPeymTUiaidv48eRrMISu",
+      "title": "Bette Davis Eyes",
+      "artists": [
+        "Missing Persons"
+      ],
+      "artistIds": [
+        "5CT7RBitS0e0u78T8tRBWQ"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/331d9d3cd258bfeb4307bf20b5aa9bdb1b640634",
+      "albumTitle": "Bette Davis Eyes",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b7bae10276e674152fe26a9b",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/0kPeymTUiaidv48eRrMISu",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6vxHp3CDNo0afgKGp2yi1E",
+      "spotifyTrackId": "6vxHp3CDNo0afgKGp2yi1E",
+      "spotifyTrackUri": "spotify:track:6vxHp3CDNo0afgKGp2yi1E",
+      "title": "Me and Julio Down by the Schoolyard",
+      "artists": [
+        "Paul Simon"
+      ],
+      "artistIds": [
+        "2CvCyf1gEVhI0mX6aFXmVI"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/ced99c439f3b805152d014f5d89e45c48292394d",
+      "albumTitle": "Paul Simon",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025058a0aebf5365a911030083",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/6vxHp3CDNo0afgKGp2yi1E",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7AUOZzM5P8UDuA0zga0PP8",
+      "spotifyTrackId": "7AUOZzM5P8UDuA0zga0PP8",
+      "spotifyTrackUri": "spotify:track:7AUOZzM5P8UDuA0zga0PP8",
+      "title": "Science Fiction/Double Feature",
+      "artists": [
+        "Richard O'Brien"
+      ],
+      "artistIds": [
+        "0aIOdrjH5s3hJqxmKoAEUg"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/08f3996ab10384786d0995af5818c23f4145d53e",
+      "albumTitle": "The Rocky Horror Picture Show - Original Soundtrack",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027bcc78f88610d99eaa8c9b50",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/7AUOZzM5P8UDuA0zga0PP8",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "77uG5Qe741Qyd5Wxo1TJhz",
+      "spotifyTrackId": "77uG5Qe741Qyd5Wxo1TJhz",
+      "spotifyTrackUri": "spotify:track:77uG5Qe741Qyd5Wxo1TJhz",
+      "title": "Suddenly, Seymour",
+      "artists": [
+        "Rick Moranis",
+        "Ellen Greene",
+        "Michelle Weeks",
+        "Tichina Arnold",
+        "Tisha Campbell"
+      ],
+      "artistIds": [
+        "2rjQ9QqeJOXxYbTzvbP8BF",
+        "6CAxtHXbWx9FdJFhgBEtBJ",
+        "2RxiB8hxxiJ9qM4e1ahHru",
+        "2ZIgadiTFMv5A3PiNVWpzq",
+        "2HOOjUvKpL2l8gXMfWEf39"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/67bcd355917e5e846992bf8fcdb436b78b6cbb09",
+      "albumTitle": "Little Shop Of Horrors (Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02841ff3a0698816a278579298",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/77uG5Qe741Qyd5Wxo1TJhz",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0HeNDXMTdBDS9eWQkhENJ2",
+      "spotifyTrackId": "0HeNDXMTdBDS9eWQkhENJ2",
+      "spotifyTrackUri": "spotify:track:0HeNDXMTdBDS9eWQkhENJ2",
+      "title": "I Know",
+      "artists": [
+        "Shovels & Rope"
+      ],
+      "artistIds": [
+        "1M3BVQ36cqPQix8lQNCh4K"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/6e6016accde51985d0a8dbc0638d8de76a57afdd",
+      "albumTitle": "I Know",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02d50c9aee892e579623ff787f",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/0HeNDXMTdBDS9eWQkhENJ2",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6MKL3Xdcf3qFhTP2KJhcsn",
+      "spotifyTrackId": "6MKL3Xdcf3qFhTP2KJhcsn",
+      "spotifyTrackUri": "spotify:track:6MKL3Xdcf3qFhTP2KJhcsn",
+      "title": "Acid Tongue",
+      "artists": [
+        "Jenny Lewis"
+      ],
+      "artistIds": [
+        "5cMVRrisBpDkXCVG48epED"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/1d6d237158b347417f5587232d8b0e8f1804e96d",
+      "albumTitle": "Acid Tongue",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e649a6f583f2dd4614769719",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/6MKL3Xdcf3qFhTP2KJhcsn",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3w6m1sTs8qXiuITB0sziwY",
+      "spotifyTrackId": "3w6m1sTs8qXiuITB0sziwY",
+      "spotifyTrackUri": "spotify:track:3w6m1sTs8qXiuITB0sziwY",
+      "title": "Jump In the Line",
+      "artists": [
+        "Harry Belafonte"
+      ],
+      "artistIds": [
+        "6Tw1ktF4xMmzaLLbe98I2z"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/78101e88c31738208a3d196085e63141194e490c",
+      "albumTitle": "Very Best Of Harry Belafonte",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021b712c9fd9f1df1f923460e9",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/3w6m1sTs8qXiuITB0sziwY",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "48gsLPdOUEDjr7P8Wvykne",
+      "spotifyTrackId": "48gsLPdOUEDjr7P8Wvykne",
+      "spotifyTrackUri": "spotify:track:48gsLPdOUEDjr7P8Wvykne",
+      "title": "Budapest",
+      "artists": [
+        "George Ezra"
+      ],
+      "artistIds": [
+        "2ysnwxxNtSgbb9t1m2Ur4j"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/f5b8e8d160c7b4c23c99a8ff3633a99765f5866d",
+      "albumTitle": "Did You Hear the Rain?",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025addc393ba356de1067a846a",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/48gsLPdOUEDjr7P8Wvykne",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4Sqc0kPuZpfI0T2TZBu8JT",
+      "spotifyTrackId": "4Sqc0kPuZpfI0T2TZBu8JT",
+      "spotifyTrackUri": "spotify:track:4Sqc0kPuZpfI0T2TZBu8JT",
+      "title": "Grace Kelly",
+      "artists": [
+        "MIKA"
+      ],
+      "artistIds": [
+        "5MmVJVhhYKQ86izuGHzJYA"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/91a27f9ab4e25c3f037a2e9eeb20169ee28343fc",
+      "albumTitle": "Life In Cartoon Motion",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02eb0b41d40b300163767da4b3",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/4Sqc0kPuZpfI0T2TZBu8JT",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "43ddJFnP8m3PzNJXiHuiyJ",
+      "spotifyTrackId": "43ddJFnP8m3PzNJXiHuiyJ",
+      "spotifyTrackUri": "spotify:track:43ddJFnP8m3PzNJXiHuiyJ",
+      "title": "The Way I Am",
+      "artists": [
+        "Ingrid Michaelson"
+      ],
+      "artistIds": [
+        "2vm8GdHyrJh2O2MfbQFYG0"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/d4eff9fc6d1800d648dc94177aea69bc8022cdbf",
+      "albumTitle": "Girls and Boys",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02baa9b132390a2d26a6b2dbed",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/43ddJFnP8m3PzNJXiHuiyJ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1nl09AjkuO7BBRF3BFAPsC",
+      "spotifyTrackId": "1nl09AjkuO7BBRF3BFAPsC",
+      "spotifyTrackUri": "spotify:track:1nl09AjkuO7BBRF3BFAPsC",
+      "title": "Man in the Mirror - Remastered Version",
+      "artists": [
+        "Michael Jackson"
+      ],
+      "artistIds": [
+        "3fMbdgg4jU18AjLCKBhRSm"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/792dc868f9ae9e40ad58ec2cf1ede3e23247ad05",
+      "albumTitle": "Michael Jackson's This Is It",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0279b8d5f5821bddae3bc5e6a9",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/1nl09AjkuO7BBRF3BFAPsC",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2nGFzvICaeEWjIrBrL2RAx",
+      "spotifyTrackId": "2nGFzvICaeEWjIrBrL2RAx",
+      "spotifyTrackUri": "spotify:track:2nGFzvICaeEWjIrBrL2RAx",
+      "title": "Put Your Records On",
+      "artists": [
+        "Corinne Bailey Rae"
+      ],
+      "artistIds": [
+        "29WzbAQtDnBJF09es0uddn"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/fc662ffa82300f0d99ab1bd9dff38273bb71e71a",
+      "albumTitle": "Corinne Bailey Rae",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021ec9b096319afbcc2dca6879",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/2nGFzvICaeEWjIrBrL2RAx",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5TAf4lnZCZTLlZHNZMLFLi",
+      "spotifyTrackId": "5TAf4lnZCZTLlZHNZMLFLi",
+      "spotifyTrackUri": "spotify:track:5TAf4lnZCZTLlZHNZMLFLi",
+      "title": "I Try",
+      "artists": [
+        "Macy Gray"
+      ],
+      "artistIds": [
+        "4ylR3zwA0zaapAu94fktwa"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/48c1c7bdf2f8bb250d80fc123752dee589154b51",
+      "albumTitle": "On How Life Is",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026fb355dfc944cce3598e30a1",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/5TAf4lnZCZTLlZHNZMLFLi",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5mYtpXrZZ1bbGJYDGC8I0Y",
+      "spotifyTrackId": "5mYtpXrZZ1bbGJYDGC8I0Y",
+      "spotifyTrackUri": "spotify:track:5mYtpXrZZ1bbGJYDGC8I0Y",
+      "title": "99 Red Balloons",
+      "artists": [
+        "Nena"
+      ],
+      "artistIds": [
+        "6Tz0QRoe083BcOo2YbG9lV"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/45d3f59802b7ce098047ca188d92316b4cc86a9c",
+      "albumTitle": "99 Luftballons",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02bab7a6c80b9da5e76f8e3fa6",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/5mYtpXrZZ1bbGJYDGC8I0Y",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6hs3SDnbO3f6VQuPO4KBEb",
+      "spotifyTrackId": "6hs3SDnbO3f6VQuPO4KBEb",
+      "spotifyTrackUri": "spotify:track:6hs3SDnbO3f6VQuPO4KBEb",
+      "title": "Send Me on My Way",
+      "artists": [
+        "Rusted Root"
+      ],
+      "artistIds": [
+        "2M3vnW1p5w4uPRkLYTbvdB"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/10a30c4b68683836017785f00e5246efe3379fde",
+      "albumTitle": "Music From Party of Five",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020b28f02c24b7dc72e61e7a07",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/6hs3SDnbO3f6VQuPO4KBEb",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2Nc1Tl1qHWLAtBnqRJmkP3",
+      "spotifyTrackId": "2Nc1Tl1qHWLAtBnqRJmkP3",
+      "spotifyTrackUri": "spotify:track:2Nc1Tl1qHWLAtBnqRJmkP3",
+      "title": "Boogie Shoes",
+      "artists": [
+        "KC & The Sunshine Band"
+      ],
+      "artistIds": [
+        "3mQBpAOMWYqAZyxtyeo4Lo"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/9f097853f1dc200b807623d045eaa04da7ac3d7f",
+      "albumTitle": "KC & the Sunshine Band... and More",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c15e8983eef55e19f9b73ff3",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/2Nc1Tl1qHWLAtBnqRJmkP3",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2tUBqZG2AbRi7Q0BIrVrEj",
+      "spotifyTrackId": "2tUBqZG2AbRi7Q0BIrVrEj",
+      "spotifyTrackUri": "spotify:track:2tUBqZG2AbRi7Q0BIrVrEj",
+      "title": "I Wanna Dance with Somebody (Who Loves Me)",
+      "artists": [
+        "Whitney Houston"
+      ],
+      "artistIds": [
+        "6XpaIBNiVzIetEPCWDvAFP"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/d08eeed434bdf398734fbb3ef95c1e397419c340",
+      "albumTitle": "Whitney",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a520a167a62d5548cdb53101",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/2tUBqZG2AbRi7Q0BIrVrEj",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4w3tQBXhn5345eUXDGBWZG",
+      "spotifyTrackId": "4w3tQBXhn5345eUXDGBWZG",
+      "spotifyTrackUri": "spotify:track:4w3tQBXhn5345eUXDGBWZG",
+      "title": "9 to 5",
+      "artists": [
+        "Dolly Parton"
+      ],
+      "artistIds": [
+        "32vWCbZh0xZ4o9gkz4PsEU"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/227e1589aee0f9ef60be36300842066da5ef25b6",
+      "albumTitle": "9 To 5 And Odd Jobs",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0249cb2d53994caada391cf39e",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/4w3tQBXhn5345eUXDGBWZG",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4VZDv8sASBS8UruUBGTFdk",
+      "spotifyTrackId": "4VZDv8sASBS8UruUBGTFdk",
+      "spotifyTrackUri": "spotify:track:4VZDv8sASBS8UruUBGTFdk",
+      "title": "Hold On",
+      "artists": [
+        "Wilson Phillips"
+      ],
+      "artistIds": [
+        "1yMYjh77WgOVafRkI50mim"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/5f417305b52c635a7df30bd45cbe6ad740ca49db",
+      "albumTitle": "Wilson Phillips",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e023168e1f416b81862ccc83594",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/4VZDv8sASBS8UruUBGTFdk",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0YTgZJfVLmJ0b8XAMZKRKg",
+      "spotifyTrackId": "0YTgZJfVLmJ0b8XAMZKRKg",
+      "spotifyTrackUri": "spotify:track:0YTgZJfVLmJ0b8XAMZKRKg",
+      "title": "Mack the Knife",
+      "artists": [
+        "Bobby Darin"
+      ],
+      "artistIds": [
+        "0EodhzA6yW1bIdD5B4tcmJ"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/c548d30e535d83c4e90162a7435f8764669fd381",
+      "albumTitle": "The Ultimate Bobby Darin",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0232ca9d1b933d95925e170c90",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/0YTgZJfVLmJ0b8XAMZKRKg",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2xar08Fq5xra2KKZs5Bw9j",
+      "spotifyTrackId": "2xar08Fq5xra2KKZs5Bw9j",
+      "spotifyTrackUri": "spotify:track:2xar08Fq5xra2KKZs5Bw9j",
+      "title": "I've Got a Woman",
+      "artists": [
+        "Ray Charles"
+      ],
+      "artistIds": [
+        "1eYhYunlNJlDoQhtYBvPsi"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/425d081433204c6ded4ae8f852ee89e5d5bcdc0d",
+      "albumTitle": "Ray Charles (aka: Hallelujah, I Love Her So)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f0e951707ca49b533fdbf64e",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/2xar08Fq5xra2KKZs5Bw9j",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5it6O1Z84HVK4A4E8OIufF",
+      "spotifyTrackId": "5it6O1Z84HVK4A4E8OIufF",
+      "spotifyTrackUri": "spotify:track:5it6O1Z84HVK4A4E8OIufF",
+      "title": "With Arms Outstretched",
+      "artists": [
+        "Rilo Kiley"
+      ],
+      "artistIds": [
+        "2cevwbv7ISD92VMNLYLHZA"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/e9eeee1b253b19a9a6b86bb179f92027456ee8c3",
+      "albumTitle": "The Execution Of All Things",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020fc393d89bb5480b4f064b8f",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/5it6O1Z84HVK4A4E8OIufF",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1PS1QMdUqOal0ai3Gt7sDQ",
+      "spotifyTrackId": "1PS1QMdUqOal0ai3Gt7sDQ",
+      "spotifyTrackUri": "spotify:track:1PS1QMdUqOal0ai3Gt7sDQ",
+      "title": "Gold Digger",
+      "artists": [
+        "Kanye West",
+        "Jamie Foxx"
+      ],
+      "artistIds": [
+        "5K4W6rqBFWDnAN6FQUkS6x",
+        "7LnaAXbDVIL75IVPnndf7w"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/c07d8315fb8fc3a820a312e29961c96a2e7d7229",
+      "albumTitle": "Late Registration",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02428d2255141c2119409a31b2",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/1PS1QMdUqOal0ai3Gt7sDQ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3qKo1AurAhl5KEMyWMoXLf",
+      "spotifyTrackId": "3qKo1AurAhl5KEMyWMoXLf",
+      "spotifyTrackUri": "spotify:track:3qKo1AurAhl5KEMyWMoXLf",
+      "title": "Celluloid Heroes",
+      "artists": [
+        "The Kinks"
+      ],
+      "artistIds": [
+        "1SQRv42e4PjEYfPhS0Tk9E"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/3d65c6135fdf7a99e180e0356b6f79c6c8f273b9",
+      "albumTitle": "Everybody's in Show-Biz (Legacy Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020a5c906230c7a64e21570d9e",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/3qKo1AurAhl5KEMyWMoXLf",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0jODWcPXpqg2f54P1O64y6",
+      "spotifyTrackId": "0jODWcPXpqg2f54P1O64y6",
+      "spotifyTrackUri": "spotify:track:0jODWcPXpqg2f54P1O64y6",
+      "title": "Maybe God Is Tryin' To Tell You Somethin' - From \"The Color Purple\" Soundtrack",
+      "artists": [
+        "Quincy Jones"
+      ],
+      "artistIds": [
+        "3rxIQc9kWT6Ueg4BhnOwRK"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/c130d0455c99ba3289ec684ec661429bd5650df1",
+      "albumTitle": "The Color Purple",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02893ec4584195ccbcea27d3df",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/0jODWcPXpqg2f54P1O64y6",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5JzF2iymNwCyFz9MTmojd0",
+      "spotifyTrackId": "5JzF2iymNwCyFz9MTmojd0",
+      "spotifyTrackUri": "spotify:track:5JzF2iymNwCyFz9MTmojd0",
+      "title": "Why Don't You Get a Job?",
+      "artists": [
+        "The Offspring"
+      ],
+      "artistIds": [
+        "5LfGQac0EIXyAN8aUwmNAQ"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/aba0f950459ff2e9b78c0338d4c6b4166887d018",
+      "albumTitle": "Americana",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020fdb7379076fe5c08ac55c38",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/5JzF2iymNwCyFz9MTmojd0",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "38i0QcGQ9hu8PMk4QObUTj",
+      "spotifyTrackId": "38i0QcGQ9hu8PMk4QObUTj",
+      "spotifyTrackUri": "spotify:track:38i0QcGQ9hu8PMk4QObUTj",
+      "title": "Holiday Road - National Lampoon's Vacation",
+      "artists": [
+        "Lindsey Buckingham"
+      ],
+      "artistIds": [
+        "3Dzj993UEz8Z5ovxuirzFO"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/9e053218f3ff741e9c467c47e900955569894a89",
+      "albumTitle": "Holiday Road",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02217c0066ccc25db60b58e7aa",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/38i0QcGQ9hu8PMk4QObUTj",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "48BNSgeaNqQXKMSlCC8JdT",
+      "spotifyTrackId": "48BNSgeaNqQXKMSlCC8JdT",
+      "spotifyTrackUri": "spotify:track:48BNSgeaNqQXKMSlCC8JdT",
+      "title": "St. Anne's Parade",
+      "artists": [
+        "Shovels & Rope"
+      ],
+      "artistIds": [
+        "1M3BVQ36cqPQix8lQNCh4K"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/8837ca061b1bc0a4f6b62a7059b47393cc216059",
+      "albumTitle": "St. Anne's Parade",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027d0ea07d7e9d6b1ab7189dad",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/48BNSgeaNqQXKMSlCC8JdT",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2LkaNhCrNVmcYgXJeLVmsw",
+      "spotifyTrackId": "2LkaNhCrNVmcYgXJeLVmsw",
+      "spotifyTrackUri": "spotify:track:2LkaNhCrNVmcYgXJeLVmsw",
+      "title": "The Sound of Silence",
+      "artists": [
+        "Simon & Garfunkel"
+      ],
+      "artistIds": [
+        "70cRZdQywnSFp9pnc2WTCE"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/8d9b74974ad656a3c84032b0b5c1f8ecda2a467e",
+      "albumTitle": "The Graduate",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02172b67ed85f8899d5695752e",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/2LkaNhCrNVmcYgXJeLVmsw",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4YwbSZaYeYja8Umyt222Qf",
+      "spotifyTrackId": "4YwbSZaYeYja8Umyt222Qf",
+      "spotifyTrackUri": "spotify:track:4YwbSZaYeYja8Umyt222Qf",
+      "title": "You Can't Hurry Love - 2016 Remaster",
+      "artists": [
+        "Phil Collins"
+      ],
+      "artistIds": [
+        "4lxfqrEsLX6N1N4OCSkILp"
+      ],
+      "previewUrl": "https://p.scdn.co/mp3-preview/153e910b0235f6460be80b228872d954bd4c96c2",
+      "albumTitle": "Hello, I Must Be Going! (Deluxe Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ab0a92e5cd20c2224c44a8a6",
+      "year": "",
+      "externalUrl": "https://open.spotify.com/track/4YwbSZaYeYja8Umyt222Qf",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    }
+  ]
+}

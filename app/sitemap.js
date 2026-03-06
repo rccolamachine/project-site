@@ -38,5 +38,9 @@ export default function sitemap() {
       url: `${baseUrl}/todo`,
       lastModified: new Date(),
     },
+    {
+      url: `${baseUrl}/mixtape`,
+      lastModified: new Date(),
+    },
   ];
 }

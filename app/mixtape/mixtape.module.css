@@ -1,0 +1,161 @@
+.pageHeader {
+  margin-bottom: 16px;
+}
+
+.headerMeta {
+  margin-top: 6px;
+}
+
+.panelSpacing {
+  margin-top: 14px;
+}
+
+.stackSpacing {
+  margin-top: 14px;
+}
+
+.playerCard {
+  margin-top: 12px;
+  display: none;
+  padding: 0;
+  overflow: hidden;
+  border-color: rgba(45, 226, 230, 0.28);
+  background: linear-gradient(
+    180deg,
+    rgba(8, 20, 22, 0.62),
+    rgba(2, 7, 10, 0.7)
+  );
+}
+
+.playerCardVisible {
+  display: block;
+}
+
+.playerShell {
+  padding: 10px 12px 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(45, 226, 230, 0.05),
+    rgba(255, 79, 216, 0.04)
+  );
+}
+
+.playerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.playerLabel {
+  margin-bottom: 0;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1.55;
+  color: rgba(206, 252, 255, 0.92);
+}
+
+.playerClose {
+  min-width: 26px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 10px;
+  line-height: 1;
+}
+
+.playerMount {
+  min-height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(45, 226, 230, 0.28);
+}
+
+.playerMountHidden {
+  display: none;
+}
+
+.playerBootMessage {
+  display: grid;
+  place-items: center;
+}
+
+.panelHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.panelReadout {
+  margin-top: 6px;
+}
+
+.panelMessage {
+  padding: 12px;
+}
+
+.panelPlaybackError {
+  padding: 0 12px 10px;
+}
+
+.loadingMore {
+  padding: 10px;
+}
+
+.tracklistBody {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  line-height: 1.75;
+  max-height: 300px;
+}
+
+.tracklistBody :global(.ui-logIndex) {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.tracklistBody :global(.ui-logTitle) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.playlistRow {
+  cursor: pointer;
+  grid-template-columns: 72px 52px minmax(220px, 1fr) auto;
+}
+
+.wakeupRow {
+  cursor: pointer;
+  grid-template-columns: 190px 52px minmax(220px, 1fr) auto;
+}
+
+.trackPlayButton {
+  min-width: 32px;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.trackPlayButtonMuted {
+  opacity: 0.5;
+}
+
+.trackTitlePadded {
+  padding-right: 8px;
+}
+
+.loadErrorCard {
+  margin-top: 12px;
+}
+
+.infoActionRow {
+  margin-top: 12px;
+}

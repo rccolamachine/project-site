@@ -57,12 +57,12 @@ const ITEMS = [
   },
   {
     id: "reactor-page-make-all-molecules",
-    title: "Ensure all molecules in catalogue can be made in Reactor",
+    title: "Reactor: track first and last time each molecule was made",
     area: "Reactor",
-    priority: "P1",
-    status: "inProgress",
+    priority: "P2",
+    status: "todo",
     notes:
-      "Currently running simulations to ensure all molecules in the catalogue can be made in Reactor. Compile recipes from results to add to catalogue.",
+      "Add API endpoints and database storage to record the first and most recent time each molecule was made. Include this shared history in everyone's catalogue.",
     links: [{ label: "Open Reactor", href: "/reactor" }],
   },
   {
@@ -76,6 +76,16 @@ const ITEMS = [
     links: [{ label: "Open Reactor", href: "/reactor" }],
   },
   {
+    id: "reactor-catalogue-api-saves",
+    title: "Move Reactor catalogue to API saves",
+    area: "Reactor",
+    priority: "P3",
+    status: "todo",
+    notes:
+      "Move Reactor catalogue persistence out of local/client storage and into API-backed saves so catalogue progress is stored centrally.",
+    links: [{ label: "Open Reactor", href: "/reactor" }],
+  },
+  {
     id: "update-about-page",
     title: "About page: fill it with stuff",
     area: "About",
@@ -84,6 +94,16 @@ const ITEMS = [
     notes:
       "Add content and stylize About page. Include bio, links, and whatever else seems fun. It's been a placeholder for too long. Add spotify playlist? Fix Links.",
     links: [{ label: "Open About", href: "/about" }],
+  },
+  {
+    id: "mixtape-restore-full-spotify",
+    title: "Mixtape: restore Full Spotify playlist features",
+    area: "Mixtape",
+    priority: "P1",
+    status: "todo",
+    notes:
+      "After Spotify allows creating a new app/client key again, re-enable and verify Full Mixtape Spotify functionality (playlist loading, lookup/search, and player flow) with live API credentials.",
+    links: [{ label: "Open Mixtape", href: "/mixtape" }],
   },
   {
     id: "populate-pictures-page",
@@ -147,7 +167,7 @@ const ITEMS = [
     title: "Pixelbooth: style upgrade and UI polish",
     area: "Pixelbooth",
     priority: "P4",
-    status: "todo", // todo | inProgress | done
+    status: "done", // todo | inProgress | done
     notes:
       "Make some design tweaks on the Pixelbooth page, including the Pixelation slider.",
     links: [{ label: "Open Pixelbooth", href: "/pixelbooth" }],
@@ -157,7 +177,7 @@ const ITEMS = [
     title: "Add Favicon",
     area: "General",
     priority: "P3",
-    status: "todo",
+    status: "done",
     notes: "Add a favicon to the site for better branding and user experience.",
   },
 ];
