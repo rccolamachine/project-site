@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import {
+  createWakeupSong,
+  deleteWakeupSong,
+  listWakeupSongs,
+} from "@/lib/wakeupSongsStore";
 
 export const runtime = "nodejs";
 
@@ -60,22 +64,7 @@ function parseSongId(input) {
 
 export async function GET() {
   try {
-    const items = db
-      .prepare(
-        `
-          SELECT
-            id,
-            song_title AS title,
-            artist,
-            song_date AS date,
-            spotify_track_id AS spotifyTrackId,
-            spotify_artist_id AS spotifyArtistId,
-            created_at
-          FROM wakeup_songs
-          ORDER BY song_date DESC, created_at DESC, id DESC
-        `,
-      )
-      .all();
+    const items = await listWakeupSongs();
 
     return NextResponse.json(
       { items },
@@ -136,39 +125,13 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
     }
 
-    const createdAt = new Date().toISOString();
-    const insert = db
-      .prepare(
-        `
-          INSERT INTO wakeup_songs (
-            song_title,
-            artist,
-            song_date,
-            spotify_track_id,
-            spotify_artist_id,
-            created_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?)
-        `,
-      )
-      .run(title, artist, date, spotifyTrackId, spotifyArtistId, createdAt);
-
-    const item = db
-      .prepare(
-        `
-          SELECT
-            id,
-            song_title AS title,
-            artist,
-            song_date AS date,
-            spotify_track_id AS spotifyTrackId,
-            spotify_artist_id AS spotifyArtistId,
-            created_at
-          FROM wakeup_songs
-          WHERE id = ?
-        `,
-      )
-      .get(insert.lastInsertRowid);
+    const item = await createWakeupSong({
+      title,
+      artist,
+      date,
+      spotifyTrackId,
+      spotifyArtistId,
+    });
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (err) {
@@ -217,14 +180,11 @@ export async function DELETE(req) {
       return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
     }
 
-    const existing = db
-      .prepare(`SELECT id FROM wakeup_songs WHERE id = ?`)
-      .get(id);
-    if (!existing) {
+    const deleted = await deleteWakeupSong(id);
+    if (!deleted) {
       return NextResponse.json({ error: "Song not found." }, { status: 404 });
     }
 
-    db.prepare(`DELETE FROM wakeup_songs WHERE id = ?`).run(id);
     return NextResponse.json({ ok: true, id }, { status: 200 });
   } catch (err) {
     return NextResponse.json(
