@@ -136,6 +136,96 @@ function buildAdjacency(atoms, bonds) {
   return adjacency;
 }
 
+function vecLength(x, y, z) {
+  return Math.sqrt(x * x + y * y + z * z);
+}
+
+function normalizeVec(vec) {
+  const len = vecLength(vec.x, vec.y, vec.z) || 1;
+  return {
+    x: vec.x / len,
+    y: vec.y / len,
+    z: vec.z / len,
+  };
+}
+
+function crossVec(a, b) {
+  return {
+    x: a.y * b.z - a.z * b.y,
+    y: a.z * b.x - a.x * b.z,
+    z: a.x * b.y - a.y * b.x,
+  };
+}
+
+function perpendicularUnit(axis) {
+  const base = Math.abs(axis.x) < 0.72 ? { x: 1, y: 0, z: 0 } : { x: 0, y: 1, z: 0 };
+  const perp = crossVec(axis, base);
+  if (vecLength(perp.x, perp.y, perp.z) > 1e-6) return normalizeVec(perp);
+  return { x: 0, y: 0, z: 1 };
+}
+
+function polarDirection(axis, u, v, thetaDeg, phiDeg) {
+  const theta = (thetaDeg * Math.PI) / 180;
+  const phi = (phiDeg * Math.PI) / 180;
+  const sinTheta = Math.sin(theta);
+  return normalizeVec({
+    x:
+      axis.x * Math.cos(theta) +
+      u.x * sinTheta * Math.cos(phi) +
+      v.x * sinTheta * Math.sin(phi),
+    y:
+      axis.y * Math.cos(theta) +
+      u.y * sinTheta * Math.cos(phi) +
+      v.y * sinTheta * Math.sin(phi),
+    z:
+      axis.z * Math.cos(theta) +
+      u.z * sinTheta * Math.cos(phi) +
+      v.z * sinTheta * Math.sin(phi),
+  });
+}
+
+function buildRingMembership(atoms, bonds) {
+  const adjacency = buildAdjacency(atoms, bonds);
+  const ringSizesByAtom = Array.from({ length: atoms.length }, () => new Set());
+
+  for (const bond of bonds) {
+    const src = bond.a;
+    const dst = bond.b;
+    const queue = [[src, [src]]];
+    const visited = new Set([src]);
+    let shortestCycle = null;
+
+    while (queue.length > 0) {
+      const [cur, path] = queue.shift();
+      if (path.length > 6) continue;
+      for (const next of adjacency[cur]) {
+        if ((cur === src && next.to === dst) || (cur === dst && next.to === src)) {
+          continue;
+        }
+        if (next.to === dst) {
+          shortestCycle = path.concat(dst);
+          queue.length = 0;
+          break;
+        }
+        if (visited.has(next.to)) continue;
+        visited.add(next.to);
+        queue.push([next.to, path.concat(next.to)]);
+      }
+    }
+
+    if (!shortestCycle) continue;
+    const ringSize = shortestCycle.length;
+    if (ringSize < 3 || ringSize > 6) continue;
+    for (const atomIdx of shortestCycle) {
+      ringSizesByAtom[atomIdx].add(ringSize);
+    }
+  }
+
+  return ringSizesByAtom.map((set) =>
+    set.size > 0 ? Math.min(...Array.from(set)) : null,
+  );
+}
+
 function bondLengthTarget3D(atoms, a, b, order = 1) {
   const hasH = atoms[a]?.el === "H" || atoms[b]?.el === "H";
   if (hasH) return 0.84;
@@ -144,57 +234,226 @@ function bondLengthTarget3D(atoms, a, b, order = 1) {
   return 1.1;
 }
 
-function inferIdealBondAngleDeg(el, neighborRows, atoms) {
-  const degree = neighborRows.length;
-  if (degree <= 1) return null;
-
-  const bondOrderSum = neighborRows.reduce((sum, row) => sum + row.order, 0);
-  const maxOrder = neighborRows.reduce((max, row) => Math.max(max, row.order), 0);
-  const heavyDegree = neighborRows.reduce(
+function inferAtomGeometry(atoms, adjacency, center, ringSizes) {
+  const atom = atoms[center];
+  const neighbors = adjacency[center];
+  const degree = neighbors.length;
+  const bondOrderSum = neighbors.reduce((sum, row) => sum + row.order, 0);
+  const maxOrder = neighbors.reduce((max, row) => Math.max(max, row.order), 0);
+  const heavyDegree = neighbors.reduce(
     (sum, row) => sum + (atoms[row.to]?.el === "H" ? 0 : 1),
     0,
   );
+  const ringSize = ringSizes?.[center] ?? null;
+  const aromaticLike =
+    ringSize != null &&
+    ringSize <= 6 &&
+    degree >= 2 &&
+    bondOrderSum >= 3 &&
+    atom.el !== "H";
 
-  if (degree === 2) {
-    if (el === "O") return bondOrderSum >= 3 ? 120 : 104.5;
-    if (el === "S") return bondOrderSum >= 3 ? 112 : 104.5;
-    if (el === "N" || el === "P") return bondOrderSum >= 4 ? 120 : 107;
-    if (maxOrder >= 3 || bondOrderSum >= 4) return 180;
-    if (heavyDegree >= 2 && bondOrderSum >= 3) return 180;
-    return 120;
+  let lonePairs = 0;
+  let geometry = "terminal";
+  let baseAngleDeg = null;
+
+  if (degree <= 1) {
+    if ((atom.el === "C" || atom.el === "N" || atom.el === "P") && maxOrder >= 3) {
+      geometry = "linear";
+    }
+    return {
+      lonePairs,
+      geometry,
+      baseAngleDeg,
+      aromaticLike,
+      ringSize,
+      degree,
+      bondOrderSum,
+      maxOrder,
+      heavyDegree,
+      planar: geometry === "trigonal-planar" || aromaticLike,
+    };
   }
 
-  if (degree === 3) {
-    if ((el === "N" || el === "P") && maxOrder <= 1 && bondOrderSum <= 3) {
-      return 107;
-    }
-    if ((el === "O" || el === "S") && maxOrder <= 1 && bondOrderSum <= 3) {
-      return 104.5;
-    }
-    if (maxOrder >= 2 || bondOrderSum >= 4) return 120;
-    return 109.5;
+  switch (atom.el) {
+    case "C":
+      lonePairs = 0;
+      if (degree === 2 && (maxOrder >= 3 || bondOrderSum >= 4)) {
+        geometry = "linear";
+        baseAngleDeg = 180;
+      } else if (aromaticLike || degree === 3 || maxOrder >= 2 || bondOrderSum >= 4) {
+        geometry = "trigonal-planar";
+        baseAngleDeg = 120;
+      } else {
+        geometry = "tetrahedral";
+        baseAngleDeg = 109.5;
+      }
+      break;
+    case "N":
+      if (degree === 2 && maxOrder >= 3) {
+        lonePairs = 0;
+        geometry = "linear";
+        baseAngleDeg = 180;
+      } else if (degree >= 3 && (bondOrderSum >= 4 || aromaticLike)) {
+        lonePairs = 0;
+        geometry = "trigonal-planar";
+        baseAngleDeg = 120;
+      } else if (degree === 2 && bondOrderSum >= 3) {
+        lonePairs = 1;
+        geometry = "bent-trigonal";
+        baseAngleDeg = 118;
+      } else if (degree === 3) {
+        lonePairs = 1;
+        geometry = "trigonal-pyramidal";
+        baseAngleDeg = 107;
+      } else {
+        lonePairs = 1;
+        geometry = "bent-tetrahedral";
+        baseAngleDeg = 105;
+      }
+      break;
+    case "O":
+      if (degree === 2 && bondOrderSum >= 3) {
+        lonePairs = 1;
+        geometry = "bent-trigonal";
+        baseAngleDeg = 118;
+      } else if (degree === 3) {
+        lonePairs = 1;
+        geometry = "trigonal-pyramidal";
+        baseAngleDeg = 107;
+      } else {
+        lonePairs = 2;
+        geometry = "bent-tetrahedral";
+        baseAngleDeg = 104.5;
+      }
+      break;
+    case "P":
+      if (degree === 2 && maxOrder >= 3) {
+        lonePairs = 0;
+        geometry = "linear";
+        baseAngleDeg = 180;
+      } else if (degree >= 4 || bondOrderSum >= 5) {
+        lonePairs = 0;
+        geometry = "tetrahedral";
+        baseAngleDeg = 109.5;
+      } else if (degree === 3 && bondOrderSum >= 4) {
+        lonePairs = 0;
+        geometry = "trigonal-planar";
+        baseAngleDeg = 120;
+      } else if (degree === 3) {
+        lonePairs = 1;
+        geometry = "trigonal-pyramidal";
+        baseAngleDeg = 98;
+      } else {
+        lonePairs = 1;
+        geometry = "bent-tetrahedral";
+        baseAngleDeg = 96;
+      }
+      break;
+    case "S":
+      if (degree === 2 && bondOrderSum >= 4) {
+        lonePairs = 1;
+        geometry = "bent-trigonal";
+        baseAngleDeg = 119;
+      } else if (degree === 2 && bondOrderSum === 3) {
+        lonePairs = 1;
+        geometry = "bent-trigonal";
+        baseAngleDeg = 114;
+      } else if (degree >= 3 && bondOrderSum >= 6) {
+        lonePairs = 0;
+        geometry = "trigonal-planar";
+        baseAngleDeg = 120;
+      } else if (degree === 3 && bondOrderSum >= 4) {
+        lonePairs = 1;
+        geometry = "trigonal-pyramidal";
+        baseAngleDeg = 103;
+      } else if (degree >= 4) {
+        lonePairs = 0;
+        geometry = "tetrahedral";
+        baseAngleDeg = 109.5;
+      } else {
+        lonePairs = 2;
+        geometry = "bent-tetrahedral";
+        baseAngleDeg = 104.5;
+      }
+      break;
+    default:
+      geometry = degree === 2 ? "linear" : degree === 3 ? "trigonal-planar" : "tetrahedral";
+      baseAngleDeg = geometry === "linear" ? 180 : geometry === "trigonal-planar" ? 120 : 109.5;
+      break;
   }
 
-  if (degree === 4) return 109.5;
-  return (Math.acos(-1 / Math.max(1.05, degree - 1)) * 180) / Math.PI;
+  if (aromaticLike && degree >= 2 && atom.el !== "S" && atom.el !== "P") {
+    geometry = degree === 2 ? "bent-trigonal" : "trigonal-planar";
+    baseAngleDeg = degree === 2 ? 120 : 120;
+  }
+
+  return {
+    lonePairs,
+    geometry,
+    baseAngleDeg,
+    aromaticLike,
+    ringSize,
+    degree,
+    bondOrderSum,
+    maxOrder,
+    heavyDegree,
+    planar: geometry === "trigonal-planar" || geometry === "bent-trigonal" || aromaticLike,
+  };
+}
+
+function pairAngleTargetDeg(feature, orderA, orderB) {
+  const base = feature.baseAngleDeg;
+  if (!Number.isFinite(base)) return null;
+  if (feature.geometry === "linear") return 180;
+
+  let target = base;
+  const multipleCount = (orderA > 1 ? 1 : 0) + (orderB > 1 ? 1 : 0);
+
+  if (feature.geometry === "trigonal-planar") {
+    if (multipleCount === 2) target += 3;
+    else if (multipleCount === 1) target += 1.5;
+  } else if (feature.geometry === "bent-trigonal") {
+    if (multipleCount === 1) target -= 1.5;
+  } else if (feature.geometry === "trigonal-pyramidal") {
+    if (multipleCount >= 1) target += 2;
+  } else if (feature.geometry === "tetrahedral") {
+    if (multipleCount >= 1) target += 1.5;
+  } else if (feature.geometry === "bent-tetrahedral") {
+    if (multipleCount >= 1) target -= 2;
+  }
+
+  if (feature.aromaticLike && feature.ringSize && feature.ringSize <= 6) {
+    target = Math.max(target, 118);
+  }
+
+  return target;
 }
 
 function buildAngleConstraints(atoms, bonds) {
   const adjacency = buildAdjacency(atoms, bonds);
+  const ringSizes = buildRingMembership(atoms, bonds);
+  const features = adjacency.map((_, idx) =>
+    inferAtomGeometry(atoms, adjacency, idx, ringSizes),
+  );
   const constraints = [];
+  const guides = [];
 
   for (let center = 0; center < adjacency.length; center += 1) {
     const neighbors = adjacency[center];
     if (neighbors.length < 2) continue;
-
-    const targetDeg = inferIdealBondAngleDeg(atoms[center]?.el, neighbors, atoms);
-    if (!Number.isFinite(targetDeg)) continue;
-    const targetRad = (targetDeg * Math.PI) / 180;
+    const feature = features[center];
 
     for (let i = 0; i < neighbors.length; i += 1) {
       for (let j = i + 1; j < neighbors.length; j += 1) {
         const a = neighbors[i].to;
         const b = neighbors[j].to;
+        const targetDeg = pairAngleTargetDeg(
+          feature,
+          neighbors[i].order,
+          neighbors[j].order,
+        );
+        if (!Number.isFinite(targetDeg)) continue;
+        const targetRad = (targetDeg * Math.PI) / 180;
         const lenA = bondLengthTarget3D(atoms, center, a, neighbors[i].order);
         const lenB = bondLengthTarget3D(atoms, center, b, neighbors[j].order);
         const pairTarget = Math.sqrt(
@@ -207,19 +466,218 @@ function buildAngleConstraints(atoms, bonds) {
           center,
           a,
           b,
+          targetDeg,
           target: pairTarget,
           stiffness:
-            neighbors.length === 2
-              ? 0.18
-              : neighbors.length === 3
-                ? 0.15
-                : 0.11,
+            feature.geometry === "linear"
+              ? 0.42
+              : feature.geometry === "trigonal-planar" || feature.geometry === "bent-trigonal"
+                ? 0.24
+                : feature.geometry === "tetrahedral" || feature.geometry === "trigonal-pyramidal"
+                  ? 0.19
+                  : 0.16,
         });
+        if (targetDeg >= 160) {
+          guides.push({ center, a, b, targetDeg, weight: 1.4 });
+        }
       }
     }
   }
 
-  return constraints;
+  return { constraints, features, guides, ringSizes };
+}
+
+function defaultDirectionsForGeometry(feature) {
+  switch (feature.geometry) {
+    case "linear":
+      return [
+        { x: 1, y: 0, z: 0 },
+        { x: -1, y: 0, z: 0 },
+      ];
+    case "trigonal-planar":
+    case "bent-trigonal":
+      return [
+        { x: 1, y: 0, z: 0 },
+        { x: -0.5, y: 0.8660254, z: 0 },
+        { x: -0.5, y: -0.8660254, z: 0 },
+      ];
+    case "tetrahedral":
+    case "trigonal-pyramidal":
+    case "bent-tetrahedral":
+      return [
+        normalizeVec({ x: 1, y: 1, z: 1 }),
+        normalizeVec({ x: 1, y: -1, z: -1 }),
+        normalizeVec({ x: -1, y: 1, z: -1 }),
+        normalizeVec({ x: -1, y: -1, z: 1 }),
+      ];
+    default:
+      return [{ x: 1, y: 0, z: 0 }];
+  }
+}
+
+function preferredChildDirections(feature, parentDir = null, needed = 0) {
+  if (!(needed > 0)) return [];
+
+  if (!parentDir) {
+    const defaults = defaultDirectionsForGeometry(feature);
+    if (feature.geometry === "bent-trigonal") {
+      const angle = feature.baseAngleDeg || 118;
+      return [
+        normalizeVec({ x: Math.cos((angle * Math.PI) / 360), y: Math.sin((angle * Math.PI) / 360), z: 0 }),
+        normalizeVec({ x: Math.cos((angle * Math.PI) / 360), y: -Math.sin((angle * Math.PI) / 360), z: 0 }),
+      ].slice(0, needed);
+    }
+    if (feature.geometry === "bent-tetrahedral") {
+      const angle = feature.baseAngleDeg || 104.5;
+      return [
+        normalizeVec({ x: Math.cos((angle * Math.PI) / 360), y: 0, z: Math.sin((angle * Math.PI) / 360) }),
+        normalizeVec({ x: Math.cos((angle * Math.PI) / 360), y: 0, z: -Math.sin((angle * Math.PI) / 360) }),
+      ].slice(0, needed);
+    }
+    return defaults.slice(0, needed);
+  }
+
+  const axis = normalizeVec(parentDir);
+  const u = perpendicularUnit(axis);
+  const v = normalizeVec(crossVec(axis, u));
+
+  switch (feature.geometry) {
+    case "linear":
+      return [{ x: -axis.x, y: -axis.y, z: -axis.z }].slice(0, needed);
+    case "bent-trigonal": {
+      const angle = feature.baseAngleDeg || 118;
+      return [polarDirection(axis, u, v, angle, 0)].slice(0, needed);
+    }
+    case "trigonal-planar":
+      return [
+        polarDirection(axis, u, v, 120, 0),
+        polarDirection(axis, u, v, 120, 180),
+      ].slice(0, needed);
+    case "bent-tetrahedral": {
+      const angle = feature.baseAngleDeg || 104.5;
+      return [polarDirection(axis, u, v, angle, 0)].slice(0, needed);
+    }
+    case "trigonal-pyramidal":
+    case "tetrahedral":
+      return [
+        polarDirection(axis, u, v, 109.47, 0),
+        polarDirection(axis, u, v, 109.47, 120),
+        polarDirection(axis, u, v, 109.47, 240),
+      ].slice(0, needed);
+    default:
+      return [
+        polarDirection(axis, u, v, 120, 0),
+        polarDirection(axis, u, v, 120, 180),
+      ].slice(0, needed);
+  }
+}
+
+function chooseRootIndex(atoms, adjacency) {
+  let best = 0;
+  let bestScore = -Infinity;
+  for (let i = 0; i < atoms.length; i += 1) {
+    const degree = adjacency[i].length;
+    const heavyDegree = adjacency[i].reduce(
+      (sum, row) => sum + (atoms[row.to].el === "H" ? 0 : 1),
+      0,
+    );
+    const score =
+      heavyDegree * 10 +
+      degree * 4 +
+      (atoms[i].el === "C" ? 2 : atoms[i].el === "N" || atoms[i].el === "O" ? 1 : 0);
+    if (score > bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+  return best;
+}
+
+function buildInitialLayout3D(atoms, bonds, features) {
+  const adjacency = buildAdjacency(atoms, bonds);
+  const nodes = atoms.map((atom, idx) => ({
+    idx,
+    el: atom.el,
+    x: 0,
+    y: 0,
+    z: 0,
+    placed: false,
+  }));
+  const root = chooseRootIndex(atoms, adjacency);
+  nodes[root].placed = true;
+  const queue = [{ center: root, parent: -1 }];
+
+  while (queue.length > 0) {
+    const { center, parent } = queue.shift();
+    const feature = features[center];
+    const childRows = adjacency[center]
+      .filter((row) => row.to !== parent && !nodes[row.to].placed)
+      .sort((a, b) => {
+        if (b.order !== a.order) return b.order - a.order;
+        const ah = atoms[a.to].el === "H" ? 0 : 1;
+        const bh = atoms[b.to].el === "H" ? 0 : 1;
+        return bh - ah;
+      });
+
+    if (childRows.length <= 0) continue;
+
+    const parentDir =
+      parent >= 0
+        ? normalizeVec({
+            x: nodes[parent].x - nodes[center].x,
+            y: nodes[parent].y - nodes[center].y,
+            z: nodes[parent].z - nodes[center].z,
+          })
+        : null;
+    const dirs = preferredChildDirections(feature, parentDir, childRows.length);
+
+    for (let i = 0; i < childRows.length; i += 1) {
+      const row = childRows[i];
+      const dir = dirs[i] || defaultDirectionsForGeometry(feature)[i] || { x: 1, y: 0, z: 0 };
+      const len = bondLengthTarget3D(atoms, center, row.to, row.order);
+      nodes[row.to].x = nodes[center].x + dir.x * len;
+      nodes[row.to].y = nodes[center].y + dir.y * len;
+      nodes[row.to].z = nodes[center].z + dir.z * len;
+      nodes[row.to].placed = true;
+      queue.push({ center: row.to, parent: center });
+    }
+  }
+
+  // Any unresolved ring/closure atoms get a deterministic fallback around the root.
+  for (let i = 0; i < nodes.length; i += 1) {
+    if (nodes[i].placed) continue;
+    const theta = (2 * Math.PI * i) / Math.max(3, nodes.length);
+    nodes[i].x = Math.cos(theta) * 1.2;
+    nodes[i].y = Math.sin(theta) * 1.2;
+    nodes[i].z = (i % 2 === 0 ? 1 : -1) * 0.18;
+    nodes[i].placed = true;
+  }
+
+  return nodes;
+}
+
+function countProjectedAnglePenalty(nodes, guides) {
+  let penalty = 0;
+  for (const guide of guides || []) {
+    const center = nodes[guide.center];
+    const a = nodes[guide.a];
+    const b = nodes[guide.b];
+    const v1x = a.x - center.x;
+    const v1y = a.y - center.y;
+    const v2x = b.x - center.x;
+    const v2y = b.y - center.y;
+    const l1 = Math.hypot(v1x, v1y);
+    const l2 = Math.hypot(v2x, v2y);
+    if (l1 < 1e-3 || l2 < 1e-3) {
+      penalty += 60;
+      continue;
+    }
+    const cosTheta = clamp((v1x * v2x + v1y * v2y) / (l1 * l2), -1, 1);
+    const deg = (Math.acos(cosTheta) * 180) / Math.PI;
+    const diff = Math.abs(deg - guide.targetDeg);
+    penalty += diff * (guide.weight || 1);
+  }
+  return penalty;
 }
 
 function countProjectionOverlap(nodes) {
@@ -291,6 +749,10 @@ function selectBestStaticProjection(layout3d, orientationIndex = 0) {
       projected,
       crossings: countLayoutCrossings(projected.nodes2d, projected.bonds),
       overlap: countProjectionOverlap(projected.nodes2d),
+      anglePenalty: countProjectedAnglePenalty(
+        projected.nodes2d,
+        layout3d.guides || [],
+      ),
       area: (maxX - minX) * (maxY - minY),
       depth: maxZ - minZ,
     };
@@ -301,6 +763,9 @@ function selectBestStaticProjection(layout3d, orientationIndex = 0) {
   candidates.sort((a, b) => {
     if (a.crossings !== b.crossings) return a.crossings - b.crossings;
     if (Math.abs(a.overlap - b.overlap) > 1e-4) return a.overlap - b.overlap;
+    if (Math.abs(a.anglePenalty - b.anglePenalty) > 1e-4) {
+      return a.anglePenalty - b.anglePenalty;
+    }
     if (Math.abs(a.area - b.area) > 1e-3) return b.area - a.area;
     if (Math.abs(a.depth - b.depth) > 1e-4) return b.depth - a.depth;
     return a.idx - b.idx;
@@ -509,21 +974,9 @@ function buildBallStickLayout3D(structure) {
 
   const { atoms, bonds } = parsed;
   const n = atoms.length;
-  const angleConstraints = buildAngleConstraints(atoms, bonds);
-  const nodes = atoms.map((atom, idx) => {
-    if (n <= 1) return { idx, el: atom.el, x: 0, y: 0, z: 0 };
-    const t = (idx + 0.5) / n;
-    const phi = Math.acos(1 - 2 * t);
-    const theta = Math.PI * (3 - Math.sqrt(5)) * idx;
-    const radial = atom.el === "H" ? 0.9 : 1.22;
-    return {
-      idx,
-      el: atom.el,
-      x: radial * Math.sin(phi) * Math.cos(theta),
-      y: radial * Math.sin(phi) * Math.sin(theta),
-      z: radial * Math.cos(phi),
-    };
-  });
+  const angleData = buildAngleConstraints(atoms, bonds);
+  const angleConstraints = angleData.constraints;
+  const nodes = buildInitialLayout3D(atoms, bonds, angleData.features);
 
   const vx = Array.from({ length: n }, () => 0);
   const vy = Array.from({ length: n }, () => 0);
@@ -607,11 +1060,11 @@ function buildBallStickLayout3D(structure) {
       fz[center] += (midZ - nodes[center].z) * 0.025 * cool;
     }
 
-    for (let i = 0; i < n; i += 1) {
-      fx[i] += -nodes[i].x * 0.06;
-      fy[i] += -nodes[i].y * 0.06;
-      fz[i] += -nodes[i].z * 0.06;
-    }
+  for (let i = 0; i < n; i += 1) {
+    fx[i] += -nodes[i].x * 0.06;
+    fy[i] += -nodes[i].y * 0.06;
+    fz[i] += -nodes[i].z * 0.06;
+  }
 
     for (let i = 0; i < n; i += 1) {
       vx[i] = vx[i] * damp + fx[i] * 0.14 * cool;
@@ -634,7 +1087,11 @@ function buildBallStickLayout3D(structure) {
     node.z *= inv;
   }
 
-  return { nodes, bonds };
+  return {
+    nodes,
+    bonds,
+    guides: angleData.guides,
+  };
 }
 
 function projectBallStick3D(layout3d, ax, ay, az, zoom = 1) {
