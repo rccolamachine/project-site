@@ -53,6 +53,7 @@ export async function POST(req) {
   }
 
   if (event?.type !== "email.received") {
+    console.log("Resend inbound webhook ignored", { type: event?.type || null });
     return NextResponse.json({ ok: true, ignored: true }, { status: 200 });
   }
 
@@ -68,6 +69,13 @@ export async function POST(req) {
   const recipients = Array.isArray(event.data?.to)
     ? event.data.to.map(normalizeAddress)
     : [];
+
+  console.log("Resend inbound email received", {
+    emailId: event.data?.email_id || null,
+    from: event.data?.from || null,
+    to: recipients,
+    inboundAlias,
+  });
 
   if (!recipients.includes(inboundAlias)) {
     return NextResponse.json(
@@ -93,6 +101,12 @@ export async function POST(req) {
       { status: 502 },
     );
   }
+
+  console.log("Resend inbound email forwarded", {
+    emailId: event.data?.email_id || null,
+    alias: inboundAlias,
+    to: forwardTo,
+  });
 
   return NextResponse.json(
     {
