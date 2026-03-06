@@ -36,7 +36,7 @@ const sections = [
       {
         title: "Mixtape",
         description:
-          "New: Songs that are in my head when I wake up in the morning.",
+          "New: Songs that are in my head when I wake up in the morning. Play a mixtape from my past.",
         href: "/mixtape",
         cta: "Hear the voices",
       },
