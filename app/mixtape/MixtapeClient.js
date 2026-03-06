@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import DesktopBadge from "../../components/DesktopBadge";
 import AddSongModal from "./components/AddSongModal";
 import DeleteSongModal from "./components/DeleteSongModal";
 import MixtapePlayerCard from "./components/MixtapePlayerCard";
@@ -663,6 +664,8 @@ export default function MixtapeClient() {
           </div>
         ) : null}
       </header>
+
+      <DesktopBadge />
 
       <MixtapePlayerCard
         currentContextLabel={currentContextLabel}

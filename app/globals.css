@@ -755,12 +755,19 @@ textarea::placeholder {
   }
   .homeHero {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    gap: 10px;
+  }
+  .homeHeroCopy {
+    order: 2;
+    flex: 0 0 auto;
+    width: 100%;
   }
   .homeHeroArt {
+    order: 1;
     width: 112px;
     height: 112px;
-    align-self: flex-end;
+    align-self: center;
   }
   .grid {
     grid-template-columns: 1fr;
