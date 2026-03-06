@@ -1,17 +1,81 @@
-﻿// scripts/generate_reactor_molecules.mjs
 import fs from "node:fs";
 import path from "node:path";
 import {
   SPONCH_ELEMENTS,
-  VALENCE_BY_ELEMENT,
   describeMoleculeComponent,
 } from "../lib/reactor/moleculeTools.mjs";
 
 const TARGET_COUNT = 1000;
 const MAX_ATOMS = 20;
-const MAX_RINGS = 1;
+const MAX_HEAVY_ATOMS = 10;
+const MAX_RING_COUNT = 1;
+const MAX_ROTATABLE_BONDS = 6;
+const MAX_COMPLEXITY = 260;
+const MAX_FORMULA_RESULTS = 32;
+const PRE_RECORD_TARGET = 2400;
+const RECORD_BATCH_SIZE = 12;
 const OUTPUT_PATH = path.resolve("data/reactor_molecules.json");
-const CAS_COMMON_CHEMISTRY_DETAIL = "https://commonchemistry.cas.org/detail?cas_rn=";
+const CACHE_VERSION = 1;
+const CACHE_DIR = path.resolve(".cache/reactor-pubchem");
+const STATE_PATH = path.join(CACHE_DIR, `state-v${CACHE_VERSION}.json`);
+const FORMULAS_PER_RUN = clampInt(
+  Number(process.env.REACTOR_FORMULAS_PER_RUN || 80),
+  1,
+  400,
+);
+const RECORD_BATCHES_PER_RUN = clampInt(
+  Number(process.env.REACTOR_RECORD_BATCHES_PER_RUN || 30),
+  1,
+  300,
+);
+const CAS_COMMON_CHEMISTRY_DETAIL =
+  "https://commonchemistry.cas.org/detail?cas_rn=";
+const PUBCHEM_BASE = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound";
+
+const PROPERTY_FIELDS = [
+  "Title",
+  "MolecularFormula",
+  "ConnectivitySMILES",
+  "IUPACName",
+  "Complexity",
+  "Charge",
+  "HBondDonorCount",
+  "HBondAcceptorCount",
+  "RotatableBondCount",
+  "HeavyAtomCount",
+  "IsotopeAtomCount",
+  "CovalentUnitCount",
+];
+
+const ATOMIC_NUMBER_TO_EL = Object.freeze({
+  1: "H",
+  6: "C",
+  7: "N",
+  8: "O",
+  15: "P",
+  16: "S",
+});
+
+const MANUAL_NO_CARBON_FORMULAS = Object.freeze([
+  "H2O",
+  "NH3",
+  "PH3",
+  "H2S",
+  "O2",
+  "O3",
+  "N2",
+  "NO",
+  "NO2",
+  "N2O",
+  "H2O2",
+  "CO",
+  "CO2",
+  "SO2",
+  "SO3",
+  "HNO2",
+  "HNO3",
+  "H3PO4",
+]);
 
 const CAS_BY_NAME = Object.freeze({
   Water: "7732-18-5",
@@ -51,601 +115,488 @@ const CAS_BY_FORMULA_WHEN_SINGLE_ISOMER = Object.freeze({
   O3: "10028-15-6",
 });
 
-function createRng(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s += 0x6d2b79f5;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+const HARD_REJECT_TITLE_PATTERNS = [
+  /\b(isotope|isotopologue|deuterated|tritiated|labeled|labelled)\b/i,
+  /\b(radical|cation|anion|zwitterion|counterion)\b/i,
+  /\b(hydrate|solvate|salt|mixture|complex|coordination|polymer|oligomer|adduct)\b/i,
+  /\b(extract|fraction|reaction mass|metabolite|derivative|impurity)\b/i,
+  /\b(protein|enzyme|peptide|dna|rna|lipid|oligosaccharide)\b/i,
+  /\b(ylid|ylidene|ylidyne|carbene|nitrene|amidogen)\b/i,
+  /\b(methylene|methylidyne|methanidyl|ethenylidene|propynylidene)\b/i,
+  /\b(azanium|azanide|oxidanium|oxonium|sulfanium|phosphanium|phosphanide)\b/i,
+  /\b(phosphorane|lambda\d*|fulminic|isofulminic)\b/i,
+  /\b(aziridine|azirine|diazirine|diaziridine|oxirane|oxirene|thiirane|thiirene)\b/i,
+  /\b(dioxirane|trioxirane|dioxaziridine|dioxathiirane|oxathiirane|thiazirine)\b/i,
+  /\b(cyclopropene|cycloprop-.*ylidene|cycloprop-.*yne)\b/i,
+  /\boxido\b/i,
+  /[\[\]{}<>]/,
+  /[\\/]/,
+  /[(),;]/,
+  /[+].*[-]|[-].*[+]/,
+];
+
+const SOFT_REJECT_TITLE_PATTERNS = [
+  /,/,
+  /;/,
+  /:/,
+  /\b(?:cis|trans|rac|alpha|beta|gamma|delta|epsilon|z|e|r|s)-/i,
+  /\d,\d/,
+  /\(/,
+  /\)/,
+];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function hasOwn(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function loadState() {
+  try {
+    const raw = fs.readFileSync(STATE_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (parsed?.version !== CACHE_VERSION) throw new Error("cache version mismatch");
+    return {
+      version: CACHE_VERSION,
+      formulaCursor: clampInt(parsed.formulaCursor || 0, 0, 1_000_000),
+      formulaSearch: parsed.formulaSearch && typeof parsed.formulaSearch === "object"
+        ? parsed.formulaSearch
+        : {},
+      candidatesByCid:
+        parsed.candidatesByCid && typeof parsed.candidatesByCid === "object"
+          ? parsed.candidatesByCid
+          : {},
+      rowsByCid:
+        parsed.rowsByCid && typeof parsed.rowsByCid === "object"
+          ? parsed.rowsByCid
+          : {},
+    };
+  } catch {
+    return {
+      version: CACHE_VERSION,
+      formulaCursor: 0,
+      formulaSearch: {},
+      candidatesByCid: {},
+      rowsByCid: {},
+    };
+  }
+}
+
+function saveState(state) {
+  fs.mkdirSync(CACHE_DIR, { recursive: true });
+  fs.writeFileSync(STATE_PATH, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+}
+
+async function fetchText(url, attempt = 0) {
+  const res = await fetch(url, {
+    headers: { Accept: "text/plain,application/json;q=0.9,*/*;q=0.8" },
+  });
+  if (res.ok) return res.text();
+
+  const body = await res.text();
+  if (attempt < 6 && (res.status >= 500 || res.status === 429)) {
+    await sleep(700 * (attempt + 1));
+    return fetchText(url, attempt + 1);
+  }
+  throw new Error(`HTTP ${res.status} for ${url}: ${body.slice(0, 220)}`);
+}
+
+async function fetchJson(url, attempt = 0) {
+  const res = await fetch(url, {
+    headers: { Accept: "application/json,text/plain;q=0.9,*/*;q=0.8" },
+  });
+  if (res.ok) return res.json();
+
+  const body = await res.text();
+  if (attempt < 6 && (res.status >= 500 || res.status === 429)) {
+    await sleep(700 * (attempt + 1));
+    return fetchJson(url, attempt + 1);
+  }
+  throw new Error(`HTTP ${res.status} for ${url}: ${body.slice(0, 220)}`);
+}
+
+function clampInt(value, min, max) {
+  return Math.max(min, Math.min(max, Math.trunc(value)));
+}
+
+function buildHillFormula(counts) {
+  const c = counts.C || 0;
+  const h = counts.H || 0;
+  const n = counts.N || 0;
+  const o = counts.O || 0;
+  const p = counts.P || 0;
+  const s = counts.S || 0;
+
+  const parts = [];
+  const push = (el, count) => {
+    if (!(count > 0)) return;
+    parts.push(`${el}${count > 1 ? count : ""}`);
   };
+
+  push("C", c);
+  push("H", h);
+  push("N", n);
+  push("O", o);
+  push("P", p);
+  push("S", s);
+
+  if (parts.length > 0) return parts.join("");
+
+  push("H", h);
+  push("N", n);
+  push("O", o);
+  push("P", p);
+  push("S", s);
+  return parts.join("");
 }
 
-const rng = createRng(20260217);
-
-function randInt(min, max) {
-  return min + Math.floor(rng() * (max - min + 1));
+function formulaLikeName(name) {
+  return /^[CHNOPS\d]+$/i.test(String(name || "").trim());
 }
 
-function pickWeighted(weighted) {
-  const total = weighted.reduce((sum, [, w]) => sum + w, 0);
-  let t = rng() * total;
-  for (const [value, weight] of weighted) {
-    t -= weight;
-    if (t <= 0) return value;
+function normalizeName(raw) {
+  const name = String(raw || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map((part) => {
+      if (part.toUpperCase() === part && /[A-Z]{2,}/.test(part)) return part;
+      if (part.length <= 1) return part.toUpperCase();
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join(" ");
+}
+
+function isCidPlaceholder(name) {
+  return /^CID\s+\d+$/i.test(String(name || "").trim());
+}
+
+function scoreTitleQuality(title) {
+  const trimmed = String(title || "").trim();
+  if (!trimmed) return { ok: false, penalty: 999 };
+  if (trimmed.length < 2 || trimmed.length > 64) {
+    return { ok: false, penalty: 999 };
   }
-  return weighted[weighted.length - 1][0];
-}
-
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(rng() * (i + 1));
-    const tmp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = tmp;
+  if (formulaLikeName(trimmed)) return { ok: false, penalty: 999 };
+  if (!/[A-Za-z]/.test(trimmed)) return { ok: false, penalty: 999 };
+  if (HARD_REJECT_TITLE_PATTERNS.some((pattern) => pattern.test(trimmed))) {
+    return { ok: false, penalty: 999 };
   }
-  return arr;
+
+  let penalty = 0;
+  for (const pattern of SOFT_REJECT_TITLE_PATTERNS) {
+    if (pattern.test(trimmed)) penalty += 18;
+  }
+  if (/[0-9]{3,}/.test(trimmed)) penalty += 40;
+  if (/^[a-z]/.test(trimmed)) penalty += 6;
+  if (trimmed.length > 32) penalty += trimmed.length - 32;
+
+  return { ok: penalty <= 48, penalty };
 }
 
-function edgeKey(a, b) {
-  return a < b ? `${a}:${b}` : `${b}:${a}`;
+function chooseDisplayName(prop) {
+  const candidates = [
+    normalizeName(prop?.Title || ""),
+    normalizeName(prop?.IUPACName || ""),
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (isCidPlaceholder(candidate)) continue;
+    const score = scoreTitleQuality(candidate);
+    if (score.ok) return { title: candidate, penalty: score.penalty };
+  }
+
+  return null;
 }
 
-function buildIndexedStructure(atoms, bonds) {
-  const atomList = Array.isArray(atoms) ? atoms : [];
-  const bondList = Array.isArray(bonds) ? bonds : [];
-  const idxById = new Map(atomList.map((a, idx) => [a.id, idx]));
-  const structureBonds = [];
+function generateFormulaRequests() {
+  const formulas = [];
   const seen = new Set();
-  const structureAtoms = atomList.map((a) => ({ el: a.el }));
 
-  for (const bond of bondList) {
-    const orderRaw = Number.isFinite(bond.order) ? Math.round(bond.order) : 1;
-    const order = Math.max(1, Math.min(3, orderRaw));
-    const ia = idxById.get(bond.aId);
-    const ib = idxById.get(bond.bId);
-    if (ia === undefined || ib === undefined || ia === ib) continue;
-
-    const lo = Math.min(ia, ib);
-    const hi = Math.max(ia, ib);
-    const key = edgeKey(lo, hi);
-    if (seen.has(key)) continue;
-    seen.add(key);
-
-    structureBonds.push({
-      a: lo,
-      b: hi,
-      order,
-    });
-  }
-
-  return {
-    atoms: structureAtoms,
-    bonds: structureBonds.sort((x, y) => x.a - y.a || x.b - y.b || x.order - y.order),
+  const addFormula = (formula, rankBias = 0) => {
+    const clean = String(formula || "").trim();
+    if (!clean || seen.has(clean)) return;
+    seen.add(clean);
+    formulas.push({ formula: clean, rankBias });
   };
-}
 
-function buildExplicitMolecule(name, heavyElements, heavyEdges, origin) {
-  const valenceLeft = heavyElements.map((el) => VALENCE_BY_ELEMENT[el] ?? 0);
-  if (valenceLeft.some((v) => v <= 0)) return null;
-
-  for (const edge of heavyEdges) {
-    const order = Math.max(1, Math.min(3, Math.round(edge.order || 1)));
-    const a = edge.a;
-    const b = edge.b;
-    if (a === b) return null;
-    if (a < 0 || b < 0 || a >= heavyElements.length || b >= heavyElements.length) {
-      return null;
-    }
-    valenceLeft[a] -= order;
-    valenceLeft[b] -= order;
-    if (valenceLeft[a] < 0 || valenceLeft[b] < 0) return null;
+  for (let i = 0; i < MANUAL_NO_CARBON_FORMULAS.length; i += 1) {
+    addFormula(MANUAL_NO_CARBON_FORMULAS[i], -220 + i);
   }
 
-  const atoms = [];
-  const bonds = [];
-  let nextId = 1;
-  const heavyIds = heavyElements.map((el) => {
-    const id = nextId;
-    nextId += 1;
-    atoms.push({ id, el });
-    return id;
+  const MAX_CARBON = 8;
+  const MAX_HETERO_TOTAL = 4;
+  const MAX_DBE = 6;
+
+  for (let heavyAtoms = 1; heavyAtoms <= MAX_HEAVY_ATOMS; heavyAtoms += 1) {
+    for (let c = 1; c <= Math.min(MAX_CARBON, heavyAtoms); c += 1) {
+      for (let n = 0; n <= Math.min(MAX_HETERO_TOTAL, heavyAtoms - c); n += 1) {
+        for (let o = 0; o <= Math.min(MAX_HETERO_TOTAL, heavyAtoms - c - n); o += 1) {
+          for (let p = 0; p <= Math.min(2, heavyAtoms - c - n - o); p += 1) {
+            for (let s = 0; s <= Math.min(2, heavyAtoms - c - n - o - p); s += 1) {
+              const totalHeavy = c + n + o + p + s;
+              if (totalHeavy !== heavyAtoms) continue;
+              if (n + o + p + s > MAX_HETERO_TOTAL) continue;
+
+              const heteroPenalty = n * 1.7 + o * 1.5 + p * 2.7 + s * 2.4;
+              for (let dbe = 0; dbe <= MAX_DBE; dbe += 1) {
+                const h = 2 * c + n + p + 2 - 2 * dbe;
+                if (h < 0) continue;
+                const atomCount = totalHeavy + h;
+                if (atomCount < 2 || atomCount > MAX_ATOMS) continue;
+
+                const formula = buildHillFormula({
+                  C: c,
+                  H: h,
+                  N: n,
+                  O: o,
+                  P: p,
+                  S: s,
+                });
+
+                const rankBias =
+                  atomCount * 18 +
+                  totalHeavy * 10 +
+                  dbe * 22 +
+                  heteroPenalty * 10;
+                addFormula(formula, rankBias);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  formulas.sort((a, b) => {
+    if (a.rankBias !== b.rankBias) return a.rankBias - b.rankBias;
+    return a.formula.localeCompare(b.formula);
   });
 
-  for (const edge of heavyEdges) {
-    bonds.push({
-      aId: heavyIds[edge.a],
-      bId: heavyIds[edge.b],
-      order: Math.max(1, Math.min(3, Math.round(edge.order || 1))),
-    });
+  return formulas;
+}
+
+function parseListKey(text) {
+  const m = String(text || "").match(/ListKey:\s*(\d+)/i);
+  return m?.[1] || null;
+}
+
+function parseCidText(text) {
+  return String(text || "")
+    .split(/\s+/)
+    .map((part) => Number.parseInt(part, 10))
+    .filter((value) => Number.isFinite(value) && value > 0);
+}
+
+async function searchFormulaCids(formula, limit = MAX_FORMULA_RESULTS) {
+  try {
+    const fastUrl =
+      `${PUBCHEM_BASE}/fastformula/${encodeURIComponent(formula)}/cids/TXT` +
+      `?listkey_count=${limit}`;
+    const fastText = await fetchText(fastUrl);
+    const fast = parseCidText(fastText).slice(0, limit);
+    if (fast.length > 0) return fast;
+  } catch {
+    // Fall through to the documented asynchronous formula search.
   }
 
-  for (let i = 0; i < valenceLeft.length; i += 1) {
-    const hCount = Math.max(0, valenceLeft[i]);
-    for (let k = 0; k < hCount; k += 1) {
-      const hId = nextId;
-      nextId += 1;
-      atoms.push({ id: hId, el: "H" });
-      bonds.push({ aId: heavyIds[i], bId: hId, order: 1 });
+  try {
+    const url = `${PUBCHEM_BASE}/formula/${encodeURIComponent(formula)}/cids/TXT`;
+    const first = await fetchText(url);
+    if (!/running/i.test(first)) return parseCidText(first).slice(0, limit);
+
+    const listKey = parseListKey(first);
+    if (!listKey) return [];
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      await sleep(attempt === 0 ? 150 : 350 + attempt * 120);
+      const pollUrl =
+        `${PUBCHEM_BASE}/listkey/${encodeURIComponent(listKey)}/cids/TXT` +
+        `?listkey_start=0&listkey_count=${limit}`;
+      const text = await fetchText(pollUrl);
+      if (/running/i.test(text)) continue;
+      return parseCidText(text).slice(0, limit);
     }
+  } catch {
+    return [];
   }
 
-  const desc = describeMoleculeComponent(atoms, bonds);
-  if (desc.atomCount <= 0) return null;
-  if (desc.atomCount > MAX_ATOMS) return null;
-  if (desc.ringCount > MAX_RINGS) return null;
+  return [];
+}
+
+async function fetchProperties(cids) {
+  if (!Array.isArray(cids) || cids.length <= 0) return [];
+  const url =
+    `${PUBCHEM_BASE}/cid/${cids.join(",")}/property/` +
+    `${PROPERTY_FIELDS.join(",")}/JSON`;
+  const json = await fetchJson(url);
+  return Array.isArray(json?.PropertyTable?.Properties)
+    ? json.PropertyTable.Properties
+    : [];
+}
+
+function prefilterProperty(prop, formulaMeta) {
+  const nameChoice = chooseDisplayName(prop);
+  if (!nameChoice) return null;
+
+  const formula = String(prop?.MolecularFormula || "").trim();
+  if (!/^[CHNOPS\d]+$/.test(formula)) return null;
+
+  const charge = Number(prop?.Charge || 0);
+  const heavyAtomCount = Number(prop?.HeavyAtomCount || 0);
+  const isotopeAtomCount = Number(prop?.IsotopeAtomCount || 0);
+  const covalentUnitCount = Number(prop?.CovalentUnitCount || 0);
+  const complexity = Number(prop?.Complexity || 0);
+  const rotatableBondCount = Number(prop?.RotatableBondCount || 0);
+
+  if (charge !== 0) return null;
+  if (covalentUnitCount !== 1) return null;
+  if (isotopeAtomCount !== 0) return null;
+  if (!(heavyAtomCount > 0) || heavyAtomCount > MAX_HEAVY_ATOMS) return null;
+  if (complexity > MAX_COMPLEXITY) return null;
+  if (rotatableBondCount > MAX_ROTATABLE_BONDS) return null;
+
+  const atomCountEstimate = String(formula)
+    .match(/[A-Z][a-z]?(\d+)?/g)
+    ?.reduce((sum, token) => {
+      const m = token.match(/([A-Z][a-z]?)(\d+)?/);
+      if (!m) return sum;
+      return sum + Number.parseInt(m[2] || "1", 10);
+    }, 0);
+  if (!Number.isFinite(atomCountEstimate) || atomCountEstimate > MAX_ATOMS) {
+    return null;
+  }
+
+  const title = nameChoice.title;
+  if (!title) return null;
+
+  const smiles = String(prop?.ConnectivitySMILES || "");
+  if (!smiles || /[.@\\/]/.test(smiles)) return null;
+
+  let score = 1000;
+  score -= formulaMeta.rankBias;
+  score -= nameChoice.penalty * 5;
+  score -= atomCountEstimate * 12;
+  score -= heavyAtomCount * 10;
+  score -= complexity * 0.8;
+  score -= rotatableBondCount * 12;
+  score -= Number(prop?.HBondDonorCount || 0) * 2;
+  score -= Number(prop?.HBondAcceptorCount || 0) * 2;
+
+  const cid = Number(prop?.CID || 0);
+  if (cid > 0) score -= Math.log10(cid + 10) * 20;
+  if (/^[A-Z]/.test(String(title || ""))) score += 20;
+  if (/^[A-Za-z][A-Za-z -]+$/.test(title)) score += 25;
+  if (
+    title === "Water" ||
+    title === "Ammonia" ||
+    title === "Methane" ||
+    title === "Ethane" ||
+    title === "Benzene"
+  ) {
+    score += 40;
+  }
 
   return {
-    name,
-    origin,
-    atoms,
-    bonds,
-    structure: buildIndexedStructure(atoms, bonds),
-    ...desc,
+    cid,
+    title,
+    formula,
+    score,
   };
 }
 
-function addTemplateMolecules(addCandidate) {
-  const templates = [
-    {
-      name: "Methane",
-      heavyElements: ["C"],
-      heavyEdges: [],
-    },
-    {
-      name: "Ethane",
-      heavyElements: ["C", "C"],
-      heavyEdges: [{ a: 0, b: 1, order: 1 }],
-    },
-    {
-      name: "Ethene",
-      heavyElements: ["C", "C"],
-      heavyEdges: [{ a: 0, b: 1, order: 2 }],
-    },
-    {
-      name: "Ethyne",
-      heavyElements: ["C", "C"],
-      heavyEdges: [{ a: 0, b: 1, order: 3 }],
-    },
-    {
-      name: "Propane",
-      heavyElements: ["C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 1 },
-      ],
-    },
-    {
-      name: "Cyclopropane",
-      heavyElements: ["C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 0, order: 1 },
-      ],
-    },
-    {
-      name: "Cyclobutane",
-      heavyElements: ["C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 3, order: 1 },
-        { a: 3, b: 0, order: 1 },
-      ],
-    },
-    {
-      name: "Cyclohexane",
-      heavyElements: ["C", "C", "C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 3, order: 1 },
-        { a: 3, b: 4, order: 1 },
-        { a: 4, b: 5, order: 1 },
-        { a: 5, b: 0, order: 1 },
-      ],
-    },
-    {
-      name: "Benzene",
-      heavyElements: ["C", "C", "C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 2 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 3, order: 2 },
-        { a: 3, b: 4, order: 1 },
-        { a: 4, b: 5, order: 2 },
-        { a: 5, b: 0, order: 1 },
-      ],
-    },
-    {
-      name: "Pyridine",
-      heavyElements: ["N", "C", "C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 2 },
-        { a: 2, b: 3, order: 1 },
-        { a: 3, b: 4, order: 2 },
-        { a: 4, b: 5, order: 1 },
-        { a: 5, b: 0, order: 2 },
-      ],
-    },
-    {
-      name: "Pyrimidine",
-      heavyElements: ["N", "C", "N", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 2 },
-        { a: 2, b: 3, order: 1 },
-        { a: 3, b: 4, order: 2 },
-        { a: 4, b: 5, order: 1 },
-        { a: 5, b: 0, order: 2 },
-      ],
-    },
-    {
-      name: "Furan",
-      heavyElements: ["O", "C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 2 },
-        { a: 2, b: 3, order: 1 },
-        { a: 3, b: 4, order: 2 },
-        { a: 4, b: 0, order: 1 },
-      ],
-    },
-    {
-      name: "Thiophene",
-      heavyElements: ["S", "C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 2 },
-        { a: 2, b: 3, order: 1 },
-        { a: 3, b: 4, order: 2 },
-        { a: 4, b: 0, order: 1 },
-      ],
-    },
-    {
-      name: "Pyrrole",
-      heavyElements: ["N", "C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 2 },
-        { a: 2, b: 3, order: 1 },
-        { a: 3, b: 4, order: 2 },
-        { a: 4, b: 0, order: 1 },
-      ],
-    },
-    {
-      name: "Toluene",
-      heavyElements: ["C", "C", "C", "C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 2 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 3, order: 2 },
-        { a: 3, b: 4, order: 1 },
-        { a: 4, b: 5, order: 2 },
-        { a: 5, b: 0, order: 1 },
-        { a: 0, b: 6, order: 1 },
-      ],
-    },
-    {
-      name: "Styrene",
-      heavyElements: ["C", "C", "C", "C", "C", "C", "C", "C"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 2 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 3, order: 2 },
-        { a: 3, b: 4, order: 1 },
-        { a: 4, b: 5, order: 2 },
-        { a: 5, b: 0, order: 1 },
-        { a: 0, b: 6, order: 1 },
-        { a: 6, b: 7, order: 2 },
-      ],
-    },
-    {
-      name: "Phenol",
-      heavyElements: ["C", "C", "C", "C", "C", "C", "O"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 2 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 3, order: 2 },
-        { a: 3, b: 4, order: 1 },
-        { a: 4, b: 5, order: 2 },
-        { a: 5, b: 0, order: 1 },
-        { a: 0, b: 6, order: 1 },
-      ],
-    },
-    {
-      name: "Aniline",
-      heavyElements: ["C", "C", "C", "C", "C", "C", "N"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 2 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 3, order: 2 },
-        { a: 3, b: 4, order: 1 },
-        { a: 4, b: 5, order: 2 },
-        { a: 5, b: 0, order: 1 },
-        { a: 0, b: 6, order: 1 },
-      ],
-    },
-    {
-      name: "Benzonitrile",
-      heavyElements: ["C", "C", "C", "C", "C", "C", "C", "N"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 2 },
-        { a: 1, b: 2, order: 1 },
-        { a: 2, b: 3, order: 2 },
-        { a: 3, b: 4, order: 1 },
-        { a: 4, b: 5, order: 2 },
-        { a: 5, b: 0, order: 1 },
-        { a: 0, b: 6, order: 1 },
-        { a: 6, b: 7, order: 3 },
-      ],
-    },
-    {
-      name: "Formaldehyde",
-      heavyElements: ["C", "O"],
-      heavyEdges: [{ a: 0, b: 1, order: 2 }],
-    },
-    {
-      name: "Acetaldehyde",
-      heavyElements: ["C", "C", "O"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 2 },
-      ],
-    },
-    {
-      name: "Acetone",
-      heavyElements: ["C", "C", "C", "O"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 1 },
-        { a: 1, b: 3, order: 2 },
-      ],
-    },
-    {
-      name: "Acetonitrile",
-      heavyElements: ["C", "C", "N"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 1 },
-        { a: 1, b: 2, order: 3 },
-      ],
-    },
-    {
-      name: "Water",
-      heavyElements: ["O"],
-      heavyEdges: [],
-    },
-    {
-      name: "Ammonia",
-      heavyElements: ["N"],
-      heavyEdges: [],
-    },
-    {
-      name: "Phosphine",
-      heavyElements: ["P"],
-      heavyEdges: [],
-    },
-    {
-      name: "Hydrogen Sulfide",
-      heavyElements: ["S"],
-      heavyEdges: [],
-    },
-    {
-      name: "Sulfur Dioxide",
-      heavyElements: ["O", "S", "O"],
-      heavyEdges: [
-        { a: 0, b: 1, order: 2 },
-        { a: 1, b: 2, order: 2 },
-      ],
-    },
-  ];
-
-  for (const tmpl of templates) {
-    const candidate = buildExplicitMolecule(
-      tmpl.name,
-      tmpl.heavyElements,
-      tmpl.heavyEdges,
-      "template",
-    );
-    if (candidate) addCandidate(candidate);
-  }
+async function fetchRecordBatch(cids) {
+  if (!Array.isArray(cids) || cids.length <= 0) return [];
+  const url = `${PUBCHEM_BASE}/cid/${cids.join(",")}/record/JSON?record_type=2d`;
+  const json = await fetchJson(url);
+  return Array.isArray(json?.PC_Compounds) ? json.PC_Compounds : [];
 }
 
-function buildRandomHeavyScaffold() {
-  const heavyCount = pickWeighted([
-    [1, 14],
-    [2, 14],
-    [3, 13],
-    [4, 12],
-    [5, 11],
-    [6, 10],
-    [7, 8],
-    [8, 6],
-    [9, 4],
-    [10, 3],
-  ]);
+function buildIndexedStructureFromRecord(record) {
+  const atomIds = Array.isArray(record?.atoms?.aid) ? record.atoms.aid : [];
+  const atomicNumbers = Array.isArray(record?.atoms?.element)
+    ? record.atoms.element
+    : [];
+  if (atomIds.length <= 0 || atomIds.length !== atomicNumbers.length) return null;
 
-  const heavyElements = Array.from({ length: heavyCount }, () =>
-    pickWeighted([
-      ["C", 60],
-      ["N", 14],
-      ["O", 14],
-      ["P", 6],
-      ["S", 6],
-    ]),
-  );
-
-  const edges = [];
-  const edgeSet = new Set();
-
-  // Connected tree baseline.
-  for (let i = 1; i < heavyCount; i += 1) {
-    const parent = randInt(0, i - 1);
-    edges.push({ a: i, b: parent, order: 1 });
-    edgeSet.add(edgeKey(i, parent));
+  const atoms = [];
+  const aidToIndex = new Map();
+  for (let i = 0; i < atomIds.length; i += 1) {
+    const el = ATOMIC_NUMBER_TO_EL[atomicNumbers[i]];
+    if (!SPONCH_ELEMENTS.includes(el)) return null;
+    atoms.push({ id: i + 1, el });
+    aidToIndex.set(atomIds[i], i);
   }
 
-  let ringEdge = null;
-  if (heavyCount >= 3 && rng() < 0.25) {
-    const candidates = [];
-    for (let i = 0; i < heavyCount; i += 1) {
-      for (let j = i + 1; j < heavyCount; j += 1) {
-        const key = edgeKey(i, j);
-        if (edgeSet.has(key)) continue;
-        candidates.push([i, j]);
-      }
-    }
-    if (candidates.length > 0) {
-      const [a, b] = candidates[randInt(0, candidates.length - 1)];
-      edges.push({ a, b, order: 1 });
-      ringEdge = { a, b };
+  const aid1 = Array.isArray(record?.bonds?.aid1) ? record.bonds.aid1 : [];
+  const aid2 = Array.isArray(record?.bonds?.aid2) ? record.bonds.aid2 : [];
+  const order = Array.isArray(record?.bonds?.order) ? record.bonds.order : [];
+  if (!(aid1.length === aid2.length && aid2.length === order.length)) return null;
+
+  const bonds = [];
+  const seen = new Set();
+  for (let i = 0; i < aid1.length; i += 1) {
+    const a = aidToIndex.get(aid1[i]);
+    const b = aidToIndex.get(aid2[i]);
+    const rawOrder = clampInt(order[i] || 1, 1, 6);
+    if (a === undefined || b === undefined || a === b) continue;
+    if (rawOrder > 3) return null;
+    const lo = Math.min(a, b);
+    const hi = Math.max(a, b);
+    const key = `${lo}:${hi}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    bonds.push({
+      aId: lo + 1,
+      bId: hi + 1,
+      order: rawOrder,
+    });
+  }
+
+  const structure = {
+    atoms: atoms.map((atom) => ({ el: atom.el })),
+    bonds: bonds
+      .map((bond) => ({
+        a: bond.aId - 1,
+        b: bond.bId - 1,
+        order: bond.order,
+      }))
+      .sort((x, y) => x.a - y.a || x.b - y.b || x.order - y.order),
+  };
+
+  return { atoms, bonds, structure };
+}
+
+function isSingleConnected(atoms, bonds) {
+  if (!Array.isArray(atoms) || atoms.length <= 0) return false;
+  if (atoms.length === 1) return true;
+  const adjacency = Array.from({ length: atoms.length }, () => []);
+  for (const bond of bonds) {
+    const a = bond.aId - 1;
+    const b = bond.bId - 1;
+    adjacency[a].push(b);
+    adjacency[b].push(a);
+  }
+  const seen = new Set([0]);
+  const stack = [0];
+  while (stack.length > 0) {
+    const cur = stack.pop();
+    for (const nxt of adjacency[cur]) {
+      if (seen.has(nxt)) continue;
+      seen.add(nxt);
+      stack.push(nxt);
     }
   }
-
-  return { heavyElements, edges, ringEdge };
-}
-
-function findTreePath(nodeCount, edges, src, dst) {
-  const adj = Array.from({ length: nodeCount }, () => []);
-  for (const edge of edges) {
-    if (edge.order !== 1) continue;
-    adj[edge.a].push(edge.b);
-    adj[edge.b].push(edge.a);
-  }
-
-  const prev = Array(nodeCount).fill(-1);
-  const queue = [src];
-  prev[src] = src;
-
-  for (let q = 0; q < queue.length; q += 1) {
-    const cur = queue[q];
-    if (cur === dst) break;
-    for (const nxt of adj[cur]) {
-      if (prev[nxt] !== -1) continue;
-      prev[nxt] = cur;
-      queue.push(nxt);
-    }
-  }
-
-  if (prev[dst] === -1) return [];
-
-  const path = [dst];
-  let cur = dst;
-  while (cur !== src) {
-    cur = prev[cur];
-    path.push(cur);
-  }
-  path.reverse();
-  return path;
-}
-
-function canTriple(elA, elB) {
-  const ok = new Set(["C", "N", "P"]);
-  return ok.has(elA) && ok.has(elB);
-}
-
-function upgradeBondOrders(heavyElements, edges, ringEdge) {
-  const valenceLeft = heavyElements.map((el) => VALENCE_BY_ELEMENT[el] ?? 0);
-  for (const edge of edges) {
-    valenceLeft[edge.a] -= 1;
-    valenceLeft[edge.b] -= 1;
-  }
-  if (valenceLeft.some((v) => v < 0)) return null;
-
-  if (ringEdge) {
-    const treeEdges = edges.filter(
-      (e) => !(e.a === ringEdge.a && e.b === ringEdge.b) && !(e.a === ringEdge.b && e.b === ringEdge.a),
-    );
-    const path = findTreePath(heavyElements.length, treeEdges, ringEdge.a, ringEdge.b);
-
-    if (path.length >= 5 && path.length <= 7 && rng() < 0.35) {
-      const ringPathEdges = [];
-      for (let i = 0; i < path.length - 1; i += 1) {
-        ringPathEdges.push(edgeKey(path[i], path[i + 1]));
-      }
-      ringPathEdges.push(edgeKey(ringEdge.a, ringEdge.b));
-
-      const edgeByKey = new Map();
-      for (const edge of edges) {
-        edgeByKey.set(edgeKey(edge.a, edge.b), edge);
-      }
-
-      for (let i = 0; i < ringPathEdges.length; i += 1) {
-        if (i % 2 !== 0) continue;
-        const key = ringPathEdges[i];
-        const edge = edgeByKey.get(key);
-        if (!edge) continue;
-        if (valenceLeft[edge.a] <= 0 || valenceLeft[edge.b] <= 0) continue;
-        edge.order += 1;
-        valenceLeft[edge.a] -= 1;
-        valenceLeft[edge.b] -= 1;
-      }
-    }
-  }
-
-  const idx = edges.map((_, i) => i);
-  for (let pass = 0; pass < 3; pass += 1) {
-    shuffle(idx);
-    for (const i of idx) {
-      const edge = edges[i];
-      const maxAdd = Math.min(3 - edge.order, valenceLeft[edge.a], valenceLeft[edge.b]);
-      if (maxAdd <= 0) continue;
-
-      const doubleChance = edge.order === 1 ? 0.22 : 0.08;
-      if (rng() >= doubleChance) continue;
-
-      let add = 1;
-      if (
-        maxAdd >= 2 &&
-        edge.order === 1 &&
-        rng() < 0.12 &&
-        canTriple(heavyElements[edge.a], heavyElements[edge.b])
-      ) {
-        add = 2;
-      }
-
-      edge.order += add;
-      valenceLeft[edge.a] -= add;
-      valenceLeft[edge.b] -= add;
-    }
-  }
-
-  if (valenceLeft.some((v) => v < 0)) return null;
-  return edges;
-}
-
-function generateRandomCandidate() {
-  const scaffold = buildRandomHeavyScaffold();
-  const edges = scaffold.edges.map((e) => ({ ...e }));
-  const upgraded = upgradeBondOrders(scaffold.heavyElements, edges, scaffold.ringEdge);
-  if (!upgraded) return null;
-
-  const candidate = buildExplicitMolecule(
-    "",
-    scaffold.heavyElements,
-    upgraded,
-    "generated",
-  );
-  if (!candidate) return null;
-
-  const onlySponch = candidate.atoms.every((a) => SPONCH_ELEMENTS.includes(a.el));
-  if (!onlySponch) return null;
-
-  return candidate;
-}
-
-function isIsomerLabel(name) {
-  return /\sisomer\s+\d+$/i.test(String(name || "").trim());
+  return seen.size === atoms.length;
 }
 
 function resolveCasNumber(name, formula) {
   const cleanName = String(name || "").trim();
   if (cleanName && CAS_BY_NAME[cleanName]) return CAS_BY_NAME[cleanName];
-
-  if (isIsomerLabel(cleanName)) return null;
 
   const cleanFormula = String(formula || "").trim();
   if (cleanFormula && CAS_BY_FORMULA_WHEN_SINGLE_ISOMER[cleanFormula]) {
@@ -655,98 +606,257 @@ function resolveCasNumber(name, formula) {
   return null;
 }
 
-function main() {
-  const byFingerprint = new Map();
+function buildOutputRow(record, candidate) {
+  const parsed = buildIndexedStructureFromRecord(record);
+  if (!parsed) return null;
+  if (parsed.atoms.length > MAX_ATOMS) return null;
+  if (!isSingleConnected(parsed.atoms, parsed.bonds)) return null;
 
-  function addCandidate(candidate) {
-    if (!candidate) return false;
-    if (byFingerprint.has(candidate.fingerprint)) return false;
-    if (candidate.atomCount > MAX_ATOMS) return false;
-    if (candidate.ringCount > MAX_RINGS) return false;
-    byFingerprint.set(candidate.fingerprint, candidate);
-    return true;
-  }
+  const desc = describeMoleculeComponent(parsed.atoms, parsed.bonds);
+  if (desc.atomCount <= 0) return null;
+  if (desc.atomCount > MAX_ATOMS) return null;
+  if (desc.heavyAtomCount > MAX_HEAVY_ATOMS) return null;
+  if (desc.ringCount > MAX_RING_COUNT) return null;
+  if (desc.maxBondOrder > 3) return null;
+  if (!/^[CHNOPS\d]+$/.test(desc.formula)) return null;
 
-  addTemplateMolecules(addCandidate);
+  const name = candidate.title;
+  if (!name) return null;
 
-  let attempts = 0;
-  while (byFingerprint.size < TARGET_COUNT && attempts < 600000) {
-    attempts += 1;
-    const candidate = generateRandomCandidate();
-    addCandidate(candidate);
-  }
+  const casNumber = resolveCasNumber(name, desc.formula);
+  const casUrl = casNumber
+    ? `${CAS_COMMON_CHEMISTRY_DETAIL}${encodeURIComponent(casNumber)}`
+    : null;
 
-  if (byFingerprint.size < TARGET_COUNT) {
-    throw new Error(
-      `Only generated ${byFingerprint.size} molecules after ${attempts} attempts.`
-    );
-  }
-
-  const sorted = Array.from(byFingerprint.values())
-    .sort((a, b) => {
-      if (a.atomCount !== b.atomCount) return a.atomCount - b.atomCount;
-      if (a.ringCount !== b.ringCount) return a.ringCount - b.ringCount;
-      if (a.maxBondOrder !== b.maxBondOrder) return b.maxBondOrder - a.maxBondOrder;
-      if (a.formula !== b.formula) return a.formula.localeCompare(b.formula);
-      return a.fingerprint.localeCompare(b.fingerprint);
-    })
-    .slice(0, TARGET_COUNT);
-
-  const generatedFormulaTotals = new Map();
-  for (const m of sorted) {
-    const hasCustomName = Boolean(m.name && m.name.trim().length > 0);
-    if (hasCustomName) continue;
-    generatedFormulaTotals.set(
-      m.formula,
-      (generatedFormulaTotals.get(m.formula) || 0) + 1,
-    );
-  }
-  const generatedFormulaOrdinal = new Map();
-
-  const rows = sorted
-    .map((m, idx) => {
-      const hasCustomName = Boolean(m.name && m.name.trim().length > 0);
-      let generatedName = m.formula;
-      if (!hasCustomName) {
-        const totalForFormula = generatedFormulaTotals.get(m.formula) || 1;
-        const nextOrdinal = (generatedFormulaOrdinal.get(m.formula) || 0) + 1;
-        generatedFormulaOrdinal.set(m.formula, nextOrdinal);
-        if (totalForFormula > 1) {
-          generatedName = `${m.formula} isomer ${nextOrdinal}`;
-        }
-      }
-
-      const resolvedName = hasCustomName ? m.name : generatedName;
-      const casNumber = resolveCasNumber(resolvedName, m.formula);
-      const casUrl = casNumber
-        ? `${CAS_COMMON_CHEMISTRY_DETAIL}${encodeURIComponent(casNumber)}`
-        : null;
-
-      return {
-        id: `mol-${String(idx + 1).padStart(4, "0")}`,
-        name: resolvedName,
-        formula: m.formula,
-        casNumber,
-        casUrl,
-        fingerprint: m.fingerprint,
-        structure: m.structure,
-        atomCount: m.atomCount,
-        heavyAtomCount: m.heavyAtomCount,
-        ringCount: m.ringCount,
-        maxBondOrder: m.maxBondOrder,
-        origin: m.origin,
-      };
-    });
-
-  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
-  fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(rows, null, 2)}\n`, "utf8");
-
-  const withRing = rows.filter((m) => m.ringCount > 0).length;
-  const withMultiple = rows.filter((m) => m.maxBondOrder > 1).length;
-
-  console.log(`Wrote ${rows.length} molecules -> ${OUTPUT_PATH}`);
-  console.log(`Contains rings: ${withRing}`);
-  console.log(`Contains double/triple bonds: ${withMultiple}`);
+  return {
+    pubchemCid: candidate.cid,
+    name,
+    formula: desc.formula,
+    casNumber,
+    casUrl,
+    fingerprint: desc.fingerprint,
+    structure: parsed.structure,
+    atomCount: desc.atomCount,
+    heavyAtomCount: desc.heavyAtomCount,
+    ringCount: desc.ringCount,
+    maxBondOrder: desc.maxBondOrder,
+    origin: "pubchem",
+    _score: candidate.score,
+  };
 }
 
-main();
+function sortRows(rows) {
+  return rows.slice().sort((a, b) => {
+    if (b._score !== a._score) return b._score - a._score;
+    if (a.atomCount !== b.atomCount) return a.atomCount - b.atomCount;
+    if (a.heavyAtomCount !== b.heavyAtomCount) {
+      return a.heavyAtomCount - b.heavyAtomCount;
+    }
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function formulaCapForRow(row) {
+  const atomCount = Number(row?.atomCount || 0);
+  if (atomCount <= 5) return 3;
+  if (atomCount <= 8) return 4;
+  return 5;
+}
+
+function selectFinalRows(rows) {
+  const chosen = [];
+  const perFormula = new Map();
+
+  for (const row of sortRows(rows)) {
+    const count = perFormula.get(row.formula) || 0;
+    const cap = formulaCapForRow(row);
+    if (count >= cap) continue;
+    perFormula.set(row.formula, count + 1);
+    chosen.push(row);
+    if (chosen.length >= TARGET_COUNT) break;
+  }
+
+  return chosen;
+}
+
+function sortedPreCandidatesFromState(state) {
+  return Object.values(state.candidatesByCid)
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score);
+}
+
+function sortedRowsFromState(state) {
+  return Object.values(state.rowsByCid).filter(Boolean);
+}
+
+async function collectPropertyCandidates(state) {
+  const formulas = generateFormulaRequests();
+  const startIndex = clampInt(state.formulaCursor || 0, 0, formulas.length);
+  const stopIndex = Math.min(formulas.length, startIndex + FORMULAS_PER_RUN);
+
+  for (let i = startIndex; i < stopIndex; i += 1) {
+    const formulaMeta = formulas[i];
+    let cids = state.formulaSearch[formulaMeta.formula];
+    if (!Array.isArray(cids)) {
+      cids = await searchFormulaCids(formulaMeta.formula, MAX_FORMULA_RESULTS);
+      state.formulaSearch[formulaMeta.formula] = cids;
+    }
+    if (cids.length <= 0) {
+      state.formulaCursor = i + 1;
+      saveState(state);
+      continue;
+    }
+
+    const missingCids = cids.filter((cid) => !hasOwn(state.candidatesByCid, String(cid)));
+    if (missingCids.length > 0) {
+      let props = [];
+      try {
+        props = await fetchProperties(missingCids);
+      } catch {
+        await sleep(1500);
+        state.formulaCursor = i;
+        saveState(state);
+        return sortedPreCandidatesFromState(state);
+      }
+
+      const propByCid = new Map(
+        props.map((prop) => [Number(prop?.CID || 0), prop]).filter(([cid]) => cid > 0),
+      );
+
+      for (const cid of missingCids) {
+        const prop = propByCid.get(cid);
+        state.candidatesByCid[cid] = prop ? prefilterProperty(prop, formulaMeta) : null;
+      }
+    }
+
+    state.formulaCursor = i + 1;
+    const preCandidateCount = sortedPreCandidatesFromState(state).length;
+    if ((i + 1) % 20 === 0 || i + 1 === stopIndex) {
+      console.log(
+        `Scanned formulas: ${i + 1}/${formulas.length} -> pre-candidates ${preCandidateCount}`,
+      );
+    }
+    saveState(state);
+    await sleep(120);
+  }
+
+  return sortedPreCandidatesFromState(state);
+}
+
+async function fetchMoreRows(state, preCandidates) {
+  const candidateByCid = new Map(preCandidates.map((row) => [row.cid, row]));
+  const candidatesToConsider = preCandidates.slice(
+    0,
+    Math.max(PRE_RECORD_TARGET, TARGET_COUNT * 5),
+  );
+  let batchesRan = 0;
+
+  while (batchesRan < RECORD_BATCHES_PER_RUN) {
+    const selectedNow = selectFinalRows(sortedRowsFromState(state));
+    if (selectedNow.length >= TARGET_COUNT) return selectedNow;
+
+    const pending = [];
+    for (const candidate of candidatesToConsider) {
+      if (!hasOwn(state.rowsByCid, String(candidate.cid))) {
+        pending.push(candidate.cid);
+      }
+      if (pending.length >= RECORD_BATCH_SIZE) break;
+    }
+
+    if (pending.length <= 0) return selectedNow;
+
+    let records = [];
+    try {
+      records = await fetchRecordBatch(pending);
+    } catch {
+      await sleep(1800);
+      return selectFinalRows(sortedRowsFromState(state));
+    }
+
+    const recordByCid = new Map(
+      records
+        .map((record) => [Number(record?.id?.id?.cid || 0), record])
+        .filter(([cid]) => cid > 0),
+    );
+
+    for (const cid of pending) {
+      const candidate = candidateByCid.get(cid);
+      const record = recordByCid.get(cid);
+      state.rowsByCid[cid] = record && candidate ? buildOutputRow(record, candidate) : null;
+    }
+
+    batchesRan += 1;
+    const selected = selectFinalRows(sortedRowsFromState(state));
+    const remaining = Math.max(0, TARGET_COUNT - selected.length);
+    console.log(
+      `Record batches this run: ${batchesRan}/${RECORD_BATCHES_PER_RUN} -> selected ${selected.length}/${TARGET_COUNT} (still looking for ${remaining})`,
+    );
+    saveState(state);
+    await sleep(180);
+  }
+
+  return selectFinalRows(sortedRowsFromState(state));
+}
+
+function writeOutput(rows) {
+  const finalRows = rows.map((row, idx) => ({
+    id: `mol-${String(idx + 1).padStart(4, "0")}`,
+    pubchemCid: row.pubchemCid,
+    name: row.name,
+    formula: row.formula,
+    casNumber: row.casNumber,
+    casUrl: row.casUrl,
+    fingerprint: row.fingerprint,
+    structure: row.structure,
+    atomCount: row.atomCount,
+    heavyAtomCount: row.heavyAtomCount,
+    ringCount: row.ringCount,
+    maxBondOrder: row.maxBondOrder,
+    origin: row.origin,
+  }));
+
+  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
+  fs.writeFileSync(OUTPUT_PATH, `${JSON.stringify(finalRows, null, 2)}\n`, "utf8");
+
+  const withRing = finalRows.filter((m) => m.ringCount > 0).length;
+  const withMultiple = finalRows.filter((m) => m.maxBondOrder > 1).length;
+
+  console.log(`Wrote ${finalRows.length} molecules -> ${OUTPUT_PATH}`);
+  console.log(`Contains rings: ${withRing}`);
+  console.log(`Contains double/triple bonds: ${withMultiple}`);
+  console.log(
+    `First ten: ${finalRows
+      .slice(0, 10)
+      .map((row) => `${row.name} (${row.formula})`)
+      .join(", ")}`,
+  );
+}
+
+async function main() {
+  const state = loadState();
+  const formulas = generateFormulaRequests();
+  console.log(
+    `Resuming PubChem build: formulas ${state.formulaCursor}/${formulas.length}, cached pre-candidates ${sortedPreCandidatesFromState(state).length}, cached rows ${sortedRowsFromState(state).length}`,
+  );
+
+  const preCandidates = await collectPropertyCandidates(state);
+  console.log(`Pre-candidates available: ${preCandidates.length}`);
+
+  const selectedRows = await fetchMoreRows(state, preCandidates);
+  const remaining = Math.max(0, TARGET_COUNT - selectedRows.length);
+  console.log(
+    `Selected so far: ${selectedRows.length}/${TARGET_COUNT} (still looking for ${remaining})`,
+  );
+
+  saveState(state);
+  if (selectedRows.length >= TARGET_COUNT) {
+    writeOutput(selectedRows);
+  } else {
+    console.log("Catalogue not complete yet. Re-run the script to continue from cache.");
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

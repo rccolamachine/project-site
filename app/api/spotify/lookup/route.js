@@ -13,32 +13,6 @@ import {
 export const runtime = "nodejs";
 const LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000;
 const LOOKUP_CACHE_STALE_FALLBACK_MS = 20 * 60 * 1000;
-function buildMockSpotifyId(seed) {
-  const cleaned = String(seed || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
-  const base = `${cleaned}abcdefghijklmnopqrstuv0123456789`;
-  return base.slice(0, 22).padEnd(22, "0");
-}
-
-function buildMockLookupItem({ trackId, title, artist }) {
-  const query = [title, artist].filter(Boolean).join(" ").trim();
-  const resolvedTrackId = trimString(trackId) || buildMockSpotifyId(query || "mocktrack");
-  const resolvedTitle = trimString(title) || `Mock Track ${resolvedTrackId.slice(0, 6)}`;
-  const resolvedArtist = trimString(artist) || "Mock Artist 01";
-  const mockArtistId = buildMockSpotifyId(`artist${resolvedArtist}`);
-  return {
-    trackId: resolvedTrackId,
-    title: resolvedTitle,
-    artists: [resolvedArtist],
-    artistIds: [mockArtistId],
-    albumTitle: "Mock Album 01",
-    albumCoverUrl: "",
-    year: "2000",
-    externalUrl: `https://open.spotify.com/track/${resolvedTrackId}`,
-    mock: true,
-  };
-}
 
 function getLookupStore() {
   const key = "__spotifyLookupRouteStore";
@@ -69,10 +43,6 @@ export async function GET(req) {
   const useSnapshot =
     shouldUseSnapshotSource(searchParams.get("snapshot")) ||
     shouldUseSnapshotSource(process.env.SPOTIFY_SNAPSHOT_MODE);
-  const useMock =
-    !useSnapshot &&
-    (shouldUseSnapshotSource(searchParams.get("mock")) ||
-      shouldUseSnapshotSource(process.env.SPOTIFY_MOCK_MODE));
   const query = [title, artist].filter(Boolean).join(" ").trim();
   const cacheKey = getLookupCacheKey(trackId, title, artist);
   const now = Date.now();
@@ -101,23 +71,6 @@ export async function GET(req) {
           headers: {
             "Cache-Control": "no-store",
             "X-Spotify-Cache": "SNAPSHOT",
-          },
-        },
-      );
-    }
-
-    if (useMock) {
-      return NextResponse.json(
-        {
-          item: buildMockLookupItem({ trackId, title, artist }),
-          source: trackId ? "trackId" : "query",
-          mock: true,
-        },
-        {
-          status: 200,
-          headers: {
-            "Cache-Control": "no-store",
-            "X-Spotify-Cache": "MOCK",
           },
         },
       );

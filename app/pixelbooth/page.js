@@ -2,6 +2,13 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import DesktopBadge from "../../components/DesktopBadge";
+import GuestbookSubmissionModal from "../../components/GuestbookSubmissionModal";
+import PageIntro from "@/components/PageIntro";
+import {
+  EMPTY_GUESTBOOK_LEAD,
+  appendGuestbookLead,
+  isValidGuestbookEmail,
+} from "@/lib/guestbook";
 
 /**
  * app/pixelbooth/page.js
@@ -32,10 +39,6 @@ function hash2(ix, iy, seed) {
   h = (h ^ (h >>> 13)) * 1274126177;
   h ^= h >>> 16;
   return (h >>> 0) / 4294967296;
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
 }
 
 function exportTinyGridToBlob(
@@ -108,13 +111,10 @@ export default function Page() {
   const [saveError, setSaveError] = useState("");
   const [saveResult, setSaveResult] = useState(null);
 
-  const [lead, setLead] = useState({
-    name: "",
-    email: "",
-    linkedinUrl: "",
-    message: "",
+  const [lead, setLead] = useState(() => ({
+    ...EMPTY_GUESTBOOK_LEAD,
     emailSelf: false, // ✅ NEW
-  });
+  }));
 
   // Lock displayed canvas height to avoid 1px strips (prefer overlap)
   const [canvasCssHeight, setCanvasCssHeight] = useState(0);
@@ -714,16 +714,6 @@ export default function Page() {
     };
   }, []);
 
-  useEffect(() => {
-    const has = document.cookie
-      .split("; ")
-      .some((c) => c.startsWith("gb_sid="));
-    if (!has) {
-      const sid = crypto.randomUUID();
-      document.cookie = `gb_sid=${sid}; Path=/; SameSite=Lax`;
-    }
-  }, []);
-
   const handleSnap = () => {
     const off = offscreenRef.current;
     const snapSmall = snapSmallRef.current;
@@ -790,7 +780,7 @@ export default function Page() {
 
     if (!name) return setSaveError("Name is required.");
     if (!email) return setSaveError("Email is required.");
-    if (!isValidEmail(email))
+    if (!isValidGuestbookEmail(email))
       return setSaveError("Enter a valid email address.");
 
     const tiny = snapSmallRef.current;
@@ -805,16 +795,17 @@ export default function Page() {
         outW: 1024,
       });
 
-      const fd = new FormData();
+      const fd = appendGuestbookLead(new FormData(), {
+        name,
+        email,
+        linkedinUrl,
+        message,
+        emailSelf,
+      });
       fd.append("photo", blob, `pixelbooth-${Date.now()}.png`);
 
-      fd.append("name", name);
-      fd.append("email", email);
-      fd.append("linkedinUrl", linkedinUrl);
-      fd.append("message", message);
 
       // ✅ NEW: server should always email Rob; and also email user if emailSelf=1
-      fd.append("emailSelf", emailSelf ? "1" : "0");
 
       fd.append(
         "pixelSize",
@@ -850,20 +841,12 @@ export default function Page() {
     }
   };
 
-  useEffect(() => {
-    if (!showSaveModal) return;
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") setShowSaveModal(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [showSaveModal]);
-
   const canSnap = !error && !snapped;
   const canBackToLive = !error && snapped;
   const canPublish = !error && snapped;
   const canSubmitSaveModal =
-    lead.name.trim().length > 0 && isValidEmail(lead.email);
+    lead.name.trim().length > 0 && isValidGuestbookEmail(lead.email);
+  const useLegacySaveModal = false;
 
   return (
     <div
@@ -900,25 +883,14 @@ export default function Page() {
           color: "#eaeaea",
         }}
       >
-        <header style={{ marginBottom: 16 }}>
-          <h1>Pixelbooth</h1>
-          <p className="lede">
-            Resize pixels, snap a photo, drag and drop to swap pixels, then
-            save it to the guestbook so everyone can see it.
-          </p>
-        </header>
+        <PageIntro
+          title="Pixelbooth"
+          lede="Resize pixels, snap a photo, drag and drop to swap pixels, then save it to the guestbook so everyone can see it."
+        />
         <DesktopBadge />
 
         {error ? (
-          <div
-            style={{
-              padding: 12,
-              borderRadius: 12,
-              background: "#2a1414",
-              border: "1px solid #5a2b2b",
-              marginBottom: 12,
-            }}
-          >
+          <div className="card ui-errorCard" style={{ marginBottom: 12 }}>
             {error}
           </div>
         ) : null}
@@ -938,9 +910,116 @@ export default function Page() {
           .pixelboothActions .pixelboothActionBtn:hover {
             color: var(--text);
           }
+          .pixelSliderWrap {
+            padding: 0;
+          }
           .pixelSlider {
             width: 100%;
-            accent-color: var(--accent);
+            position: relative;
+            z-index: 1;
+            display: block;
+            height: 28px;
+            margin: 0;
+            padding: 0;
+            appearance: none;
+            -webkit-appearance: none;
+            background: transparent;
+            cursor: ew-resize;
+          }
+          .pixelSlider:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+          }
+          .pixelSlider:focus-visible {
+            box-shadow: none;
+            outline: none;
+          }
+          .pixelSlider::-webkit-slider-runnable-track {
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+            background:
+              repeating-linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.14) 0 6px,
+                rgba(255, 255, 255, 0.02) 6px 12px
+              ),
+              linear-gradient(
+                90deg,
+                rgba(45, 226, 230, 0.32),
+                rgba(24, 118, 128, 0.32)
+              ),
+              linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.08),
+                rgba(0, 0, 0, 0.26)
+              );
+            box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
+          }
+          .pixelSlider::-moz-range-track {
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+            background:
+              repeating-linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.14) 0 6px,
+                rgba(255, 255, 255, 0.02) 6px 12px
+              ),
+              linear-gradient(
+                90deg,
+                rgba(45, 226, 230, 0.32),
+                rgba(24, 118, 128, 0.32)
+              ),
+              linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.08),
+                rgba(0, 0, 0, 0.26)
+              );
+            box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
+          }
+          .pixelSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            margin-top: -3px;
+            border: 2px solid rgba(0, 0, 0, 0.85);
+            border-radius: 0;
+            background:
+              linear-gradient(180deg, var(--accent2), var(--accent)),
+              #fff;
+            box-shadow:
+              0 0 0 2px rgba(255, 255, 255, 0.16),
+              4px 4px 0 rgba(0, 0, 0, 0.4);
+          }
+          .pixelSlider::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border: 2px solid rgba(0, 0, 0, 0.85);
+            border-radius: 0;
+            background:
+              linear-gradient(180deg, var(--accent2), var(--accent)),
+              #fff;
+            box-shadow:
+              0 0 0 2px rgba(255, 255, 255, 0.16),
+              4px 4px 0 rgba(0, 0, 0, 0.4);
+          }
+          .pixelSlider::-moz-range-progress {
+            height: 18px;
+            border-radius: 999px;
+            background:
+              repeating-linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.16) 0 6px,
+                rgba(255, 255, 255, 0.03) 6px 12px
+              ),
+              linear-gradient(
+                90deg,
+                rgba(255, 79, 216, 0.84),
+                rgba(45, 226, 230, 0.84)
+              );
+            box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.28);
           }
         `}</style>
 
@@ -988,12 +1067,9 @@ export default function Page() {
 
         {saveResult ? (
           <div
-            style={{
-              marginBottom: 12,
-              fontSize: 12,
-              opacity: 0.95,
-              color: saveResult.tone === "warning" ? "#ffd27d" : "#c7ffd1",
-            }}
+            className="ui-feedback"
+            data-tone={saveResult.tone}
+            style={{ marginBottom: 12, marginTop: 0 }}
           >
             {saveResult.message}{" "}
             <a href={saveResult.url} target="_blank" rel="noreferrer">
@@ -1012,15 +1088,17 @@ export default function Page() {
             ) : null}
           </label>
 
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={slider}
-            disabled={snapped}
-            onChange={(e) => setSlider(Number(e.target.value))}
-            className="pixelSlider"
-          />
+          <div className="pixelSliderWrap">
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={slider}
+              disabled={snapped}
+              onChange={(e) => setSlider(Number(e.target.value))}
+              className="pixelSlider"
+            />
+          </div>
         </div>
 
         <video ref={videoRef} playsInline muted style={{ display: "none" }} />
@@ -1052,7 +1130,19 @@ export default function Page() {
         </div>
       </div>
 
-      {showSaveModal ? (
+      <GuestbookSubmissionModal
+        open={showSaveModal}
+        title="Publish your photo"
+        lead={lead}
+        setLead={setLead}
+        saving={saving}
+        saveError={saveError}
+        canSubmit={canSubmitSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSubmit={submitSave}
+      />
+
+      {useLegacySaveModal ? (
         <div
           role="dialog"
           aria-modal="true"

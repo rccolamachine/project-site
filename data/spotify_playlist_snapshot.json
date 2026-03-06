@@ -1,11 +1,11 @@
 {
-  "schemaVersion": 1,
-  "generatedAt": "2026-03-06T17:00:00.000Z",
+  "schemaVersion": 2,
+  "generatedAt": "2026-03-06T18:15:48.762Z",
   "source": "spotify-public-playlist-page",
   "sourceUrl": "https://open.spotify.com/playlist/4X8HWeNNCCc1sdVQA4NQOo",
   "playlistId": "4X8HWeNNCCc1sdVQA4NQOo",
   "playlistName": "Random Rob Shit",
-  "total": 31,
+  "total": 30,
   "declaredTotal": 260,
   "partial": true,
   "items": [
@@ -24,6 +24,7 @@
       "albumTitle": "Bette Davis Eyes",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b7bae10276e674152fe26a9b",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/0kPeymTUiaidv48eRrMISu",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -42,6 +43,7 @@
       "albumTitle": "Paul Simon",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025058a0aebf5365a911030083",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/6vxHp3CDNo0afgKGp2yi1E",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -60,6 +62,7 @@
       "albumTitle": "The Rocky Horror Picture Show - Original Soundtrack",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027bcc78f88610d99eaa8c9b50",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/7AUOZzM5P8UDuA0zga0PP8",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -86,6 +89,7 @@
       "albumTitle": "Little Shop Of Horrors (Original Motion Picture Soundtrack)",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02841ff3a0698816a278579298",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/77uG5Qe741Qyd5Wxo1TJhz",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -104,6 +108,7 @@
       "albumTitle": "I Know",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02d50c9aee892e579623ff787f",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/0HeNDXMTdBDS9eWQkhENJ2",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -122,6 +127,7 @@
       "albumTitle": "Acid Tongue",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e649a6f583f2dd4614769719",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/6MKL3Xdcf3qFhTP2KJhcsn",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -140,6 +146,7 @@
       "albumTitle": "Very Best Of Harry Belafonte",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021b712c9fd9f1df1f923460e9",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/3w6m1sTs8qXiuITB0sziwY",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -158,6 +165,7 @@
       "albumTitle": "Did You Hear the Rain?",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025addc393ba356de1067a846a",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/48gsLPdOUEDjr7P8Wvykne",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -176,6 +184,7 @@
       "albumTitle": "Life In Cartoon Motion",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02eb0b41d40b300163767da4b3",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/4Sqc0kPuZpfI0T2TZBu8JT",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -194,6 +203,7 @@
       "albumTitle": "Girls and Boys",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02baa9b132390a2d26a6b2dbed",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/43ddJFnP8m3PzNJXiHuiyJ",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -212,6 +222,7 @@
       "albumTitle": "Michael Jackson's This Is It",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0279b8d5f5821bddae3bc5e6a9",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/1nl09AjkuO7BBRF3BFAPsC",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -230,6 +241,7 @@
       "albumTitle": "Corinne Bailey Rae",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021ec9b096319afbcc2dca6879",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/2nGFzvICaeEWjIrBrL2RAx",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -248,6 +260,7 @@
       "albumTitle": "On How Life Is",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026fb355dfc944cce3598e30a1",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/5TAf4lnZCZTLlZHNZMLFLi",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -266,6 +279,7 @@
       "albumTitle": "99 Luftballons",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02bab7a6c80b9da5e76f8e3fa6",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/5mYtpXrZZ1bbGJYDGC8I0Y",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -284,6 +298,7 @@
       "albumTitle": "Music From Party of Five",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020b28f02c24b7dc72e61e7a07",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/6hs3SDnbO3f6VQuPO4KBEb",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -302,6 +317,7 @@
       "albumTitle": "KC & the Sunshine Band... and More",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c15e8983eef55e19f9b73ff3",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/2Nc1Tl1qHWLAtBnqRJmkP3",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -320,6 +336,7 @@
       "albumTitle": "Whitney",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a520a167a62d5548cdb53101",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/2tUBqZG2AbRi7Q0BIrVrEj",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -338,6 +355,7 @@
       "albumTitle": "9 To 5 And Odd Jobs",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0249cb2d53994caada391cf39e",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/4w3tQBXhn5345eUXDGBWZG",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -356,6 +374,7 @@
       "albumTitle": "Wilson Phillips",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e023168e1f416b81862ccc83594",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/4VZDv8sASBS8UruUBGTFdk",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -374,6 +393,7 @@
       "albumTitle": "The Ultimate Bobby Darin",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0232ca9d1b933d95925e170c90",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/0YTgZJfVLmJ0b8XAMZKRKg",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -392,6 +412,7 @@
       "albumTitle": "Ray Charles (aka: Hallelujah, I Love Her So)",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f0e951707ca49b533fdbf64e",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/2xar08Fq5xra2KKZs5Bw9j",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -410,6 +431,7 @@
       "albumTitle": "The Execution Of All Things",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020fc393d89bb5480b4f064b8f",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/5it6O1Z84HVK4A4E8OIufF",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -430,6 +452,7 @@
       "albumTitle": "Late Registration",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02428d2255141c2119409a31b2",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/1PS1QMdUqOal0ai3Gt7sDQ",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -448,6 +471,7 @@
       "albumTitle": "Everybody's in Show-Biz (Legacy Edition)",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020a5c906230c7a64e21570d9e",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/3qKo1AurAhl5KEMyWMoXLf",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -466,6 +490,7 @@
       "albumTitle": "The Color Purple",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02893ec4584195ccbcea27d3df",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/0jODWcPXpqg2f54P1O64y6",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -484,6 +509,7 @@
       "albumTitle": "Americana",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020fdb7379076fe5c08ac55c38",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/5JzF2iymNwCyFz9MTmojd0",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -502,6 +528,7 @@
       "albumTitle": "Holiday Road",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02217c0066ccc25db60b58e7aa",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/38i0QcGQ9hu8PMk4QObUTj",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -520,6 +547,7 @@
       "albumTitle": "St. Anne's Parade",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027d0ea07d7e9d6b1ab7189dad",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/48BNSgeaNqQXKMSlCC8JdT",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -538,6 +566,7 @@
       "albumTitle": "The Graduate",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02172b67ed85f8899d5695752e",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/2LkaNhCrNVmcYgXJeLVmsw",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -556,25 +585,8 @@
       "albumTitle": "Hello, I Must Be Going! (Deluxe Edition)",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ab0a92e5cd20c2224c44a8a6",
       "year": "",
+      "addedAt": "",
       "externalUrl": "https://open.spotify.com/track/4YwbSZaYeYja8Umyt222Qf",
-      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
-    },
-    {
-      "id": "54pvEYFocTlvIAQOfXSjqV",
-      "spotifyTrackId": "54pvEYFocTlvIAQOfXSjqV",
-      "spotifyTrackUri": "spotify:track:54pvEYFocTlvIAQOfXSjqV",
-      "title": "Alone Again (Naturally)",
-      "artists": [
-        "Gilbert O'Sullivan"
-      ],
-      "artistIds": [
-        "4HVmeVTQBgvTuvjB1JYwaf"
-      ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/e46728130abf301569ad71819ced73253d78ca12",
-      "albumTitle": "Back to Front (Deluxe Edition)",
-      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02acc5e23ac0089a5649961ca0",
-      "year": "",
-      "externalUrl": "https://open.spotify.com/track/54pvEYFocTlvIAQOfXSjqV",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     }
   ]

@@ -1,6 +1,7 @@
 import styles from "../mixtape.module.css";
 import {
   formatArtistList,
+  formatPlaylistAddedAt,
   getSpotifyTrackIdFromEntry,
 } from "../mixtapeUtils";
 
@@ -21,11 +22,11 @@ export default function PlaylistPanel({
   tracks,
 }) {
   return (
-    <section className={`card ui-logPanel ${styles.panelSpacing}`}>
+    <section className={`card ui-logPanel ${styles.panelSpacing} ${styles.mixtapePanel}`}>
       <div className="ui-logHeader">
-        <div className={styles.panelHeaderRow}>
-          <span>FULL MIXTAPE TRACKLIST</span>
-          <div className="ui-toolbarActions">
+        <div className={styles.panelHeaderGrid}>
+          <span className={styles.panelTitle}>RANDOM ROB SH!T</span>
+          <div className={`${styles.panelHeaderAction} ui-toolbarActions`}>
             <button
               type="button"
               onClick={onPlayRandom}
@@ -34,8 +35,13 @@ export default function PlaylistPanel({
               {playlistRandomLoading ? "Picking..." : "Play Random"}
             </button>
           </div>
+          <div className={styles.panelDescription}>
+            A playlist I&apos;ve been curating for the last ten years.
+          </div>
+          <div className={`${styles.panelReadout} ${styles.panelReadoutRight}`}>
+            {playlistReadout}
+          </div>
         </div>
-        <div className={styles.panelReadout}>{playlistReadout}</div>
       </div>
 
       {playlistError ? (
@@ -80,8 +86,11 @@ export default function PlaylistPanel({
                 tabIndex={0}
                 title="Click for info"
               >
-                <span className="ui-logIndex">
-                  {String(listNumber).padStart(3, "0")}
+                <span
+                  className={`ui-logDate ${styles.trackDateCell}`}
+                  title={track.addedAt || ""}
+                >
+                  {formatPlaylistAddedAt(track.addedAt) || "--"}
                 </span>
                 <button
                   type="button"

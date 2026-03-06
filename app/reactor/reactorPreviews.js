@@ -127,52 +127,186 @@ function countLayoutCrossings(nodes, bonds) {
   return count;
 }
 
-function applyCrossingRepulsion(nodes, bonds, fx, fy, cool) {
-  for (let i = 0; i < bonds.length; i += 1) {
-    const e1 = bonds[i];
-    for (let j = i + 1; j < bonds.length; j += 1) {
-      const e2 = bonds[j];
-      if (e1.a === e2.a || e1.a === e2.b || e1.b === e2.a || e1.b === e2.b) {
-        continue;
+function buildAdjacency(atoms, bonds) {
+  const adjacency = Array.from({ length: atoms.length }, () => []);
+  for (const bond of bonds) {
+    adjacency[bond.a].push({ to: bond.b, order: bond.order });
+    adjacency[bond.b].push({ to: bond.a, order: bond.order });
+  }
+  return adjacency;
+}
+
+function bondLengthTarget3D(atoms, a, b, order = 1) {
+  const hasH = atoms[a]?.el === "H" || atoms[b]?.el === "H";
+  if (hasH) return 0.84;
+  if (order >= 3) return 0.94;
+  if (order === 2) return 1.02;
+  return 1.1;
+}
+
+function inferIdealBondAngleDeg(el, neighborRows, atoms) {
+  const degree = neighborRows.length;
+  if (degree <= 1) return null;
+
+  const bondOrderSum = neighborRows.reduce((sum, row) => sum + row.order, 0);
+  const maxOrder = neighborRows.reduce((max, row) => Math.max(max, row.order), 0);
+  const heavyDegree = neighborRows.reduce(
+    (sum, row) => sum + (atoms[row.to]?.el === "H" ? 0 : 1),
+    0,
+  );
+
+  if (degree === 2) {
+    if (el === "O") return bondOrderSum >= 3 ? 120 : 104.5;
+    if (el === "S") return bondOrderSum >= 3 ? 112 : 104.5;
+    if (el === "N" || el === "P") return bondOrderSum >= 4 ? 120 : 107;
+    if (maxOrder >= 3 || bondOrderSum >= 4) return 180;
+    if (heavyDegree >= 2 && bondOrderSum >= 3) return 180;
+    return 120;
+  }
+
+  if (degree === 3) {
+    if ((el === "N" || el === "P") && maxOrder <= 1 && bondOrderSum <= 3) {
+      return 107;
+    }
+    if ((el === "O" || el === "S") && maxOrder <= 1 && bondOrderSum <= 3) {
+      return 104.5;
+    }
+    if (maxOrder >= 2 || bondOrderSum >= 4) return 120;
+    return 109.5;
+  }
+
+  if (degree === 4) return 109.5;
+  return (Math.acos(-1 / Math.max(1.05, degree - 1)) * 180) / Math.PI;
+}
+
+function buildAngleConstraints(atoms, bonds) {
+  const adjacency = buildAdjacency(atoms, bonds);
+  const constraints = [];
+
+  for (let center = 0; center < adjacency.length; center += 1) {
+    const neighbors = adjacency[center];
+    if (neighbors.length < 2) continue;
+
+    const targetDeg = inferIdealBondAngleDeg(atoms[center]?.el, neighbors, atoms);
+    if (!Number.isFinite(targetDeg)) continue;
+    const targetRad = (targetDeg * Math.PI) / 180;
+
+    for (let i = 0; i < neighbors.length; i += 1) {
+      for (let j = i + 1; j < neighbors.length; j += 1) {
+        const a = neighbors[i].to;
+        const b = neighbors[j].to;
+        const lenA = bondLengthTarget3D(atoms, center, a, neighbors[i].order);
+        const lenB = bondLengthTarget3D(atoms, center, b, neighbors[j].order);
+        const pairTarget = Math.sqrt(
+          Math.max(
+            1e-6,
+            lenA * lenA + lenB * lenB - 2 * lenA * lenB * Math.cos(targetRad),
+          ),
+        );
+        constraints.push({
+          center,
+          a,
+          b,
+          target: pairTarget,
+          stiffness:
+            neighbors.length === 2
+              ? 0.18
+              : neighbors.length === 3
+                ? 0.15
+                : 0.11,
+        });
       }
-      const a = nodes[e1.a];
-      const b = nodes[e1.b];
-      const c = nodes[e2.a];
-      const d = nodes[e2.b];
-      if (!segmentsCross(a, b, c, d)) continue;
-
-      const k = 0.18 * cool;
-      const d1x = b.x - a.x;
-      const d1y = b.y - a.y;
-      const l1 = Math.hypot(d1x, d1y) + 1e-6;
-      const p1x = -d1y / l1;
-      const p1y = d1x / l1;
-
-      const d2x = d.x - c.x;
-      const d2y = d.y - c.y;
-      const l2 = Math.hypot(d2x, d2y) + 1e-6;
-      const p2x = -d2y / l2;
-      const p2y = d2x / l2;
-
-      const m1x = (a.x + b.x) * 0.5;
-      const m1y = (a.y + b.y) * 0.5;
-      const m2x = (c.x + d.x) * 0.5;
-      const m2y = (c.y + d.y) * 0.5;
-
-      const sign1 = Math.sign((m2x - m1x) * p1x + (m2y - m1y) * p1y) || 1;
-      const sign2 = Math.sign((m1x - m2x) * p2x + (m1y - m2y) * p2y) || 1;
-
-      fx[e1.a] -= sign1 * p1x * k;
-      fy[e1.a] -= sign1 * p1y * k;
-      fx[e1.b] -= sign1 * p1x * k;
-      fy[e1.b] -= sign1 * p1y * k;
-
-      fx[e2.a] -= sign2 * p2x * k;
-      fy[e2.a] -= sign2 * p2y * k;
-      fx[e2.b] -= sign2 * p2x * k;
-      fy[e2.b] -= sign2 * p2y * k;
     }
   }
+
+  return constraints;
+}
+
+function countProjectionOverlap(nodes) {
+  let penalty = 0;
+  for (let i = 0; i < nodes.length; i += 1) {
+    const a = nodes[i];
+    for (let j = i + 1; j < nodes.length; j += 1) {
+      const b = nodes[j];
+      const minDist = (a.r + b.r) * 0.82;
+      const dist = Math.hypot(b.x - a.x, b.y - a.y);
+      const overlap = minDist - dist;
+      if (overlap > 0) penalty += overlap * overlap;
+    }
+  }
+  return penalty;
+}
+
+const STATIC_PREVIEW_ROTATIONS = Object.freeze([
+  { x: -35, y: 35, z: -12 },
+  { x: -28, y: 55, z: 10 },
+  { x: -18, y: 80, z: -18 },
+  { x: -42, y: 110, z: 18 },
+  { x: -26, y: 145, z: -8 },
+  { x: -12, y: 180, z: 16 },
+  { x: -38, y: 220, z: -20 },
+  { x: -24, y: 255, z: 14 },
+  { x: -16, y: 290, z: -12 },
+  { x: -32, y: 325, z: 20 },
+  { x: 18, y: 48, z: 28 },
+  { x: 24, y: 132, z: -26 },
+]);
+
+function selectBestStaticProjection(layout3d, orientationIndex = 0) {
+  if (!layout3d) return null;
+
+  const offset = Number.isFinite(orientationIndex)
+    ? Math.max(0, Math.floor(orientationIndex))
+    : 0;
+
+  const candidates = STATIC_PREVIEW_ROTATIONS.map((rotation, idx) => {
+    const tweak = offset * 11;
+    const projected = projectBallStick3D(
+      layout3d,
+      ((rotation.x + tweak * 0.35) * Math.PI) / 180,
+      ((rotation.y + tweak) * Math.PI) / 180,
+      ((rotation.z - tweak * 0.45) * Math.PI) / 180,
+      1.04,
+    );
+    if (!projected) return null;
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+
+    for (const node of projected.nodes2d) {
+      minX = Math.min(minX, node.x - node.r);
+      maxX = Math.max(maxX, node.x + node.r);
+      minY = Math.min(minY, node.y - node.r);
+      maxY = Math.max(maxY, node.y + node.r);
+      minZ = Math.min(minZ, node.z);
+      maxZ = Math.max(maxZ, node.z);
+    }
+
+    return {
+      idx,
+      projected,
+      crossings: countLayoutCrossings(projected.nodes2d, projected.bonds),
+      overlap: countProjectionOverlap(projected.nodes2d),
+      area: (maxX - minX) * (maxY - minY),
+      depth: maxZ - minZ,
+    };
+  }).filter(Boolean);
+
+  if (candidates.length <= 0) return null;
+
+  candidates.sort((a, b) => {
+    if (a.crossings !== b.crossings) return a.crossings - b.crossings;
+    if (Math.abs(a.overlap - b.overlap) > 1e-4) return a.overlap - b.overlap;
+    if (Math.abs(a.area - b.area) > 1e-3) return b.area - a.area;
+    if (Math.abs(a.depth - b.depth) > 1e-4) return b.depth - a.depth;
+    return a.idx - b.idx;
+  });
+
+  return candidates[0]?.projected || null;
 }
 
 function atomVisualRadius(el) {
@@ -185,156 +319,24 @@ function previewAtomRadius(el, depthFactor = 1) {
 }
 
 function buildBallStickLayout(structure, orientationIndex = 0) {
-  const parsed = normalizeStructure(structure);
-  if (!parsed) return null;
+  const layout3d = buildBallStickLayout3D(structure);
+  if (!layout3d) return null;
 
-  const { atoms, bonds } = parsed;
-  const n = atoms.length;
-  const makeAttempt = (attemptSeed) => {
-    const phase = (attemptSeed * Math.PI) / 4.3;
-    const flip = Math.floor(attemptSeed) % 2 === 0 ? 1 : -1;
-    const nodes = atoms.map((atom, idx) => {
-      if (n === 1) return { idx, el: atom.el, x: 0, y: 0 };
-      const theta = (2 * Math.PI * idx) / Math.max(3, n) + phase;
-      const radial = atom.el === "H" ? 0.68 : 1.1;
-      return {
-        idx,
-        el: atom.el,
-        x: Math.cos(theta) * radial,
-        y: Math.sin(theta) * radial * flip,
-      };
-    });
+  const projected = selectBestStaticProjection(layout3d, orientationIndex);
+  if (!projected) return null;
 
-    const damp = 0.84;
-    const vx = Array.from({ length: n }, () => 0);
-    const vy = Array.from({ length: n }, () => 0);
-
-    for (let iter = 0; iter < 220; iter += 1) {
-      const fx = Array.from({ length: n }, () => 0);
-      const fy = Array.from({ length: n }, () => 0);
-      const cool = 1 - iter / 245;
-
-      for (let i = 0; i < n; i += 1) {
-        for (let j = i + 1; j < n; j += 1) {
-          const dx = nodes[j].x - nodes[i].x;
-          const dy = nodes[j].y - nodes[i].y;
-          const d2 = dx * dx + dy * dy + 1e-4;
-          const d = Math.sqrt(d2);
-          const isHPair = atoms[i].el === "H" && atoms[j].el === "H";
-          const rep = (isHPair ? 0.04 : 0.085) / d2;
-          const ux = dx / d;
-          const uy = dy / d;
-          fx[i] -= rep * ux;
-          fy[i] -= rep * uy;
-          fx[j] += rep * ux;
-          fy[j] += rep * uy;
-        }
-      }
-
-      for (const bond of bonds) {
-        const a = bond.a;
-        const b = bond.b;
-        const dx = nodes[b].x - nodes[a].x;
-        const dy = nodes[b].y - nodes[a].y;
-        const d = Math.sqrt(dx * dx + dy * dy) + 1e-6;
-        const hasH = atoms[a].el === "H" || atoms[b].el === "H";
-        const target = hasH
-          ? 0.56
-          : bond.order >= 3
-            ? 0.62
-            : bond.order === 2
-              ? 0.7
-              : 0.8;
-        const k = hasH ? 0.32 : 0.18;
-        const pull = k * (d - target);
-        const ux = dx / d;
-        const uy = dy / d;
-        fx[a] += pull * ux;
-        fy[a] += pull * uy;
-        fx[b] -= pull * ux;
-        fy[b] -= pull * uy;
-      }
-
-      applyCrossingRepulsion(nodes, bonds, fx, fy, cool);
-
-      for (let i = 0; i < n; i += 1) {
-        fx[i] += -nodes[i].x * 0.04;
-        fy[i] += -nodes[i].y * 0.04;
-      }
-
-      for (let i = 0; i < n; i += 1) {
-        vx[i] = vx[i] * damp + fx[i] * 0.15 * cool;
-        vy[i] = vy[i] * damp + fy[i] * 0.15 * cool;
-        nodes[i].x += vx[i];
-        nodes[i].y += vy[i];
-      }
-    }
-
-    return nodes;
+  return {
+    nodes: projected.nodes2d.map((node) => ({
+      idx: node.idx,
+      el: node.el,
+      x: node.x,
+      y: node.y,
+      z: node.z,
+      depthFactor: node.depthFactor,
+      r: node.r,
+    })),
+    bonds: projected.bonds,
   };
-
-  const tryCount = n <= 6 ? 10 : 8;
-  const baseSeed = Number.isFinite(orientationIndex)
-    ? Math.max(0, orientationIndex) * 0.73
-    : 0;
-  const candidates = [];
-
-  for (let t = 0; t < tryCount; t += 1) {
-    const nodes = makeAttempt(baseSeed + t);
-    const crossings = countLayoutCrossings(nodes, bonds);
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    for (const node of nodes) {
-      minX = Math.min(minX, node.x);
-      maxX = Math.max(maxX, node.x);
-      minY = Math.min(minY, node.y);
-      maxY = Math.max(maxY, node.y);
-    }
-    const area = (maxX - minX) * (maxY - minY);
-    candidates.push({ nodes, crossings, area });
-  }
-
-  candidates.sort((a, b) => {
-    if (a.crossings !== b.crossings) return a.crossings - b.crossings;
-    return a.area - b.area;
-  });
-
-  const candidateRank = clamp(Math.floor(orientationIndex), 0, candidates.length - 1);
-  const nodes =
-    candidates[candidateRank]?.nodes ||
-    candidates[0]?.nodes ||
-    makeAttempt(baseSeed);
-
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-
-  for (const node of nodes) {
-    minX = Math.min(minX, node.x);
-    maxX = Math.max(maxX, node.x);
-    minY = Math.min(minY, node.y);
-    maxY = Math.max(maxY, node.y);
-  }
-
-  const spanX = Math.max(0.2, maxX - minX);
-  const spanY = Math.max(0.2, maxY - minY);
-  const maxRadius = Math.max(...atoms.map((a) => previewAtomRadius(a.el)));
-  const scale = Math.min(
-    (78 - maxRadius * 1.4) / spanX,
-    (44 - maxRadius * 1.4) / spanY,
-  );
-  const cx = (minX + maxX) * 0.5;
-  const cy = (minY + maxY) * 0.5;
-
-  for (const node of nodes) {
-    node.x = 50 + (node.x - cx) * Math.max(6, scale);
-    node.y = 32 + (node.y - cy) * Math.max(6, scale);
-  }
-
-  return { nodes, bonds };
 }
 
 function bondOffsets(order) {
@@ -380,8 +382,8 @@ export function MoleculeBallStickPreview({
         const b = layout.nodes[bond.b];
         const aEl = layout.nodes[bond.a].el;
         const bEl = layout.nodes[bond.b].el;
-        const aR = previewAtomRadius(aEl);
-        const bR = previewAtomRadius(bEl);
+        const aR = a.r || previewAtomRadius(aEl, a.depthFactor || 1);
+        const bR = b.r || previewAtomRadius(bEl, b.depthFactor || 1);
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const len = Math.hypot(dx, dy) || 1;
@@ -408,7 +410,7 @@ export function MoleculeBallStickPreview({
 
       {layout.nodes.map((node, idx) => {
         const fill = PREVIEW_ELEMENT_COLORS[node.el] || "#94a3b8";
-        const r = previewAtomRadius(node.el);
+        const r = node.r || previewAtomRadius(node.el, node.depthFactor || 1);
         return (
           <g key={idx}>
             <circle
@@ -507,6 +509,7 @@ function buildBallStickLayout3D(structure) {
 
   const { atoms, bonds } = parsed;
   const n = atoms.length;
+  const angleConstraints = buildAngleConstraints(atoms, bonds);
   const nodes = atoms.map((atom, idx) => {
     if (n <= 1) return { idx, el: atom.el, x: 0, y: 0, z: 0 };
     const t = (idx + 0.5) / n;
@@ -527,11 +530,11 @@ function buildBallStickLayout3D(structure) {
   const vz = Array.from({ length: n }, () => 0);
   const damp = 0.86;
 
-  for (let iter = 0; iter < 280; iter += 1) {
+  for (let iter = 0; iter < 360; iter += 1) {
     const fx = Array.from({ length: n }, () => 0);
     const fy = Array.from({ length: n }, () => 0);
     const fz = Array.from({ length: n }, () => 0);
-    const cool = 1 - iter / 320;
+    const cool = 1 - iter / 400;
 
     for (let i = 0; i < n; i += 1) {
       for (let j = i + 1; j < n; j += 1) {
@@ -562,13 +565,7 @@ function buildBallStickLayout3D(structure) {
       const dz = nodes[b].z - nodes[a].z;
       const d = Math.sqrt(dx * dx + dy * dy + dz * dz) + 1e-6;
       const hasH = atoms[a].el === "H" || atoms[b].el === "H";
-      const target = hasH
-        ? 0.84
-        : bond.order >= 3
-          ? 0.94
-          : bond.order === 2
-            ? 1.02
-            : 1.1;
+      const target = bondLengthTarget3D(atoms, a, b, bond.order);
       const k = hasH ? 0.34 : 0.2;
       const pull = k * (d - target);
       const ux = dx / d;
@@ -580,6 +577,34 @@ function buildBallStickLayout3D(structure) {
       fx[b] -= pull * ux;
       fy[b] -= pull * uy;
       fz[b] -= pull * uz;
+    }
+
+    for (const constraint of angleConstraints) {
+      const a = constraint.a;
+      const b = constraint.b;
+      const center = constraint.center;
+      const dx = nodes[b].x - nodes[a].x;
+      const dy = nodes[b].y - nodes[a].y;
+      const dz = nodes[b].z - nodes[a].z;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz) + 1e-6;
+      const pull = constraint.stiffness * cool * (d - constraint.target);
+      const ux = dx / d;
+      const uy = dy / d;
+      const uz = dz / d;
+
+      fx[a] += pull * ux;
+      fy[a] += pull * uy;
+      fz[a] += pull * uz;
+      fx[b] -= pull * ux;
+      fy[b] -= pull * uy;
+      fz[b] -= pull * uz;
+
+      const midX = (nodes[a].x + nodes[b].x) * 0.5;
+      const midY = (nodes[a].y + nodes[b].y) * 0.5;
+      const midZ = (nodes[a].z + nodes[b].z) * 0.5;
+      fx[center] += (midX - nodes[center].x) * 0.025 * cool;
+      fy[center] += (midY - nodes[center].y) * 0.025 * cool;
+      fz[center] += (midZ - nodes[center].z) * 0.025 * cool;
     }
 
     for (let i = 0; i < n; i += 1) {

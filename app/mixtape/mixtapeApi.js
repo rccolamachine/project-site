@@ -1,31 +1,15 @@
-import {
-  CLIENT_SPOTIFY_MOCK_MODE,
-  CLIENT_SPOTIFY_MOCK_TOTAL,
-} from "./mixtapeConstants";
-
 export async function getApiErrorMessage(res, fallbackMessage) {
   const json = await res.json().catch(() => null);
   return json?.detail || json?.error || fallbackMessage;
 }
 
-export function buildSpotifyApiUrl(
-  pathname,
-  params,
-  { includeMockTotal = false } = {},
-) {
+export function buildSpotifyApiUrl(pathname, params) {
   const searchParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
     searchParams.set(key, String(value));
   });
-
-  if (CLIENT_SPOTIFY_MOCK_MODE) {
-    searchParams.set("mock", "1");
-    if (includeMockTotal) {
-      searchParams.set("mockTotal", String(CLIENT_SPOTIFY_MOCK_TOTAL));
-    }
-  }
 
   const query = searchParams.toString();
   return query ? `${pathname}?${query}` : pathname;
@@ -116,15 +100,11 @@ export async function fetchSpotifyPlaylistPage({
   signal,
 }) {
   return fetchJsonOrThrow(
-    buildSpotifyApiUrl(
-      "/api/spotify/playlist",
-      {
-        playlistId,
-        offset,
-        limit,
-      },
-      { includeMockTotal: true },
-    ),
+    buildSpotifyApiUrl("/api/spotify/playlist", {
+      playlistId,
+      offset,
+      limit,
+    }),
     {
       cache: "no-store",
       signal,

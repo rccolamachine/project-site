@@ -9,16 +9,25 @@ export default function WakeupLogPanel({
   onRowPlay,
   songs,
 }) {
+  const wakeupReadout =
+    songs.length === 0 ? "Showing 0 of 0" : `Showing ${songs.length} of ${songs.length}`;
+
   return (
     <div className={styles.stackSpacing}>
-      <section className="card ui-logPanel">
+      <section className={`card ui-logPanel ${styles.mixtapePanel}`}>
         <div className="ui-logHeader">
-          <div className={styles.panelHeaderRow}>
-            <span>WAKEUP MIXTAPE LOG</span>
-            <div className="ui-toolbarActions">
+          <div className={styles.panelHeaderGrid}>
+            <span className={styles.panelTitle}>WAKEUP MIXTAPE LOG</span>
+            <div className={`${styles.panelHeaderAction} ui-toolbarActions`}>
               <button type="button" onClick={onAddSong}>
                 Add Song
               </button>
+            </div>
+            <div className={styles.panelDescription}>
+              Most days, I wake up with a song in my head. These are those songs.
+            </div>
+            <div className={`${styles.panelReadout} ${styles.panelReadoutRight}`}>
+              {wakeupReadout}
             </div>
           </div>
         </div>

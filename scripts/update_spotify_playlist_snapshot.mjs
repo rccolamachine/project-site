@@ -4,9 +4,59 @@ import path from "node:path";
 const DEFAULT_PLAYLIST_URL =
   "https://open.spotify.com/playlist/4X8HWeNNCCc1sdVQA4NQOo";
 const DEFAULT_OUTPUT_RELATIVE = "data/spotify_playlist_snapshot.json";
+const DEFAULT_ENV_FILES = [".env.local", ".env.development.local"];
+const SPOTIFY_API_PAGE_SIZE = 50;
 
 function safeTrim(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function parseYear(value) {
+  const raw = safeTrim(value);
+  if (!raw) return "";
+  const year = raw.slice(0, 4);
+  return /^\d{4}$/.test(year) ? year : "";
+}
+
+function stripWrappingQuotes(value) {
+  const raw = safeTrim(value);
+  if (
+    raw.length >= 2 &&
+    ((raw.startsWith('"') && raw.endsWith('"')) ||
+      (raw.startsWith("'") && raw.endsWith("'")))
+  ) {
+    return raw.slice(1, -1);
+  }
+  return raw;
+}
+
+async function loadEnvFiles(baseDir) {
+  for (const relativePath of DEFAULT_ENV_FILES) {
+    const filePath = path.join(baseDir, relativePath);
+    let text = "";
+    try {
+      text = await fs.readFile(filePath, "utf8");
+    } catch {
+      continue;
+    }
+
+    for (const line of text.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+
+      const withoutExport = trimmed.startsWith("export ")
+        ? trimmed.slice("export ".length)
+        : trimmed;
+      const separatorIndex = withoutExport.indexOf("=");
+      if (separatorIndex <= 0) continue;
+
+      const key = withoutExport.slice(0, separatorIndex).trim();
+      if (!key || process.env[key] != null) continue;
+
+      const rawValue = withoutExport.slice(separatorIndex + 1);
+      process.env[key] = stripWrappingQuotes(rawValue);
+    }
+  }
 }
 
 function parseArgs(argv) {
@@ -60,13 +110,27 @@ function parseSpotifyIdFromUri(uri, prefix) {
   return safeTrim(raw.slice(expected.length));
 }
 
+function parseSpotifyIdFromExternalUrl(url, prefix) {
+  const raw = safeTrim(url);
+  if (!raw) return "";
+
+  try {
+    const parsed = new URL(raw);
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (parts[0] !== prefix) return "";
+    return safeTrim(parts[1]);
+  } catch {
+    return "";
+  }
+}
+
 function pickImageUrl(sources) {
   if (!Array.isArray(sources) || sources.length === 0) return "";
   const sorted = [...sources].sort((a, b) => (a?.width || 0) - (b?.width || 0));
   return safeTrim(sorted[1]?.url || sorted[0]?.url || "");
 }
 
-function mapTrackItem(item, playlistId) {
+function mapPublicTrackItem(item, playlistId) {
   const track = item?.itemV2?.data;
   if (!track || track.__typename !== "Track") return null;
 
@@ -95,7 +159,43 @@ function mapTrackItem(item, playlistId) {
     albumTitle: safeTrim(track?.albumOfTrack?.name),
     albumCoverUrl: pickImageUrl(track?.albumOfTrack?.coverArt?.sources),
     year: "",
+    addedAt: "",
     externalUrl: `https://open.spotify.com/track/${spotifyTrackId}`,
+    sourcePlaylistId: playlistId,
+  };
+}
+
+function mapApiTrackItem(item, playlistId) {
+  const track = item?.track || item?.item || {};
+  const spotifyTrackUri = safeTrim(track?.uri);
+  const spotifyTrackId =
+    safeTrim(track?.id) ||
+    parseSpotifyIdFromUri(spotifyTrackUri, "track") ||
+    parseSpotifyIdFromExternalUrl(track?.external_urls?.spotify, "track");
+  if (!spotifyTrackId) return null;
+
+  const artists = Array.isArray(track?.artists)
+    ? track.artists.map((artist) => safeTrim(artist?.name)).filter(Boolean)
+    : [];
+  const artistIds = Array.isArray(track?.artists)
+    ? track.artists.map((artist) => safeTrim(artist?.id)).filter(Boolean)
+    : [];
+
+  return {
+    id: spotifyTrackId,
+    spotifyTrackId,
+    spotifyTrackUri: spotifyTrackUri || `spotify:track:${spotifyTrackId}`,
+    title: safeTrim(track?.name),
+    artists,
+    artistIds,
+    previewUrl: safeTrim(track?.preview_url),
+    albumTitle: safeTrim(track?.album?.name),
+    albumCoverUrl: pickImageUrl(track?.album?.images),
+    year: parseYear(track?.album?.release_date),
+    addedAt: safeTrim(item?.added_at),
+    externalUrl:
+      safeTrim(track?.external_urls?.spotify) ||
+      `https://open.spotify.com/track/${spotifyTrackId}`,
     sourcePlaylistId: playlistId,
   };
 }
@@ -128,23 +228,71 @@ async function loadPlaylistHtml({ playlistUrl, htmlPath }) {
   return res.text();
 }
 
-async function main() {
-  const options = parseArgs(process.argv.slice(2));
-  const playlistId = parsePlaylistId(options.playlist);
-  if (!playlistId) {
-    throw new Error("Unable to parse playlist id from --playlist argument.");
+async function loadPlaylistSnapshotFromApi(playlistId, playlistUrl) {
+  const clientId = safeTrim(process.env.SPOTIFY_CLIENT_ID);
+  const clientSecret = safeTrim(process.env.SPOTIFY_CLIENT_SECRET);
+  if (!clientId || !clientSecret) {
+    return null;
   }
 
-  const playlistUrl = options.playlist.includes("http")
-    ? options.playlist
-    : `https://open.spotify.com/playlist/${playlistId}`;
-  const outputPath = path.isAbsolute(options.out)
-    ? options.out
-    : path.join(process.cwd(), options.out);
+  const { getPlaylistItems, getSpotifyAccessToken } = await import("../lib/spotify.js");
+  const accessToken = await getSpotifyAccessToken();
 
+  const metaResponse = await fetch(
+    `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}?fields=name`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: "no-store",
+    },
+  );
+  if (!metaResponse.ok) {
+    throw new Error(`Failed to fetch playlist metadata (${metaResponse.status}).`);
+  }
+
+  const metaJson = await metaResponse.json().catch(() => null);
+  const playlistName = safeTrim(metaJson?.name);
+
+  let offset = 0;
+  let total = 0;
+  const rawItems = [];
+
+  do {
+    const page = await getPlaylistItems(playlistId, {
+      offset,
+      limit: SPOTIFY_API_PAGE_SIZE,
+    });
+    const pageItems = Array.isArray(page?.items) ? page.items : [];
+    total = Math.max(0, Number(page?.total || 0));
+    rawItems.push(...pageItems);
+    offset += pageItems.length;
+
+    if (pageItems.length === 0) break;
+  } while (offset < total);
+
+  const items = rawItems
+    .map((item) => mapApiTrackItem(item, playlistId))
+    .filter(Boolean);
+
+  return {
+    schemaVersion: 2,
+    generatedAt: new Date().toISOString(),
+    source: "spotify-web-api-playlist-items",
+    sourceUrl: playlistUrl,
+    playlistId,
+    playlistName,
+    total: items.length,
+    declaredTotal: Math.max(items.length, total),
+    partial: items.length < total,
+    items,
+  };
+}
+
+async function loadPlaylistSnapshotFromPublicPage(playlistId, playlistUrl, htmlPath) {
   const html = await loadPlaylistHtml({
     playlistUrl,
-    htmlPath: options.html,
+    htmlPath,
   });
   const initialState = parseInitialState(html);
 
@@ -163,16 +311,16 @@ async function main() {
     ? playlistEntity.content.items
     : [];
   const items = rawItems
-    .map((item) => mapTrackItem(item, playlistId))
+    .map((item) => mapPublicTrackItem(item, playlistId))
     .filter(Boolean);
 
   const declaredTotal = Math.max(
     0,
     Number(playlistEntity?.content?.totalCount || items.length) || items.length,
   );
-  const partial = declaredTotal > items.length;
-  const snapshot = {
-    schemaVersion: 1,
+
+  return {
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     source: "spotify-public-playlist-page",
     sourceUrl: playlistUrl,
@@ -180,9 +328,43 @@ async function main() {
     playlistName: safeTrim(playlistEntity?.name),
     total: items.length,
     declaredTotal,
-    partial,
+    partial: declaredTotal > items.length,
     items,
   };
+}
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2));
+  await loadEnvFiles(process.cwd());
+
+  const playlistId = parsePlaylistId(options.playlist);
+  if (!playlistId) {
+    throw new Error("Unable to parse playlist id from --playlist argument.");
+  }
+
+  const playlistUrl = options.playlist.includes("http")
+    ? options.playlist
+    : `https://open.spotify.com/playlist/${playlistId}`;
+  const outputPath = path.isAbsolute(options.out)
+    ? options.out
+    : path.join(process.cwd(), options.out);
+
+  let snapshot = null;
+  let apiError = null;
+
+  try {
+    snapshot = await loadPlaylistSnapshotFromApi(playlistId, playlistUrl);
+  } catch (err) {
+    apiError = err;
+  }
+
+  if (!snapshot) {
+    snapshot = await loadPlaylistSnapshotFromPublicPage(
+      playlistId,
+      playlistUrl,
+      options.html,
+    );
+  }
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
@@ -192,9 +374,12 @@ async function main() {
     outputPath,
     playlistId,
     playlistName: snapshot.playlistName,
-    itemsSaved: items.length,
-    declaredTotal,
-    partial,
+    itemsSaved: snapshot.items.length,
+    declaredTotal: snapshot.declaredTotal,
+    partial: snapshot.partial,
+    source: snapshot.source,
+    addedAtCount: snapshot.items.filter((item) => safeTrim(item?.addedAt)).length,
+    apiError: apiError ? apiError.message || String(apiError) : "",
   };
   console.log(JSON.stringify(summary, null, 2));
 }

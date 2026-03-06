@@ -123,12 +123,6 @@ export default function SiteHeader() {
           >
             To-Do
           </Link>
-          <Link
-            className={pathname.startsWith("/pictures") ? "active" : ""}
-            href="/pictures"
-          >
-            Pictures
-          </Link>
         </nav>
       </div>
     </header>

@@ -1,21 +1,61 @@
-// app/api/pictures/route.js
+import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { put, list, del } from "@vercel/blob";
+import { del, list, put } from "@vercel/blob";
+import { getGuestbookDeleteCookieName } from "@/lib/guestbook";
 
 export const runtime = "nodejs";
-const DEFAULT_RESEND_FROM = "Pixelbooth <hello@mail.rccolamachine.com>";
 
-// ---------- helpers ----------
-function isValidEmail(s) {
-  if (!s) return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s).trim());
+const DEFAULT_RESEND_FROM = "Pixelbooth <hello@mail.rccolamachine.com>";
+const DELETE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+
+function isValidEmail(value) {
+  if (!value) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 }
-function safeTrim(v) {
-  return typeof v === "string" ? v.trim() : "";
+
+function safeTrim(value) {
+  return typeof value === "string" ? value.trim() : "";
 }
-function safeAuthor(s) {
-  return safeTrim(s) || "Guest";
+
+function safeAuthor(value) {
+  return safeTrim(value) || "Guest";
+}
+
+function safeTime(iso) {
+  const time = Date.parse(String(iso || ""));
+  return Number.isFinite(time) ? time : 0;
+}
+
+function getDeleteTokenSecret() {
+  return (
+    safeTrim(process.env.GUESTBOOK_DELETE_SECRET) ||
+    safeTrim(process.env.BLOB_READ_WRITE_TOKEN) ||
+    safeTrim(process.env.RESEND_API_KEY)
+  );
+}
+
+function signDeleteToken(id) {
+  const secret = getDeleteTokenSecret();
+  if (!secret) {
+    throw new Error(
+      "Server missing a guestbook delete secret. Set GUESTBOOK_DELETE_SECRET.",
+    );
+  }
+
+  return createHmac("sha256", secret)
+    .update(`guestbook-delete:${id}`)
+    .digest("hex");
+}
+
+function tokenMatches(expected, actual) {
+  if (!expected || !actual) return false;
+
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(actual);
+
+  if (expectedBuffer.length !== actualBuffer.length) return false;
+  return timingSafeEqual(expectedBuffer, actualBuffer);
 }
 
 async function sendEmailOrThrow(resend, payload, label) {
@@ -46,7 +86,19 @@ async function fetchJson(url) {
   return res.json();
 }
 
-// ---------- GET: list guestbook entries ----------
+function buildDeleteCookie(id) {
+  return {
+    name: getGuestbookDeleteCookieName(id),
+    value: signDeleteToken(id),
+    options: {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: DELETE_COOKIE_MAX_AGE_SECONDS,
+    },
+  };
+}
+
 export async function GET(req) {
   try {
     const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
@@ -68,86 +120,72 @@ export async function GET(req) {
     );
     const cursor = searchParams.get("cursor") || undefined;
 
-    // Pull extra so we likely get both .png and .json pairs
-    const res = await list({
+    const result = await list({
       prefix: "photobooth/",
       limit: Math.max(100, limit * 3),
       cursor,
       token: blobToken,
     });
 
-    const blobs = res.blobs || [];
+    const jsonById = new Map();
+    const imageById = new Map();
 
-    const jsonById = new Map(); // id -> jsonUrl
-    const imgById = new Map(); // id -> blob
-
-    for (const b of blobs) {
-      const p = b.pathname || "";
-      if (p.endsWith(".json")) {
-        const id =
-          p
-            .split("/")
-            .pop()
-            ?.replace(/\.json$/i, "") || "";
-        if (id) jsonById.set(id, b.url);
-      } else if (p.endsWith(".png")) {
-        const id =
-          p
-            .split("/")
-            .pop()
-            ?.replace(/\.png$/i, "") || "";
-        if (id) imgById.set(id, b);
+    for (const blob of result.blobs || []) {
+      const pathname = blob.pathname || "";
+      if (pathname.endsWith(".json")) {
+        const id = pathname.split("/").pop()?.replace(/\.json$/i, "") || "";
+        if (id) jsonById.set(id, blob);
+      } else if (pathname.endsWith(".png")) {
+        const id = pathname.split("/").pop()?.replace(/\.png$/i, "") || "";
+        if (id) imageById.set(id, blob);
       }
     }
 
-    // newest-first by image uploadedAt
-    const ids = Array.from(imgById.keys()).sort((a, b) => {
-      const A = imgById.get(a);
-      const B = imgById.get(b);
-      return (
-        new Date(B.uploadedAt).getTime() - new Date(A.uploadedAt).getTime()
-      );
-    });
-
-    const sliced = ids.slice(0, limit);
-
+    const ids = Array.from(new Set([...imageById.keys(), ...jsonById.keys()]));
     const items = await Promise.all(
-      sliced.map(async (id) => {
-        const img = imgById.get(id);
-        const metaUrl = jsonById.get(id);
+      ids.map(async (id) => {
+        const imageBlob = imageById.get(id) || null;
+        const metaBlob = jsonById.get(id) || null;
 
         let meta = null;
-        if (metaUrl) {
+        if (metaBlob?.url) {
           try {
-            meta = await fetchJson(metaUrl);
+            meta = await fetchJson(metaBlob.url);
           } catch {
             meta = null;
           }
         }
 
-        const createdAt = meta?.created_at || img.uploadedAt;
+        const createdAt =
+          safeTrim(meta?.created_at) ||
+          imageBlob?.uploadedAt ||
+          metaBlob?.uploadedAt ||
+          "";
 
         return {
           id,
-          image_url: img.url,
+          image_url: safeTrim(meta?.image_url) || imageBlob?.url || "",
           name: safeAuthor(meta?.name),
           message: safeTrim(meta?.message) || "",
           linkedinUrl: safeTrim(meta?.linkedinUrl) || "",
           created_at: createdAt,
-          sid: safeTrim(meta?.sid) || "",
-
-          // extras (optional)
-          pathname: img.pathname,
-          uploadedAt: img.uploadedAt,
+          entryType: safeTrim(meta?.entryType) || (imageBlob ? "photo" : "message"),
+          uploadedAt: imageBlob?.uploadedAt || metaBlob?.uploadedAt || "",
         };
       }),
     );
 
+    items.sort((a, b) => {
+      const aTime = safeTime(a.created_at || a.uploadedAt);
+      const bTime = safeTime(b.created_at || b.uploadedAt);
+      return bTime - aTime;
+    });
+
     return NextResponse.json(
       {
-        items,
-        cursor: res.cursor || null,
-        hasMore: !!res.cursor,
+        items: items.slice(0, limit),
+        cursor: result.cursor || null,
+        hasMore: !!result.cursor,
       },
       { status: 200 },
     );
@@ -159,7 +197,6 @@ export async function GET(req) {
   }
 }
 
-// ---------- POST: upload image + metadata sidecar + email ----------
 export async function POST(req) {
   try {
     const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
@@ -175,29 +212,25 @@ export async function POST(req) {
     }
 
     const fd = await req.formData();
+    const photo = fd.get("photo");
+    const hasPhoto =
+      !!photo && typeof photo !== "string" && Number(photo.size || 0) > 0;
 
-    const photo = fd.get("photo"); // File
     const name = safeTrim(fd.get("name"));
     const email = safeTrim(fd.get("email"));
     const linkedinUrl = safeTrim(fd.get("linkedinUrl"));
     const message = safeTrim(fd.get("message"));
     const emailSelf = safeTrim(fd.get("emailSelf")) === "1";
-
     const pixelSize = safeTrim(fd.get("pixelSize"));
     const tinyW = safeTrim(fd.get("tinyW"));
     const tinyH = safeTrim(fd.get("tinyH"));
     const outW = safeTrim(fd.get("outW"));
     const outH = safeTrim(fd.get("outH"));
 
-    if (!photo || typeof photo === "string") {
-      return NextResponse.json(
-        { error: "Missing photo file." },
-        { status: 400 },
-      );
-    }
     if (!name) {
       return NextResponse.json({ error: "Name is required." }, { status: 400 });
     }
+
     if (!email || !isValidEmail(email)) {
       return NextResponse.json(
         { error: "Valid email is required." },
@@ -205,65 +238,66 @@ export async function POST(req) {
       );
     }
 
-    // session ownership
-    const sid = req.cookies.get("gb_sid")?.value || "";
-
-    // Resend optional (upload still succeeds if missing/misconfigured)
     const resendKey = process.env.RESEND_API_KEY || "";
     const resend = resendKey ? new Resend(resendKey) : null;
-
-    // Stable id so png/json pair
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const imgPath = `photobooth/${id}.png`;
     const metaPath = `photobooth/${id}.json`;
+    const entryType = hasPhoto ? "photo" : "message";
 
-    // 1) upload image (always as .png)
-    const imgBlob = await put(imgPath, photo, {
-      access: "public",
-      contentType: photo.type || "image/png",
-      addRandomSuffix: false,
-      token: blobToken,
-    });
+    let imageBlob = null;
+    if (hasPhoto) {
+      imageBlob = await put(imgPath, photo, {
+        access: "public",
+        contentType: photo.type || "image/png",
+        addRandomSuffix: false,
+        token: blobToken,
+      });
+    }
 
-    // 2) upload metadata sidecar
-    // NOTE: we do NOT store email in the public metadata file
     const meta = {
       id,
-      sid,
       name,
       linkedinUrl,
       message,
+      entryType,
       created_at: new Date().toISOString(),
-      image_url: imgBlob.url,
-      pixelSize,
-      tinyW,
-      tinyH,
-      outW,
-      outH,
+      image_url: imageBlob?.url || "",
+      pixelSize: hasPhoto ? pixelSize : "",
+      tinyW: hasPhoto ? tinyW : "",
+      tinyH: hasPhoto ? tinyH : "",
+      outW: hasPhoto ? outW : "",
+      outH: hasPhoto ? outH : "",
     };
 
     await putJson(metaPath, meta, { token: blobToken });
 
-    // 3) email (best effort)
-    const subject = `Pixelbooth submission: ${name}`;
+    const subject = hasPhoto
+      ? `Pixelbooth submission: ${name}`
+      : `Guestbook message: ${name}`;
     const details = [
+      `Type: ${entryType === "photo" ? "Pixelbooth photo" : "Guestbook message"}`,
       `Name: ${name}`,
       `Email: ${email}`,
       linkedinUrl ? `LinkedIn: ${linkedinUrl}` : null,
       message ? `Message: ${message}` : null,
-      "",
-      `Image URL: ${imgBlob.url}`,
-      "",
-      `pixelSize: ${pixelSize}`,
-      `tinyW x tinyH: ${tinyW} x ${tinyH}`,
-      `outW x outH: ${outW} x ${outH}`,
+      hasPhoto && imageBlob?.url ? `Image URL: ${imageBlob.url}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const guestCopyDetails = [
+      `Type: ${entryType === "photo" ? "Pixelbooth photo" : "Guestbook message"}`,
+      `Name: ${name}`,
+      linkedinUrl ? `LinkedIn: ${linkedinUrl}` : null,
+      message ? `Message: ${message}` : null,
+      hasPhoto ? "Your PNG photo is attached to this email." : null,
     ]
       .filter(Boolean)
       .join("\n");
 
     const from = process.env.RESEND_FROM || DEFAULT_RESEND_FROM;
     const toRob = "rob@mail.rccolamachine.com";
-
     const emailWarnings = [];
 
     if (!resend) {
@@ -288,15 +322,31 @@ export async function POST(req) {
         emailWarnings.push(error?.message || String(error));
       }
 
-      if (emailSelf && isValidEmail(email)) {
+      if (emailSelf) {
         try {
+          const attachments =
+            hasPhoto && photo && typeof photo !== "string"
+              ? [
+                  {
+                    filename: `pixelbooth-${id}.png`,
+                    content: Buffer.from(await photo.arrayBuffer()).toString(
+                      "base64",
+                    ),
+                    contentType: photo.type || "image/png",
+                  },
+                ]
+              : undefined;
+
           await sendEmailOrThrow(
             resend,
             {
               from,
               to: [email],
-              subject: "Your Pixelbooth submission",
-              text: `Here's a copy of what you submitted:\n\n${details}`,
+              subject: hasPhoto
+                ? "Your Pixelbooth submission"
+                : "Your Guestbook submission",
+              text: `Here's a copy of what you submitted:\n\n${guestCopyDetails}`,
+              attachments,
             },
             "Guest copy failed",
           );
@@ -307,14 +357,23 @@ export async function POST(req) {
       }
     }
 
-    const emailWarning = emailWarnings.length
-      ? emailWarnings.join(" ")
-      : null;
-
-    return NextResponse.json(
-      { id, url: imgBlob.url, ...(emailWarning ? { emailWarning } : {}) },
+    const response = NextResponse.json(
+      {
+        id,
+        url: imageBlob?.url || "",
+        ...(emailWarnings.length ? { emailWarning: emailWarnings.join(" ") } : {}),
+      },
       { status: 200 },
     );
+
+    const deleteCookie = buildDeleteCookie(id);
+    response.cookies.set(
+      deleteCookie.name,
+      deleteCookie.value,
+      deleteCookie.options,
+    );
+
+    return response;
   } catch (err) {
     return NextResponse.json(
       { error: "Upload/email failed", detail: err?.message || String(err) },
@@ -323,7 +382,6 @@ export async function POST(req) {
   }
 }
 
-// ---------- DELETE: delete entry only if same session ----------
 export async function DELETE(req) {
   try {
     const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
@@ -334,31 +392,32 @@ export async function DELETE(req) {
       );
     }
 
-    const sid = req.cookies.get("gb_sid")?.value || "";
-    if (!sid) {
-      return NextResponse.json(
-        { error: "No session cookie found." },
-        { status: 401 },
-      );
-    }
-
     const { searchParams } = new URL(req.url);
     const id = safeTrim(searchParams.get("id"));
     if (!id) {
       return NextResponse.json({ error: "Missing id." }, { status: 400 });
     }
 
-    const metaPath = `photobooth/${id}.json`;
-    const imgPath = `photobooth/${id}.png`;
+    const cookieName = getGuestbookDeleteCookieName(id);
+    const providedToken = req.cookies.get(cookieName)?.value || "";
+    const expectedToken = signDeleteToken(id);
 
-    // Find the metadata JSON blob so we can read it and verify sid
+    if (!tokenMatches(expectedToken, providedToken)) {
+      return NextResponse.json(
+        { error: "Not allowed to delete this entry." },
+        { status: 403 },
+      );
+    }
+
+    const metaPath = `photobooth/${id}.json`;
+    const imagePath = `photobooth/${id}.png`;
     const found = await list({
       prefix: metaPath,
       limit: 10,
       token: blobToken,
     });
 
-    const metaBlob = (found.blobs || []).find((b) => b.pathname === metaPath);
+    const metaBlob = (found.blobs || []).find((blob) => blob.pathname === metaPath);
     if (!metaBlob) {
       return NextResponse.json({ error: "Entry not found." }, { status: 404 });
     }
@@ -372,16 +431,19 @@ export async function DELETE(req) {
     }
 
     const meta = await metaRes.json();
-    if (!meta?.sid || meta.sid !== sid) {
-      return NextResponse.json(
-        { error: "Not allowed to delete this entry." },
-        { status: 403 },
-      );
-    }
+    const pathsToDelete = [metaPath];
+    if (safeTrim(meta?.image_url)) pathsToDelete.push(imagePath);
 
-    await del([metaPath, imgPath], { token: blobToken });
+    await del(pathsToDelete, { token: blobToken });
 
-    return NextResponse.json({ ok: true }, { status: 200 });
+    const response = NextResponse.json({ ok: true }, { status: 200 });
+    response.cookies.set(cookieName, "", {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 0,
+    });
+    return response;
   } catch (err) {
     return NextResponse.json(
       { error: "Delete failed", detail: err?.message || String(err) },

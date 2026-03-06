@@ -6,13 +6,6 @@ function isTruthyEnvValue(value) {
 
 export const MIXTAPE_PLAYLIST_ID = "4X8HWeNNCCc1sdVQA4NQOo";
 export const PLAYLIST_PAGE_SIZE = 25;
-export const CLIENT_SPOTIFY_MOCK_MODE = isTruthyEnvValue(
-  process.env.NEXT_PUBLIC_SPOTIFY_MOCK_MODE,
-);
-export const CLIENT_SPOTIFY_MOCK_TOTAL = Math.max(
-  1,
-  Number(process.env.NEXT_PUBLIC_SPOTIFY_MOCK_TOTAL || 260),
-);
 export const CLIENT_SHOW_FULL_MIXTAPE_PANEL = isTruthyEnvValue(
   process.env.NEXT_PUBLIC_SHOW_FULL_MIXTAPE_PANEL,
 );

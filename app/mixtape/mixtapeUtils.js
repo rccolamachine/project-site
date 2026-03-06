@@ -18,6 +18,21 @@ export function formatSongDate(input) {
   });
 }
 
+export function formatPlaylistAddedAt(input) {
+  const raw = String(input || "").trim();
+  if (!raw) return "";
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export function formatArtistList(artists) {
   return Array.isArray(artists)
     ? artists.filter(Boolean).join(", ")

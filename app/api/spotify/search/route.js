@@ -13,31 +13,6 @@ import {
 export const runtime = "nodejs";
 const SEARCH_CACHE_TTL_MS = 45_000;
 const SEARCH_CACHE_STALE_FALLBACK_MS = 5 * 60 * 1000;
-function buildMockSpotifyId(seed, index = 0) {
-  const cleaned = String(seed || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
-  const base = `${cleaned}${String(index + 1)}abcdefghijklmnopqrstuv0123456789`;
-  return base.slice(0, 22).padEnd(22, "0");
-}
-
-function buildMockSearchTracks(query, limit) {
-  const count = Math.max(1, Math.min(10, Number(limit) || 7));
-  const tracks = [];
-  for (let i = 0; i < count; i += 1) {
-    const trackId = buildMockSpotifyId(query, i);
-    tracks.push({
-      id: trackId,
-      title: `Mock ${query} ${i + 1}`,
-      artists: [`Mock Artist ${String((i % 9) + 1).padStart(2, "0")}`],
-      artistIds: [buildMockSpotifyId(`artist${query}`, i)],
-      album: `Mock Album ${String((i % 6) + 1).padStart(2, "0")}`,
-      externalUrl: `https://open.spotify.com/track/${trackId}`,
-      mock: true,
-    });
-  }
-  return tracks;
-}
 
 function getSearchStore() {
   const key = "__spotifySearchRouteStore";
@@ -61,10 +36,6 @@ export async function GET(req) {
   const useSnapshot =
     shouldUseSnapshotSource(searchParams.get("snapshot")) ||
     shouldUseSnapshotSource(process.env.SPOTIFY_SNAPSHOT_MODE);
-  const useMock =
-    !useSnapshot &&
-    (shouldUseSnapshotSource(searchParams.get("mock")) ||
-      shouldUseSnapshotSource(process.env.SPOTIFY_MOCK_MODE));
   const now = Date.now();
   const store = getSearchStore();
   const cacheStore = store.cache;
@@ -88,19 +59,6 @@ export async function GET(req) {
           headers: {
             "Cache-Control": "no-store",
             "X-Spotify-Cache": "SNAPSHOT",
-          },
-        },
-      );
-    }
-
-    if (useMock) {
-      return NextResponse.json(
-        { tracks: buildMockSearchTracks(query, limit), mock: true },
-        {
-          status: 200,
-          headers: {
-            "Cache-Control": "no-store",
-            "X-Spotify-Cache": "MOCK",
           },
         },
       );

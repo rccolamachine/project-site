@@ -1,4 +1,5 @@
 import Image from "next/image";
+import PageIntro from "@/components/PageIntro";
 
 const photos = [
   { src: "/pictures/01.jpg", title: "Morning light", year: "2026" },
@@ -9,10 +10,7 @@ const photos = [
 export default function Pictures() {
   return (
     <section className="page">
-      <header style={{ marginBottom: 16 }}>
-        <h1>Pictures</h1>
-        <p className="lede">A small gallery. Add more anytime.</p>
-      </header>
+      <PageIntro title="Pictures" lede="A small gallery. Add more anytime." />
 
       <div className="grid">
         {photos.map((p) => (

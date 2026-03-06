@@ -18,8 +18,6 @@ import {
 } from "./mixtapeApi";
 import {
   CLIENT_SHOW_FULL_MIXTAPE_PANEL,
-  CLIENT_SPOTIFY_MOCK_MODE,
-  CLIENT_SPOTIFY_MOCK_TOTAL,
   MIXTAPE_PLAYLIST_ID,
   PLAYLIST_PAGE_SIZE,
 } from "./mixtapeConstants";
@@ -124,59 +122,21 @@ export default function MixtapeClient() {
       setPlaylistError("");
 
       try {
-        if (reset) {
-          const meta = await fetchSpotifyPlaylistPage({
-            playlistId: MIXTAPE_PLAYLIST_ID,
-            offset: 0,
-            limit: 1,
-          });
-
-          const total = Number(meta?.total || 0);
-          if (total <= 0) {
-            setPlaylistTracks([]);
-            setPlaylistTotal(0);
-            setPlaylistOffset(0);
-            setPlaylistHasMore(false);
-            return;
-          }
-
-          const chunkSize = Math.min(PLAYLIST_PAGE_SIZE, total);
-          const requestOffset = Math.max(0, total - chunkSize);
-          const page = await fetchSpotifyPlaylistPage({
-            playlistId: MIXTAPE_PLAYLIST_ID,
-            offset: requestOffset,
-            limit: chunkSize,
-          });
-
-          const nextItems = [...(Array.isArray(page?.items) ? page.items : [])].reverse();
-
-          setPlaylistTracks(nextItems);
-          setPlaylistTotal(total);
-          setPlaylistOffset(requestOffset);
-          setPlaylistHasMore(requestOffset > 0 && nextItems.length > 0);
-          return;
-        }
-
-        if (playlistOffset <= 0) {
-          setPlaylistHasMore(false);
-          return;
-        }
-
-        const chunkSize = Math.min(PLAYLIST_PAGE_SIZE, playlistOffset);
-        const requestOffset = Math.max(0, playlistOffset - chunkSize);
+        const requestOffset = reset ? 0 : playlistOffset;
         const page = await fetchSpotifyPlaylistPage({
           playlistId: MIXTAPE_PLAYLIST_ID,
           offset: requestOffset,
-          limit: chunkSize,
+          limit: PLAYLIST_PAGE_SIZE,
         });
 
-        const nextItems = [...(Array.isArray(page?.items) ? page.items : [])].reverse();
+        const nextItems = Array.isArray(page?.items) ? page.items : [];
         const total = Number(page?.total || playlistTotal || 0);
+        const nextOffset = requestOffset + nextItems.length;
 
-        setPlaylistTracks((prev) => [...prev, ...nextItems]);
+        setPlaylistTracks((prev) => (reset ? nextItems : [...prev, ...nextItems]));
         setPlaylistTotal(total);
-        setPlaylistOffset(requestOffset);
-        setPlaylistHasMore(requestOffset > 0 && nextItems.length > 0);
+        setPlaylistOffset(nextOffset);
+        setPlaylistHasMore(nextItems.length > 0 && nextOffset < total);
       } catch (err) {
         if (reset) {
           setPlaylistTracks([]);
@@ -607,7 +567,7 @@ export default function MixtapeClient() {
         return false;
       }
 
-      const offset = Math.max(0, playlistTotal - parsedListNumber);
+      const offset = Math.max(0, parsedListNumber - 1);
       const page = await fetchSpotifyPlaylistPage({
         playlistId: MIXTAPE_PLAYLIST_ID,
         offset,
@@ -656,13 +616,8 @@ export default function MixtapeClient() {
       <header className={styles.pageHeader}>
         <h1>Mixtape</h1>
         <p className="lede">
-          Most days, I wake up with a song in my head. These are those songs.
+          A running log of wake-up songs plus the full playlist they live in.
         </p>
-        {CLIENT_SPOTIFY_MOCK_MODE ? (
-          <div className={`ui-searchMeta ${styles.headerMeta}`}>
-            Spotify mock mode enabled ({CLIENT_SPOTIFY_MOCK_TOTAL} tracks).
-          </div>
-        ) : null}
       </header>
 
       <DesktopBadge />

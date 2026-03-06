@@ -33,8 +33,11 @@ export default function MixtapePlayerCard({
     <section className={className}>
       <div className={styles.playerShell}>
         <div className={styles.playerHeader}>
-          <div className={styles.playerLabel}>
-            {getPlayerLabel(currentContextLabel, currentListNumber)}
+          <div className={styles.playerMeta}>
+            <div className={styles.playerEyebrow}>Spotify Mini Player</div>
+            <div className={styles.playerLabel}>
+              {getPlayerLabel(currentContextLabel, currentListNumber)}
+            </div>
           </div>
           <button
             type="button"
@@ -43,7 +46,7 @@ export default function MixtapePlayerCard({
             title="Close player"
             aria-label="Close player"
           >
-            X
+            ×
           </button>
         </div>
 
