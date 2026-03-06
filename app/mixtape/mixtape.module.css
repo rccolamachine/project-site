@@ -212,6 +212,27 @@
   justify-self: end;
 }
 
+@media (max-width: 640px) {
+  .panelHeaderGrid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title action"
+      "description description"
+      "meta meta";
+    row-gap: 8px;
+  }
+
+  .panelDescription {
+    max-width: none;
+  }
+
+  .panelReadoutRight {
+    text-align: left;
+    justify-self: start;
+    max-width: none;
+  }
+}
+
 .panelMessage {
   padding: 12px;
 }
