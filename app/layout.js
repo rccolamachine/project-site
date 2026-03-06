@@ -14,7 +14,7 @@ const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata = {
-  title: "Rob Chapleski | Quality Engineering & Creative Code",
+  title: "rccolamachine | pixel sandboxes and vaporwave vibes",
   description: "Lead SDET. Automation Architect. Vaporwave builder.",
   icons: {
     icon: [{ url: "/brand/pixel-rob.png", type: "image/png" }],
