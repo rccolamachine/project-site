@@ -19,16 +19,15 @@
   display: none;
   padding: 0;
   overflow: hidden;
+  position: relative;
   border-color: rgba(45, 226, 230, 0.34);
   background: linear-gradient(
-    135deg,
-    rgba(5, 16, 19, 0.88),
-    rgba(8, 20, 22, 0.72) 48%,
-    rgba(13, 10, 24, 0.7)
+    180deg,
+    rgba(8, 12, 18, 0.94),
+    rgba(4, 8, 14, 0.96)
   );
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-    inset 0 0 26px rgba(45, 226, 230, 0.08),
     0 18px 42px rgba(2, 7, 10, 0.28);
 }
 
@@ -36,12 +35,23 @@
   display: block;
 }
 
+.playerCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 10px 1px rgba(45, 226, 230, 0.44),
+    inset 0 0 18px 3px rgba(45, 226, 230, 0.18);
+}
+
 .playerShell {
   position: relative;
   padding: 12px;
-  background:
-    radial-gradient(circle at top left, rgba(45, 226, 230, 0.12), transparent 36%),
-    linear-gradient(180deg, rgba(45, 226, 230, 0.05), rgba(255, 79, 216, 0.04));
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(8, 12, 18, 0.92), rgba(4, 8, 14, 0.88));
 }
 
 .playerShell::before {
@@ -50,7 +60,7 @@
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(45, 226, 230, 0.08), transparent 22%, transparent 78%, rgba(255, 79, 216, 0.08)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03), transparent 22%, transparent 78%, rgba(255, 255, 255, 0.03)),
     repeating-linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.04) 0,
@@ -73,19 +83,9 @@
 
 .playerMeta {
   display: grid;
-  gap: 4px;
+  gap: 0;
   flex: 1;
   min-width: 0;
-}
-
-.playerEyebrow {
-  font-family: var(--font-pixel);
-  font-size: 9px;
-  line-height: 1.2;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(45, 226, 230, 0.74);
-  text-shadow: 0 0 10px rgba(45, 226, 230, 0.22);
 }
 
 .playerLabel {
@@ -97,11 +97,10 @@
   padding: 6px 10px;
   border: 1px solid rgba(45, 226, 230, 0.34);
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(10, 22, 24, 0.9), rgba(6, 14, 19, 0.82));
+  background: linear-gradient(180deg, rgba(8, 16, 20, 0.96), rgba(5, 11, 16, 0.92));
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-    inset 0 0 14px rgba(45, 226, 230, 0.24),
-    inset 0 0 28px rgba(45, 226, 230, 0.14),
+    inset 0 0 10px rgba(45, 226, 230, 0.1),
     0 0 0 1px rgba(5, 18, 20, 0.35);
 }
 
@@ -129,11 +128,10 @@
   position: relative;
   z-index: 1;
   border: 1px solid rgba(45, 226, 230, 0.3);
-  background:
-    linear-gradient(180deg, rgba(8, 18, 23, 0.92), rgba(4, 10, 14, 0.88));
+  background: linear-gradient(180deg, rgba(8, 12, 18, 0.98), rgba(5, 9, 14, 0.96));
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-    inset 0 0 18px rgba(45, 226, 230, 0.12),
+    inset 0 0 12px rgba(45, 226, 230, 0.14),
     0 0 0 1px rgba(5, 18, 20, 0.45);
 }
 
@@ -147,7 +145,20 @@
 }
 
 .mixtapePanel {
+  position: relative;
   border-color: rgba(255, 79, 216, 0.4);
+  box-shadow:
+    inset 0 0 10px 1px rgba(255, 79, 216, 0.48),
+    inset 0 0 18px 3px rgba(255, 79, 216, 0.26);
+}
+
+.mixtapePanel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: inherit;
   box-shadow:
     inset 0 0 10px 1px rgba(255, 79, 216, 0.48),
     inset 0 0 18px 3px rgba(255, 79, 216, 0.26);
@@ -174,6 +185,15 @@
 .panelHeaderAction {
   grid-area: action;
   justify-self: end;
+}
+
+.panelHeaderButtons {
+  gap: 8px;
+}
+
+.headerActionButton {
+  min-height: 36px;
+  padding: 0 12px;
 }
 
 .panelDescription {
@@ -204,11 +224,47 @@
   padding: 10px;
 }
 
+.columnHeaderRow {
+  min-width: 620px;
+  display: grid;
+  grid-template-columns: 164px 52px minmax(220px, 1fr) minmax(180px, auto);
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(180deg, rgba(15, 25, 28, 0.96), rgba(8, 14, 18, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 0 rgba(255, 255, 255, 0.06);
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(198, 253, 255, 0.74);
+}
+
+.columnHeaderDate {
+  white-space: nowrap;
+}
+
+.columnHeaderSpacer {
+  width: 100%;
+  height: 1px;
+}
+
+.columnHeaderArtist {
+  justify-self: end;
+  text-align: right;
+}
+
 .tracklistBody {
   font-family: var(--font-pixel);
   font-size: 11px;
   line-height: 1.75;
   max-height: 300px;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 79, 216, 0.72) rgba(8, 12, 18, 0.52);
 }
@@ -347,6 +403,35 @@
   min-width: 0;
   white-space: nowrap;
   padding-right: 6px;
+}
+
+.spotifyActionButton {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: #1ed760;
+  border-color: rgba(30, 215, 96, 0.42);
+  background: linear-gradient(180deg, rgba(6, 20, 10, 0.92), rgba(4, 12, 8, 0.88));
+  box-shadow:
+    inset 0 0 10px rgba(30, 215, 96, 0.12),
+    0 0 16px rgba(30, 215, 96, 0.1);
+}
+
+.spotifyActionButton:hover {
+  color: #1ed760;
+  border-color: rgba(30, 215, 96, 0.7);
+  background: linear-gradient(180deg, rgba(10, 28, 14, 0.98), rgba(5, 16, 10, 0.92));
+  box-shadow:
+    inset 0 0 12px rgba(30, 215, 96, 0.18),
+    0 0 20px rgba(30, 215, 96, 0.14);
+}
+
+.spotifyIcon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex: 0 0 auto;
 }
 
 .loadErrorCard {

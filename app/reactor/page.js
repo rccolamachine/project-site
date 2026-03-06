@@ -1,6 +1,7 @@
 // app/reactor/page.js
 "use client";
 
+import Image from "next/image";
 import React, {
   useCallback,
   useEffect,
@@ -43,6 +44,7 @@ import {
   MoleculeBallStickPreview,
   MoleculeRotatingPreview,
 } from "./reactorPreviews";
+import discovererMedal from "./assets/discoverer_medal.png";
 import "./reactor.css";
 
 const ELEMENTS = ["S", "P", "O", "N", "C", "H"];
@@ -72,10 +74,22 @@ const THERMO_SAMPLE_MS = 1_000;
 const COLLECTION_PAGE_SIZE = 36;
 const FIRST_DISCOVERY_CALLOUT_MS = 5200;
 const FIRST_DISCOVERY_CALLOUT_FADE_MS = 1700;
+const WORLD_CATALOGUE_POLL_MS = 60_000;
+const REMOTE_CATALOGUE_FLUSH_MS = 20_000;
+const REMOTE_CATALOGUE_RETRY_MS = 45_000;
+const REMOTE_CATALOGUE_BATCH_MAX = 120;
 const REACTOR_OVERLAY_LIGHT_TEXT = "#e2e8f0";
 const REACTOR_PLOT_TEMP_COLOR = "#ff4fd8";
 const REACTOR_PLOT_PRESSURE_COLOR = "#2de2e6";
 const MIN_CATALOGUE_VISIBLE_ROWS = 3;
+const CATALOGUE_GRID_COLUMNS = "74px 92px 240px 112px 176px 176px";
+const CATALOGUE_TABLE_WIDTH_PX = 926;
+const CREATED_SORT_CYCLE = Object.freeze([
+  "me-asc",
+  "me-desc",
+  "world-asc",
+  "world-desc",
+]);
 const LIVE_SELECTION_PALETTE = Object.freeze([
   {
     atomSoft: "#86efac",
@@ -206,6 +220,23 @@ function formatProtocolCountdown(remainingMs) {
 }
 
 const CATALOG_ID_SET = new Set(MOLECULE_CATALOG.map((entry) => entry.id));
+const CATALOGUE_TIMESTAMP_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+const CATALOGUE_DATE_ONLY_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  year: "2-digit",
+  month: "2-digit",
+  day: "2-digit",
+});
+const CATALOGUE_TIME_ONLY_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
 
 function formatThermoScalar(value) {
   const n = Number(value) || 0;
@@ -218,31 +249,294 @@ function formatThermoScalar(value) {
   return n.toPrecision(2);
 }
 
-function readSavedCatalogueIdsFromStorage() {
-  if (typeof window === "undefined") return [];
+function normalizeCatalogueTimestamp(value) {
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const ms = Date.parse(value);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms).toISOString();
+}
+
+function normalizeLocalCatalogueProgress(candidate) {
+  const ids = new Set();
+  const moleculeStatsById = {};
+
+  if (Array.isArray(candidate)) {
+    for (const id of candidate) {
+      if (typeof id !== "string" || !CATALOG_ID_SET.has(id)) continue;
+      ids.add(id);
+    }
+    return { collectedIds: Array.from(ids).sort(), moleculeStatsById };
+  }
+
+  const parsed = candidate && typeof candidate === "object" ? candidate : {};
+  const idsRaw = Array.isArray(parsed?.collectedIds) ? parsed.collectedIds : [];
+  for (const id of idsRaw) {
+    if (typeof id !== "string" || !CATALOG_ID_SET.has(id)) continue;
+    ids.add(id);
+  }
+
+  const rawStats =
+    parsed?.moleculeStatsById && typeof parsed.moleculeStatsById === "object"
+      ? parsed.moleculeStatsById
+      : parsed?.localMoleculeStats &&
+          typeof parsed.localMoleculeStats === "object"
+        ? parsed.localMoleculeStats
+        : {};
+
+  for (const [id, raw] of Object.entries(rawStats)) {
+    if (!CATALOG_ID_SET.has(id) || !raw || typeof raw !== "object") continue;
+    let firstCreatedAt = normalizeCatalogueTimestamp(raw.firstCreatedAt);
+    let lastCreatedAt = normalizeCatalogueTimestamp(raw.lastCreatedAt);
+    const createdCount = Math.max(0, Math.floor(Number(raw.createdCount) || 0));
+
+    if (!firstCreatedAt && lastCreatedAt) firstCreatedAt = lastCreatedAt;
+    if (!lastCreatedAt && firstCreatedAt) lastCreatedAt = firstCreatedAt;
+    if (!firstCreatedAt && !lastCreatedAt && createdCount <= 0) continue;
+    if (firstCreatedAt && lastCreatedAt && firstCreatedAt > lastCreatedAt) {
+      const swap = firstCreatedAt;
+      firstCreatedAt = lastCreatedAt;
+      lastCreatedAt = swap;
+    }
+
+    ids.add(id);
+    moleculeStatsById[id] = {
+      firstCreatedAt,
+      lastCreatedAt,
+      createdCount,
+    };
+  }
+
+  return {
+    collectedIds: Array.from(ids).sort(),
+    moleculeStatsById,
+  };
+}
+
+function readSavedCatalogueProgressFromStorage() {
+  if (typeof window === "undefined") {
+    return { collectedIds: [], moleculeStatsById: {} };
+  }
   try {
     const raw =
       window.localStorage.getItem(CATALOGUE_STORAGE_KEY) ||
       window.localStorage.getItem(LEGACY_COLLECTION_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    const idsRaw = Array.isArray(parsed)
-      ? parsed
-      : Array.isArray(parsed?.collectedIds)
-        ? parsed.collectedIds
-        : [];
-    const seen = new Set();
-    const valid = [];
-    for (const id of idsRaw) {
-      if (typeof id !== "string") continue;
-      if (!CATALOG_ID_SET.has(id) || seen.has(id)) continue;
-      seen.add(id);
-      valid.push(id);
-    }
-    return valid;
+    if (!raw) return { collectedIds: [], moleculeStatsById: {} };
+    return normalizeLocalCatalogueProgress(JSON.parse(raw));
   } catch {
-    return [];
+    return { collectedIds: [], moleculeStatsById: {} };
   }
+}
+
+function readSavedCatalogueIdsFromStorage() {
+  return readSavedCatalogueProgressFromStorage().collectedIds;
+}
+
+function formatCatalogueTimestampMinute(value) {
+  const iso = normalizeCatalogueTimestamp(value);
+  if (!iso) return "--";
+  return CATALOGUE_TIMESTAMP_FORMATTER.format(new Date(iso));
+}
+
+function formatCatalogueDateOnly(value) {
+  const iso = normalizeCatalogueTimestamp(value);
+  if (!iso) return "--";
+  return CATALOGUE_DATE_ONLY_FORMATTER.format(new Date(iso));
+}
+
+function formatCatalogueTimeOnly(value) {
+  const iso = normalizeCatalogueTimestamp(value);
+  if (!iso) return "--";
+  return CATALOGUE_TIME_ONLY_FORMATTER.format(new Date(iso));
+}
+
+function buildWorldCatalogueStatsMap(items) {
+  const next = {};
+  for (const item of Array.isArray(items) ? items : []) {
+    if (!item?.id) continue;
+    next[item.id] = {
+      firstCreatedAt: normalizeCatalogueTimestamp(item.firstCreatedAt),
+      lastCreatedAt: normalizeCatalogueTimestamp(item.lastCreatedAt),
+      createdCount: Math.max(0, Math.floor(Number(item.createdCount) || 0)),
+    };
+  }
+  return next;
+}
+
+function compareOptionalIsoTimestamps(a, b) {
+  const aHas = Boolean(a);
+  const bHas = Boolean(b);
+  if (aHas !== bHas) return aHas ? -1 : 1;
+  if (!aHas && !bHas) return 0;
+  return String(a).localeCompare(String(b));
+}
+
+function advanceCreatedSortMode(mode) {
+  const currentIndex = CREATED_SORT_CYCLE.indexOf(String(mode || ""));
+  if (currentIndex < 0) return CREATED_SORT_CYCLE[0];
+  return CREATED_SORT_CYCLE[(currentIndex + 1) % CREATED_SORT_CYCLE.length];
+}
+
+function createdSortBadgeLabel(mode) {
+  return String(mode || "").startsWith("world-") ? "W" : "M";
+}
+
+function CreatedTimestampStack({
+  label,
+  timestamp,
+  titlePrefix,
+  align = "left",
+  labelColor,
+  valueColor,
+}) {
+  const hasTimestamp = Boolean(timestamp);
+  const isRight = align === "right";
+  const title = hasTimestamp
+    ? `${titlePrefix}: ${formatCatalogueTimestampMinute(timestamp)}`
+    : undefined;
+
+  return (
+    <div
+      title={title}
+      style={{
+        minWidth: 0,
+        width: "100%",
+        display: "grid",
+        gap: 1,
+        justifyItems: isRight ? "end" : "start",
+        textAlign: isRight ? "right" : "left",
+        overflow: "hidden",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 8,
+          fontWeight: 900,
+          color: labelColor,
+          lineHeight: 1.1,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: 8,
+          fontWeight: 800,
+          color: valueColor,
+          lineHeight: 1.1,
+        }}
+      >
+        {hasTimestamp ? formatCatalogueDateOnly(timestamp) : "to-do"}
+      </span>
+      <span
+        style={{
+          fontSize: 8,
+          fontWeight: 700,
+          color: valueColor,
+          lineHeight: 1.1,
+        }}
+      >
+        {hasTimestamp ? formatCatalogueTimeOnly(timestamp) : "\u00A0"}
+      </span>
+    </div>
+  );
+}
+
+function CreatedTimestampCell({
+  meTimestamp,
+  worldTimestamp,
+  meTitlePrefix,
+  worldTitlePrefix,
+  showMedal = false,
+}) {
+  return (
+    <div
+      className="reactor-catalogue-status-wrap"
+      style={{
+        display: "grid",
+        gridTemplateColumns: showMedal
+          ? "minmax(0, 1fr) 32px minmax(0, 1fr)"
+          : "repeat(2, minmax(0, 1fr))",
+        gap: 4,
+        alignItems: "start",
+        justifyItems: "stretch",
+        overflow: "hidden",
+      }}
+    >
+      <CreatedTimestampStack
+        label="Me"
+        timestamp={meTimestamp}
+        titlePrefix={meTitlePrefix}
+        align="left"
+        labelColor={meTimestamp ? "#166534" : "#334155"}
+        valueColor={meTimestamp ? "#166534" : "#64748b"}
+      />
+      {showMedal ? (
+        <div
+          title="World's First Discoverer"
+          style={{
+            alignSelf: "center",
+            justifySelf: "center",
+            width: 28,
+            height: 28,
+            display: "grid",
+            placeItems: "center",
+          }}
+        >
+          <Image
+            src={discovererMedal}
+            alt="First discoverer medal"
+            width={28}
+            height={28}
+            style={{
+              width: 28,
+              height: 28,
+              objectFit: "contain",
+              display: "block",
+            }}
+          />
+        </div>
+      ) : null}
+      <CreatedTimestampStack
+        label="World"
+        timestamp={worldTimestamp}
+        titlePrefix={worldTitlePrefix}
+        align="right"
+        labelColor="#334155"
+        valueColor="#475569"
+      />
+    </div>
+  );
+}
+
+function chooseLastCreatedCatalogueId(collectedIds, moleculeStatsById) {
+  let bestId = null;
+  let bestTs = "";
+  for (const id of collectedIds || []) {
+    const lastCreatedAt = moleculeStatsById?.[id]?.lastCreatedAt || "";
+    if (!lastCreatedAt) continue;
+    if (!bestId || lastCreatedAt > bestTs) {
+      bestId = id;
+      bestTs = lastCreatedAt;
+    }
+  }
+  return bestId || (collectedIds?.[collectedIds.length - 1] ?? null);
+}
+
+async function putRemoteCatalogueEvents(events, { keepalive = false } = {}) {
+  const response = await fetch("/api/reactor/catalogue", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ events }),
+    cache: "no-store",
+    keepalive,
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+
+  return response.json();
 }
 
 export default function ReactorPage() {
@@ -320,9 +614,15 @@ export default function ReactorPage() {
   const [collectionFilter, setCollectionFilter] = useState("all");
   const [collectionSort, setCollectionSort] = useState("number");
   const [collectionSortDir, setCollectionSortDir] = useState("asc");
+  const [collectionFirstCreatedSortMode, setCollectionFirstCreatedSortMode] =
+    useState("me-asc");
+  const [collectionLastCreatedSortMode, setCollectionLastCreatedSortMode] =
+    useState("me-asc");
   const [collectionQuery, setCollectionQuery] = useState("");
   const [collectionPage, setCollectionPage] = useState(1);
   const [collectedIds, setCollectedIds] = useState([]);
+  const [localCatalogueStatsById, setLocalCatalogueStatsById] = useState({});
+  const [worldCatalogueStatsById, setWorldCatalogueStatsById] = useState({});
   const [lastCataloguedId, setLastCataloguedId] = useState(null);
   const [selectedLiveIds, setSelectedLiveIds] = useState([]);
   const [liveMoleculeSummary, setLiveMoleculeSummary] = useState([]);
@@ -351,6 +651,8 @@ export default function ReactorPage() {
   const [expandedSnapshot, setExpandedSnapshot] = useState(null);
   const [expandedAngles, setExpandedAngles] = useState({ x: 0, y: 0, z: 0 });
   const [expandedZoom, setExpandedZoom] = useState(1);
+  const [worldCatalogueBadgeVisible, setWorldCatalogueBadgeVisible] =
+    useState(false);
 
   const canvasCardRef = useRef(null);
   const mountRef = useRef(null);
@@ -415,8 +717,14 @@ export default function ReactorPage() {
   });
   const controlDeltaClearTimerRef = useRef(null);
   const actionReadoutClearTimerRef = useRef(null);
+  const worldCatalogueBadgeTimerRef = useRef(null);
   const queuedScanTimerRef = useRef(null);
   const queuedScanPendingRef = useRef(false);
+  const localCatalogueStatsRef = useRef({});
+  const remoteCatalogueSeenLiveRef = useRef(new Set());
+  const remoteCataloguePendingRef = useRef(new Map());
+  const remoteCatalogueFlushTimerRef = useRef(null);
+  const remoteCatalogueFlushInFlightRef = useRef(false);
 
   const threeRef = useRef({
     renderer: null,
@@ -654,13 +962,6 @@ export default function ReactorPage() {
 
   const sortedCollection = useMemo(() => {
     const rows = filteredCollection.slice();
-    const statusRank = (entry) => {
-      const isCollected = collectedSet.has(entry.id);
-      const isLive = liveCollectedSet.has(entry.id);
-      if (isLive) return 0;
-      if (isCollected) return 1;
-      return 2;
-    };
 
     rows.sort((a, b) => {
       let cmp = 0;
@@ -671,10 +972,34 @@ export default function ReactorPage() {
       } else if (collectionSort === "name") {
         const byName = a.name.localeCompare(b.name);
         if (byName !== 0) cmp = byName;
-      } else if (collectionSort === "status") {
-        const as = statusRank(a);
-        const bs = statusRank(b);
-        if (as !== bs) cmp = as - bs;
+      } else if (
+        collectionSort === "firstCreated" ||
+        collectionSort === "lastCreated"
+      ) {
+        const field =
+          collectionSort === "lastCreated" ? "lastCreatedAt" : "firstCreatedAt";
+        const meA = localCatalogueStatsById[a.id]?.[field] || "";
+        const meB = localCatalogueStatsById[b.id]?.[field] || "";
+        const worldA = worldCatalogueStatsById[a.id]?.[field] || "";
+        const worldB = worldCatalogueStatsById[b.id]?.[field] || "";
+        const mode = String(
+          collectionSort === "lastCreated"
+            ? collectionLastCreatedSortMode
+            : collectionFirstCreatedSortMode,
+        );
+        const primaryIsWorld = mode.startsWith("world-");
+        const descending = mode.endsWith("-desc");
+
+        const primaryA = primaryIsWorld ? worldA : meA;
+        const primaryB = primaryIsWorld ? worldB : meB;
+        const secondaryA = primaryIsWorld ? meA : worldA;
+        const secondaryB = primaryIsWorld ? meB : worldB;
+
+        cmp = compareOptionalIsoTimestamps(primaryA, primaryB);
+        if (cmp === 0) {
+          cmp = compareOptionalIsoTimestamps(secondaryA, secondaryB);
+        }
+        if (descending) cmp = -cmp;
       }
 
       if (cmp === 0) {
@@ -692,9 +1017,11 @@ export default function ReactorPage() {
     filteredCollection,
     collectionSort,
     collectionSortDir,
+    collectionFirstCreatedSortMode,
+    collectionLastCreatedSortMode,
     molecularWeightById,
-    collectedSet,
-    liveCollectedSet,
+    localCatalogueStatsById,
+    worldCatalogueStatsById,
   ]);
 
   const collectionPageCount = useMemo(
@@ -752,6 +1079,18 @@ export default function ReactorPage() {
     [showActionReadout],
   );
 
+  const showWorldCatalogueUpdatedReadout = useCallback(() => {
+    if (worldCatalogueBadgeTimerRef.current) {
+      window.clearTimeout(worldCatalogueBadgeTimerRef.current);
+      worldCatalogueBadgeTimerRef.current = null;
+    }
+    setWorldCatalogueBadgeVisible(true);
+    worldCatalogueBadgeTimerRef.current = window.setTimeout(() => {
+      worldCatalogueBadgeTimerRef.current = null;
+      setWorldCatalogueBadgeVisible(false);
+    }, 1400);
+  }, []);
+
   const showDeletedReadout = useCallback(
     (counts, forceBracket = false) => {
       const rows = ELEMENTS.map((el) => ({
@@ -771,12 +1110,17 @@ export default function ReactorPage() {
   );
 
   useEffect(() => {
-    const valid = readSavedCatalogueIdsFromStorage();
+    const progress = readSavedCatalogueProgressFromStorage();
+    const valid = progress.collectedIds;
     const hasSavedCatalogue = valid.length > 0;
     setHasEverLocalSave(hasSavedCatalogue);
     setStarterSeedUsed(hasSavedCatalogue);
     setCollectedIds(valid);
-    setLastCataloguedId(valid.length > 0 ? valid[valid.length - 1] : null);
+    setLocalCatalogueStatsById(progress.moleculeStatsById);
+    localCatalogueStatsRef.current = progress.moleculeStatsById;
+    setLastCataloguedId(
+      chooseLastCreatedCatalogueId(valid, progress.moleculeStatsById),
+    );
     if (valid.length > 0) {
       setTutorialOpen(false);
       setCatalogueOpen(false);
@@ -791,16 +1135,196 @@ export default function ReactorPage() {
 
   useEffect(() => {
     if (!catalogueHydrated || resetInProgressRef.current) return;
-    localStorage.setItem(CATALOGUE_STORAGE_KEY, JSON.stringify(collectedIds));
-  }, [collectedIds, catalogueHydrated]);
+    localStorage.setItem(
+      CATALOGUE_STORAGE_KEY,
+      JSON.stringify({
+        v: 2,
+        savedAt: Date.now(),
+        collectedIds,
+        moleculeStatsById: localCatalogueStatsById,
+      }),
+    );
+  }, [collectedIds, localCatalogueStatsById, catalogueHydrated]);
 
   useEffect(() => {
     if (collectedIds.length > 0) setHasEverLocalSave(true);
   }, [collectedIds]);
 
   useEffect(() => {
+    return () => {
+      if (worldCatalogueBadgeTimerRef.current) {
+        window.clearTimeout(worldCatalogueBadgeTimerRef.current);
+        worldCatalogueBadgeTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const flushRemoteCatalogueEvents = useCallback(
+    async ({
+      keepalive = false,
+      retryDelayMs = REMOTE_CATALOGUE_RETRY_MS,
+    } = {}) => {
+      const pendingSnapshot = Array.from(
+        remoteCataloguePendingRef.current.values(),
+      )
+        .sort((a, b) => String(a.id).localeCompare(String(b.id)))
+        .slice(0, REMOTE_CATALOGUE_BATCH_MAX);
+
+      if (pendingSnapshot.length <= 0) return;
+      if (remoteCatalogueFlushInFlightRef.current) return;
+
+      if (remoteCatalogueFlushTimerRef.current) {
+        window.clearTimeout(remoteCatalogueFlushTimerRef.current);
+        remoteCatalogueFlushTimerRef.current = null;
+      }
+
+      remoteCatalogueFlushInFlightRef.current = true;
+      try {
+        const result = await putRemoteCatalogueEvents(pendingSnapshot, {
+          keepalive,
+        });
+        if (Array.isArray(result?.items) && result.items.length > 0) {
+          const updated = buildWorldCatalogueStatsMap(result.items);
+          setWorldCatalogueStatsById((prev) => ({ ...prev, ...updated }));
+          showWorldCatalogueUpdatedReadout();
+        }
+        for (const sent of pendingSnapshot) {
+          const current = remoteCataloguePendingRef.current.get(sent.id);
+          if (!current) continue;
+          if (
+            current.firstCreatedAt === sent.firstCreatedAt &&
+            current.lastCreatedAt === sent.lastCreatedAt &&
+            current.count === sent.count
+          ) {
+            remoteCataloguePendingRef.current.delete(sent.id);
+          }
+        }
+      } catch {
+        if (
+          typeof window !== "undefined" &&
+          !remoteCatalogueFlushTimerRef.current
+        ) {
+          remoteCatalogueFlushTimerRef.current = window.setTimeout(() => {
+            remoteCatalogueFlushTimerRef.current = null;
+            void flushRemoteCatalogueEvents();
+          }, retryDelayMs);
+        }
+      } finally {
+        remoteCatalogueFlushInFlightRef.current = false;
+        if (
+          typeof window !== "undefined" &&
+          remoteCataloguePendingRef.current.size > 0 &&
+          !remoteCatalogueFlushTimerRef.current
+        ) {
+          remoteCatalogueFlushTimerRef.current = window.setTimeout(() => {
+            remoteCatalogueFlushTimerRef.current = null;
+            void flushRemoteCatalogueEvents();
+          }, REMOTE_CATALOGUE_FLUSH_MS);
+        }
+      }
+    },
+    [showWorldCatalogueUpdatedReadout],
+  );
+
+  const scheduleRemoteCatalogueFlush = useCallback(
+    (delayMs = REMOTE_CATALOGUE_FLUSH_MS) => {
+      if (typeof window === "undefined") return;
+      if (remoteCatalogueFlushTimerRef.current) return;
+      remoteCatalogueFlushTimerRef.current = window.setTimeout(
+        () => {
+          remoteCatalogueFlushTimerRef.current = null;
+          void flushRemoteCatalogueEvents();
+        },
+        Math.max(250, Math.floor(Number(delayMs) || REMOTE_CATALOGUE_FLUSH_MS)),
+      );
+    },
+    [flushRemoteCatalogueEvents],
+  );
+
+  const loadWorldCatalogueStats = useCallback(async () => {
+    const response = await fetch("/api/reactor/catalogue", {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (!response.ok) return;
+    const payload = await response.json();
+    setWorldCatalogueStatsById(buildWorldCatalogueStatsMap(payload?.items));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const refresh = async () => {
+      try {
+        await loadWorldCatalogueStats();
+      } catch {}
+    };
+
+    void refresh();
+    const intervalId = window.setInterval(() => {
+      if (cancelled) return;
+      void refresh();
+    }, WORLD_CATALOGUE_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [loadWorldCatalogueStats]);
+
+  const queueRemoteCatalogueEvents = useCallback(
+    (ids, observedAt = new Date().toISOString()) => {
+      const normalizedIds = [
+        ...new Set(
+          (Array.isArray(ids) ? ids : [])
+            .map((id) => String(id).trim())
+            .filter(Boolean),
+        ),
+      ];
+      if (normalizedIds.length <= 0) return;
+
+      for (const id of normalizedIds) {
+        const existing = remoteCataloguePendingRef.current.get(id);
+        if (!existing) {
+          remoteCataloguePendingRef.current.set(id, {
+            id,
+            firstCreatedAt: observedAt,
+            lastCreatedAt: observedAt,
+            count: 1,
+          });
+          continue;
+        }
+
+        existing.firstCreatedAt =
+          observedAt < existing.firstCreatedAt
+            ? observedAt
+            : existing.firstCreatedAt;
+        existing.lastCreatedAt =
+          observedAt > existing.lastCreatedAt
+            ? observedAt
+            : existing.lastCreatedAt;
+        existing.count += 1;
+      }
+
+      if (
+        remoteCataloguePendingRef.current.size >= REMOTE_CATALOGUE_BATCH_MAX
+      ) {
+        void flushRemoteCatalogueEvents();
+        return;
+      }
+
+      scheduleRemoteCatalogueFlush();
+    },
+    [flushRemoteCatalogueEvents, scheduleRemoteCatalogueFlush],
+  );
+
+  useEffect(() => {
     collectedSetRef.current = new Set(collectedIds);
   }, [collectedIds]);
+
+  useEffect(() => {
+    localCatalogueStatsRef.current = localCatalogueStatsById;
+  }, [localCatalogueStatsById]);
 
   useEffect(() => {
     selectedLiveIdsRef.current = new Set(selectedLiveIds);
@@ -814,6 +1338,28 @@ export default function ReactorPage() {
       return next.length === prev.length ? prev : next;
     });
   }, [liveMatchedIds]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const flushNow = () => {
+      void flushRemoteCatalogueEvents({
+        keepalive: true,
+        retryDelayMs: REMOTE_CATALOGUE_RETRY_MS,
+      });
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushNow();
+    };
+
+    window.addEventListener("pagehide", flushNow);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", flushNow);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [flushRemoteCatalogueEvents]);
 
   useEffect(() => {
     if (!(catalogCountGlowUntilMs > 0)) return undefined;
@@ -1250,6 +1796,31 @@ export default function ReactorPage() {
         isolation: "isolate",
         overflow: "hidden",
       },
+      topBadgeRow: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 12,
+      },
+      worldUpdateBadge: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "6px 10px",
+        borderRadius: 999,
+        border: "1px solid rgba(45,226,230,0.34)",
+        background:
+          "linear-gradient(180deg, rgba(8,12,18,0.94), rgba(4,8,14,0.96))",
+        color: "#99f6e4",
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: 0.2,
+        whiteSpace: "nowrap",
+        boxShadow:
+          "inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 0 10px 1px rgba(45,226,230,0.44), inset 0 0 18px 3px rgba(45,226,230,0.18), 0 18px 42px rgba(2,7,10,0.28)",
+        textShadow: "0 0 8px rgba(153,246,228,0.18)",
+      },
       controls: {
         position: "absolute",
         left: 10,
@@ -1428,8 +1999,8 @@ export default function ReactorPage() {
         position: "absolute",
         right: 10,
         bottom: 58,
-        width: 640,
-        maxWidth: "min(640px, calc(100% - 20px))",
+        width: 820,
+        maxWidth: "min(820px, calc(100% - 20px))",
         maxHeight: "min(50%, 360px)",
         overflow: "auto",
         borderRadius: 14,
@@ -2298,6 +2869,31 @@ export default function ReactorPage() {
       }
 
       const matchedIdsOrdered = Array.from(matchedIds).sort();
+      const prevMatchedLive = remoteCatalogueSeenLiveRef.current;
+      const newlySeenMatchedIds = matchedIdsOrdered.filter(
+        (id) => !prevMatchedLive.has(id),
+      );
+      remoteCatalogueSeenLiveRef.current = new Set(matchedIdsOrdered);
+      if (newlySeenMatchedIds.length > 0) {
+        const observedAtIso = new Date(nowMs).toISOString();
+        setLocalCatalogueStatsById((prev) => {
+          const next = { ...prev };
+          for (const id of newlySeenMatchedIds) {
+            const existing = next[id];
+            const firstCreatedAt = existing?.firstCreatedAt || observedAtIso;
+            next[id] = {
+              firstCreatedAt,
+              lastCreatedAt: observedAtIso,
+              createdCount: Math.max(
+                1,
+                Math.floor(Number(existing?.createdCount) || 0) + 1,
+              ),
+            };
+          }
+          return next;
+        });
+        queueRemoteCatalogueEvents(newlySeenMatchedIds, observedAtIso);
+      }
       const matchedIdsKey = matchedIdsOrdered.join("|");
       if (matchedIdsKey !== liveMatchedIdsKeyRef.current) {
         liveMatchedIdsKeyRef.current = matchedIdsKey;
@@ -2328,7 +2924,7 @@ export default function ReactorPage() {
         return Array.from(next).sort();
       });
     },
-    [catalogByFingerprint, catalogById],
+    [catalogByFingerprint, catalogById, queueRemoteCatalogueEvents],
   );
 
   const queueCollectionScan = useCallback(() => {
@@ -2502,6 +3098,10 @@ export default function ReactorPage() {
       if (queuedScanTimerRef.current) {
         clearTimeout(queuedScanTimerRef.current);
         queuedScanTimerRef.current = null;
+      }
+      if (remoteCatalogueFlushTimerRef.current) {
+        clearTimeout(remoteCatalogueFlushTimerRef.current);
+        remoteCatalogueFlushTimerRef.current = null;
       }
       queuedScanPendingRef.current = false;
       ro.disconnect();
@@ -3240,15 +3840,38 @@ export default function ReactorPage() {
     return Array.from(new Set(valid)).sort();
   }
 
+  function normalizeExportableLocalCatalogueStats(statsById) {
+    const next = {};
+    for (const [id, raw] of Object.entries(statsById || {})) {
+      if (!catalogById.has(id) || !raw || typeof raw !== "object") continue;
+      const firstCreatedAt = normalizeCatalogueTimestamp(raw.firstCreatedAt);
+      const lastCreatedAt = normalizeCatalogueTimestamp(raw.lastCreatedAt);
+      const createdCount = Math.max(
+        0,
+        Math.floor(Number(raw.createdCount) || 0),
+      );
+      if (!firstCreatedAt && !lastCreatedAt && createdCount <= 0) continue;
+      next[id] = {
+        firstCreatedAt,
+        lastCreatedAt,
+        createdCount,
+      };
+    }
+    return next;
+  }
+
   async function exportEncryptedCatalogue() {
     try {
       setCatalogueSaveBusy(true);
       setCatalogueSaveStatus("");
 
       const payloadJson = JSON.stringify({
-        v: 1,
+        v: 2,
         savedAt: Date.now(),
         collectedIds: normalizeCatalogueIds(collectedIds),
+        moleculeStatsById: normalizeExportableLocalCatalogueStats(
+          localCatalogueStatsById,
+        ),
       });
       const encrypted = await encryptCatalogueJson(payloadJson);
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -3292,12 +3915,15 @@ export default function ReactorPage() {
       }
 
       const parsed = JSON.parse(rawJsonText);
-      const ids = Array.isArray(parsed)
-        ? normalizeCatalogueIds(parsed)
-        : normalizeCatalogueIds(parsed?.collectedIds);
+      const progress = normalizeLocalCatalogueProgress(parsed);
+      const ids = normalizeCatalogueIds(progress.collectedIds);
+      const statsById = normalizeExportableLocalCatalogueStats(
+        progress.moleculeStatsById,
+      );
 
       setCollectedIds(ids);
-      setLastCataloguedId(ids.length > 0 ? ids[ids.length - 1] : null);
+      setLocalCatalogueStatsById(statsById);
+      setLastCataloguedId(chooseLastCreatedCatalogueId(ids, statsById));
       setCatalogCountGlowUntilMs(0);
       setCatalogCountGlowNowMs(0);
       setCatalogueSaveStatus(`Loaded catalogue: ${file.name}`);
@@ -3336,6 +3962,7 @@ export default function ReactorPage() {
     setDiscoveryCallouts([]);
     setCalloutEpoch((v) => v + 1);
     setCollectedIds([]);
+    setLocalCatalogueStatsById({});
     setLastCataloguedId(null);
     setCatalogCountGlowUntilMs(0);
     setCatalogCountGlowNowMs(0);
@@ -3391,6 +4018,25 @@ export default function ReactorPage() {
   }
 
   function toggleCollectionSort(nextKey) {
+    if (nextKey === "firstCreated" || nextKey === "lastCreated") {
+      if (collectionSort === nextKey) {
+        if (nextKey === "firstCreated") {
+          setCollectionFirstCreatedSortMode(advanceCreatedSortMode);
+        } else {
+          setCollectionLastCreatedSortMode(advanceCreatedSortMode);
+        }
+        return;
+      }
+      setCollectionSort(nextKey);
+      if (nextKey === "firstCreated") {
+        setCollectionFirstCreatedSortMode("me-asc");
+      } else {
+        setCollectionLastCreatedSortMode("me-asc");
+      }
+      setCollectionSortDir("asc");
+      return;
+    }
+
     if (collectionSort === nextKey) {
       setCollectionSortDir((d) => (d === "asc" ? "desc" : "asc"));
       return;
@@ -3401,6 +4047,45 @@ export default function ReactorPage() {
 
   function sortArrowsFor(key) {
     const active = collectionSort === key;
+    if (key === "firstCreated" || key === "lastCreated") {
+      const mode = String(
+        key === "lastCreated"
+          ? collectionLastCreatedSortMode
+          : collectionFirstCreatedSortMode,
+      );
+      const showDown = !active || mode.endsWith("-desc");
+      const showUp = !active || mode.endsWith("-asc");
+      const label = createdSortBadgeLabel(mode);
+      return (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            gap: 2,
+            minWidth: 18,
+            marginLeft: 4,
+            color: active ? "#334155" : "#64748b",
+            fontSize: 12,
+            fontWeight: 600,
+            lineHeight: 1,
+            flexShrink: 0,
+          }}
+          aria-hidden="true"
+        >
+          {active ? (
+            <span style={{ fontSize: 9, fontWeight: 900 }}>{label}</span>
+          ) : null}
+          {showDown ? (
+            <span style={{ transform: "translateY(1px)" }}>&darr;</span>
+          ) : null}
+          {showUp ? (
+            <span style={{ transform: "translateY(-1px)" }}>&uarr;</span>
+          ) : null}
+        </span>
+      );
+    }
+
     const dir = collectionSortDir === "desc" ? "desc" : "asc";
     const showDown = !active || dir === "desc";
     const showUp = !active || dir === "asc";
@@ -3566,7 +4251,14 @@ export default function ReactorPage() {
           accurate, but close enough for fun and educational molecular play.
         </p>
       </header>
-      <DesktopBadge />
+      <div style={ui.topBadgeRow}>
+        <DesktopBadge />
+        <div style={{ minWidth: 0 }}>
+          {worldCatalogueBadgeVisible ? (
+            <div style={ui.worldUpdateBadge}>World catalogue updated</div>
+          ) : null}
+        </div>
+      </div>
 
       <div ref={canvasCardRef} style={ui.canvasCard}>
         {/* Controls: top-left */}
@@ -4421,7 +5113,7 @@ export default function ReactorPage() {
 
             <div style={{ ...ui.row, marginTop: 8 }}>
               <div className="reactor-text-11-slate">
-                {sortedCollection.length} shown
+                {visibleCollection.length}/{sortedCollection.length} shown
               </div>
               <div className="reactor-text-11-slate">
                 Page {activeCollectionPage}/{collectionPageCount}
@@ -4451,7 +5143,7 @@ export default function ReactorPage() {
               style={{
                 maxHeight: 200,
                 overflowY: "auto",
-                overflowX: "hidden",
+                overflowX: "auto",
                 border: "1px solid rgba(15,23,42,0.14)",
                 borderRadius: 10,
                 background: "rgba(255,255,255,0.8)",
@@ -4461,8 +5153,9 @@ export default function ReactorPage() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns:
-                    "74px 92px minmax(160px, 1fr) 124px 112px",
+                  gridTemplateColumns: CATALOGUE_GRID_COLUMNS,
+                  width: `${CATALOGUE_TABLE_WIDTH_PX}px`,
+                  minWidth: `${CATALOGUE_TABLE_WIDTH_PX}px`,
                   gap: 8,
                   alignItems: "center",
                   padding: "6px 8px",
@@ -4502,17 +5195,26 @@ export default function ReactorPage() {
                   className="reactor-sort-button"
                   title="Sort by molecular weight"
                 >
-                  <span>Mol. wt. (g/mol)</span>
+                  <span>Mol. wt.</span>
                   {sortArrowsFor("weight")}
                 </button>
                 <button
                   type="button"
-                  onClick={() => toggleCollectionSort("status")}
+                  onClick={() => toggleCollectionSort("firstCreated")}
                   className="reactor-sort-button"
-                  title="Sort by status"
+                  title="Sort by first created"
                 >
-                  <span>Status</span>
-                  {sortArrowsFor("status")}
+                  <span>First Created</span>
+                  {sortArrowsFor("firstCreated")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleCollectionSort("lastCreated")}
+                  className="reactor-sort-button"
+                  title="Sort by last created"
+                >
+                  <span>Last Created</span>
+                  {sortArrowsFor("lastCreated")}
                 </button>
               </div>
 
@@ -4525,7 +5227,16 @@ export default function ReactorPage() {
                 const selectedPalette = isSelectedLive
                   ? getLiveSelectionPalette(selectedIndex)
                   : null;
-                const status = isLive ? "live" : isCollected ? "done" : "to-do";
+                const localStats = localCatalogueStatsById[entry.id] || null;
+                const worldStats = worldCatalogueStatsById[entry.id] || null;
+                const localFirstCreatedAt = localStats?.firstCreatedAt || null;
+                const localLastCreatedAt = localStats?.lastCreatedAt || null;
+                const worldFirstCreatedAt = worldStats?.firstCreatedAt || null;
+                const worldLastCreatedAt = worldStats?.lastCreatedAt || null;
+                const isFirstDiscoverer =
+                  localFirstCreatedAt != null &&
+                  worldFirstCreatedAt != null &&
+                  localFirstCreatedAt === worldFirstCreatedAt;
                 const number = catalogueNumberFromId(entry.id);
                 const molecularWeight = molecularWeightById.get(entry.id);
                 return (
@@ -4534,8 +5245,9 @@ export default function ReactorPage() {
                     id={`catalogue-entry-${entry.id}`}
                     style={{
                       display: "grid",
-                      gridTemplateColumns:
-                        "74px 92px minmax(160px, 1fr) 124px 112px",
+                      gridTemplateColumns: CATALOGUE_GRID_COLUMNS,
+                      width: `${CATALOGUE_TABLE_WIDTH_PX}px`,
+                      minWidth: `${CATALOGUE_TABLE_WIDTH_PX}px`,
                       gap: 8,
                       alignItems: "center",
                       padding: "6px 8px",
@@ -4559,46 +5271,9 @@ export default function ReactorPage() {
                             : "none",
                     }}
                   >
-                    <span className="reactor-catalogue-number">
-                      {Number.isFinite(number) ? `#${number}` : entry.id}
-                    </span>
-                    <MoleculeBallStickPreview
-                      structure={entry.structure}
-                      formula={entry.formula}
-                      onExpand={() => {
-                        setExpandedAngles({ x: 0, y: 0, z: 0 });
-                        setExpandedZoom(1);
-                        setExpandedSnapshot({
-                          name: entry.name,
-                          formula: entry.formula,
-                          structure: entry.structure,
-                        });
-                      }}
-                    />
-                    <CatalogueNameCell
-                      name={entry.name}
-                      formula={entry.formula}
-                    />
-                    <span className="reactor-catalogue-weight">
-                      {Number.isFinite(molecularWeight)
-                        ? `${Math.round(molecularWeight)}`
-                        : "--"}
-                    </span>
                     <div className="reactor-catalogue-status-wrap">
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 900,
-                          color: isSelectedLive
-                            ? selectedPalette.status
-                            : isLive
-                              ? "#854d0e"
-                              : isCollected
-                                ? "#166534"
-                                : "#334155",
-                        }}
-                      >
-                        {status}
+                      <span className="reactor-catalogue-number">
+                        {Number.isFinite(number) ? `#${number}` : entry.id}
                       </span>
                       {isLive ? (
                         <label
@@ -4627,6 +5302,41 @@ export default function ReactorPage() {
                         </label>
                       ) : null}
                     </div>
+                    <MoleculeBallStickPreview
+                      structure={entry.structure}
+                      formula={entry.formula}
+                      onExpand={() => {
+                        setExpandedAngles({ x: 0, y: 0, z: 0 });
+                        setExpandedZoom(1);
+                        setExpandedSnapshot({
+                          name: entry.name,
+                          formula: entry.formula,
+                          structure: entry.structure,
+                        });
+                      }}
+                    />
+                    <CatalogueNameCell
+                      name={entry.name}
+                      formula={entry.formula}
+                    />
+                    <span className="reactor-catalogue-weight">
+                      {Number.isFinite(molecularWeight)
+                        ? `${Math.round(molecularWeight)}`
+                        : "--"}
+                    </span>
+                    <CreatedTimestampCell
+                      meTimestamp={localFirstCreatedAt}
+                      worldTimestamp={worldFirstCreatedAt}
+                      meTitlePrefix="My first created"
+                      worldTitlePrefix="World first created"
+                      showMedal={isFirstDiscoverer}
+                    />
+                    <CreatedTimestampCell
+                      meTimestamp={localLastCreatedAt}
+                      worldTimestamp={worldLastCreatedAt}
+                      meTitlePrefix="My last created"
+                      worldTitlePrefix="World last created"
+                    />
                   </div>
                 );
               })}
@@ -4637,8 +5347,9 @@ export default function ReactorPage() {
                     aria-hidden="true"
                     style={{
                       display: "grid",
-                      gridTemplateColumns:
-                        "74px 92px minmax(160px, 1fr) 124px 112px",
+                      gridTemplateColumns: CATALOGUE_GRID_COLUMNS,
+                      width: `${CATALOGUE_TABLE_WIDTH_PX}px`,
+                      minWidth: `${CATALOGUE_TABLE_WIDTH_PX}px`,
                       gap: 8,
                       alignItems: "center",
                       padding: "6px 8px",

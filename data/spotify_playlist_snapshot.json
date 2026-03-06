@@ -1,11 +1,11 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-03-06T18:15:48.762Z",
-  "source": "spotify-public-playlist-page",
+  "generatedAt": "2026-03-06T23:21:16.047Z",
+  "source": "spotify-web-api-playlist-items",
   "sourceUrl": "https://open.spotify.com/playlist/4X8HWeNNCCc1sdVQA4NQOo",
   "playlistId": "4X8HWeNNCCc1sdVQA4NQOo",
   "playlistName": "Random Rob Shit",
-  "total": 30,
+  "total": 259,
   "declaredTotal": 260,
   "partial": true,
   "items": [
@@ -20,11 +20,11 @@
       "artistIds": [
         "5CT7RBitS0e0u78T8tRBWQ"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/331d9d3cd258bfeb4307bf20b5aa9bdb1b640634",
+      "previewUrl": "",
       "albumTitle": "Bette Davis Eyes",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b7bae10276e674152fe26a9b",
-      "year": "",
-      "addedAt": "",
+      "year": "2007",
+      "addedAt": "2016-12-16T20:48:53Z",
       "externalUrl": "https://open.spotify.com/track/0kPeymTUiaidv48eRrMISu",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -39,11 +39,11 @@
       "artistIds": [
         "2CvCyf1gEVhI0mX6aFXmVI"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/ced99c439f3b805152d014f5d89e45c48292394d",
+      "previewUrl": "",
       "albumTitle": "Paul Simon",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025058a0aebf5365a911030083",
-      "year": "",
-      "addedAt": "",
+      "year": "1972",
+      "addedAt": "2016-12-16T20:51:32Z",
       "externalUrl": "https://open.spotify.com/track/6vxHp3CDNo0afgKGp2yi1E",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -58,11 +58,11 @@
       "artistIds": [
         "0aIOdrjH5s3hJqxmKoAEUg"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/08f3996ab10384786d0995af5818c23f4145d53e",
+      "previewUrl": "",
       "albumTitle": "The Rocky Horror Picture Show - Original Soundtrack",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027bcc78f88610d99eaa8c9b50",
-      "year": "",
-      "addedAt": "",
+      "year": "1975",
+      "addedAt": "2016-12-16T20:52:42Z",
       "externalUrl": "https://open.spotify.com/track/7AUOZzM5P8UDuA0zga0PP8",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -85,11 +85,11 @@
         "2ZIgadiTFMv5A3PiNVWpzq",
         "2HOOjUvKpL2l8gXMfWEf39"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/67bcd355917e5e846992bf8fcdb436b78b6cbb09",
+      "previewUrl": "",
       "albumTitle": "Little Shop Of Horrors (Original Motion Picture Soundtrack)",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02841ff3a0698816a278579298",
-      "year": "",
-      "addedAt": "",
+      "year": "1986",
+      "addedAt": "2016-12-16T20:52:58Z",
       "externalUrl": "https://open.spotify.com/track/77uG5Qe741Qyd5Wxo1TJhz",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -104,11 +104,11 @@
       "artistIds": [
         "1M3BVQ36cqPQix8lQNCh4K"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/6e6016accde51985d0a8dbc0638d8de76a57afdd",
+      "previewUrl": "",
       "albumTitle": "I Know",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02d50c9aee892e579623ff787f",
-      "year": "",
-      "addedAt": "",
+      "year": "2016",
+      "addedAt": "2016-12-16T20:53:24Z",
       "externalUrl": "https://open.spotify.com/track/0HeNDXMTdBDS9eWQkhENJ2",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -123,11 +123,11 @@
       "artistIds": [
         "5cMVRrisBpDkXCVG48epED"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/1d6d237158b347417f5587232d8b0e8f1804e96d",
+      "previewUrl": "",
       "albumTitle": "Acid Tongue",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e649a6f583f2dd4614769719",
-      "year": "",
-      "addedAt": "",
+      "year": "2008",
+      "addedAt": "2016-12-16T20:56:21Z",
       "externalUrl": "https://open.spotify.com/track/6MKL3Xdcf3qFhTP2KJhcsn",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -142,11 +142,11 @@
       "artistIds": [
         "6Tw1ktF4xMmzaLLbe98I2z"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/78101e88c31738208a3d196085e63141194e490c",
+      "previewUrl": "",
       "albumTitle": "Very Best Of Harry Belafonte",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021b712c9fd9f1df1f923460e9",
-      "year": "",
-      "addedAt": "",
+      "year": "2001",
+      "addedAt": "2016-12-16T20:56:31Z",
       "externalUrl": "https://open.spotify.com/track/3w6m1sTs8qXiuITB0sziwY",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -161,11 +161,11 @@
       "artistIds": [
         "2ysnwxxNtSgbb9t1m2Ur4j"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/f5b8e8d160c7b4c23c99a8ff3633a99765f5866d",
+      "previewUrl": "",
       "albumTitle": "Did You Hear the Rain?",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025addc393ba356de1067a846a",
-      "year": "",
-      "addedAt": "",
+      "year": "2013",
+      "addedAt": "2016-12-16T20:57:40Z",
       "externalUrl": "https://open.spotify.com/track/48gsLPdOUEDjr7P8Wvykne",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -180,11 +180,11 @@
       "artistIds": [
         "5MmVJVhhYKQ86izuGHzJYA"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/91a27f9ab4e25c3f037a2e9eeb20169ee28343fc",
+      "previewUrl": "",
       "albumTitle": "Life In Cartoon Motion",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02eb0b41d40b300163767da4b3",
-      "year": "",
-      "addedAt": "",
+      "year": "2007",
+      "addedAt": "2016-12-16T20:57:46Z",
       "externalUrl": "https://open.spotify.com/track/4Sqc0kPuZpfI0T2TZBu8JT",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -199,11 +199,11 @@
       "artistIds": [
         "2vm8GdHyrJh2O2MfbQFYG0"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/d4eff9fc6d1800d648dc94177aea69bc8022cdbf",
+      "previewUrl": "",
       "albumTitle": "Girls and Boys",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02baa9b132390a2d26a6b2dbed",
-      "year": "",
-      "addedAt": "",
+      "year": "2007",
+      "addedAt": "2016-12-16T20:57:52Z",
       "externalUrl": "https://open.spotify.com/track/43ddJFnP8m3PzNJXiHuiyJ",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -218,11 +218,11 @@
       "artistIds": [
         "3fMbdgg4jU18AjLCKBhRSm"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/792dc868f9ae9e40ad58ec2cf1ede3e23247ad05",
+      "previewUrl": "",
       "albumTitle": "Michael Jackson's This Is It",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0279b8d5f5821bddae3bc5e6a9",
-      "year": "",
-      "addedAt": "",
+      "year": "2009",
+      "addedAt": "2016-12-16T20:57:59Z",
       "externalUrl": "https://open.spotify.com/track/1nl09AjkuO7BBRF3BFAPsC",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -237,11 +237,11 @@
       "artistIds": [
         "29WzbAQtDnBJF09es0uddn"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/fc662ffa82300f0d99ab1bd9dff38273bb71e71a",
+      "previewUrl": "",
       "albumTitle": "Corinne Bailey Rae",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021ec9b096319afbcc2dca6879",
-      "year": "",
-      "addedAt": "",
+      "year": "2006",
+      "addedAt": "2016-12-16T20:58:19Z",
       "externalUrl": "https://open.spotify.com/track/2nGFzvICaeEWjIrBrL2RAx",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -256,11 +256,11 @@
       "artistIds": [
         "4ylR3zwA0zaapAu94fktwa"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/48c1c7bdf2f8bb250d80fc123752dee589154b51",
+      "previewUrl": "",
       "albumTitle": "On How Life Is",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026fb355dfc944cce3598e30a1",
-      "year": "",
-      "addedAt": "",
+      "year": "1999",
+      "addedAt": "2016-12-16T20:58:22Z",
       "externalUrl": "https://open.spotify.com/track/5TAf4lnZCZTLlZHNZMLFLi",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -275,11 +275,11 @@
       "artistIds": [
         "6Tz0QRoe083BcOo2YbG9lV"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/45d3f59802b7ce098047ca188d92316b4cc86a9c",
+      "previewUrl": "",
       "albumTitle": "99 Luftballons",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02bab7a6c80b9da5e76f8e3fa6",
-      "year": "",
-      "addedAt": "",
+      "year": "1984",
+      "addedAt": "2016-12-16T20:58:55Z",
       "externalUrl": "https://open.spotify.com/track/5mYtpXrZZ1bbGJYDGC8I0Y",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -294,11 +294,11 @@
       "artistIds": [
         "2M3vnW1p5w4uPRkLYTbvdB"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/10a30c4b68683836017785f00e5246efe3379fde",
+      "previewUrl": "",
       "albumTitle": "Music From Party of Five",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020b28f02c24b7dc72e61e7a07",
-      "year": "",
-      "addedAt": "",
+      "year": "1996",
+      "addedAt": "2016-12-16T20:59:29Z",
       "externalUrl": "https://open.spotify.com/track/6hs3SDnbO3f6VQuPO4KBEb",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -313,11 +313,11 @@
       "artistIds": [
         "3mQBpAOMWYqAZyxtyeo4Lo"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/9f097853f1dc200b807623d045eaa04da7ac3d7f",
+      "previewUrl": "",
       "albumTitle": "KC & the Sunshine Band... and More",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c15e8983eef55e19f9b73ff3",
-      "year": "",
-      "addedAt": "",
+      "year": "1994",
+      "addedAt": "2016-12-16T21:00:38Z",
       "externalUrl": "https://open.spotify.com/track/2Nc1Tl1qHWLAtBnqRJmkP3",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -332,11 +332,11 @@
       "artistIds": [
         "6XpaIBNiVzIetEPCWDvAFP"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/d08eeed434bdf398734fbb3ef95c1e397419c340",
+      "previewUrl": "",
       "albumTitle": "Whitney",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a520a167a62d5548cdb53101",
-      "year": "",
-      "addedAt": "",
+      "year": "1987",
+      "addedAt": "2016-12-16T21:02:38Z",
       "externalUrl": "https://open.spotify.com/track/2tUBqZG2AbRi7Q0BIrVrEj",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -351,11 +351,11 @@
       "artistIds": [
         "32vWCbZh0xZ4o9gkz4PsEU"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/227e1589aee0f9ef60be36300842066da5ef25b6",
+      "previewUrl": "",
       "albumTitle": "9 To 5 And Odd Jobs",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0249cb2d53994caada391cf39e",
-      "year": "",
-      "addedAt": "",
+      "year": "1980",
+      "addedAt": "2016-12-16T21:02:43Z",
       "externalUrl": "https://open.spotify.com/track/4w3tQBXhn5345eUXDGBWZG",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -370,11 +370,11 @@
       "artistIds": [
         "1yMYjh77WgOVafRkI50mim"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/5f417305b52c635a7df30bd45cbe6ad740ca49db",
+      "previewUrl": "",
       "albumTitle": "Wilson Phillips",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e023168e1f416b81862ccc83594",
-      "year": "",
-      "addedAt": "",
+      "year": "1990",
+      "addedAt": "2016-12-16T21:02:47Z",
       "externalUrl": "https://open.spotify.com/track/4VZDv8sASBS8UruUBGTFdk",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -389,11 +389,11 @@
       "artistIds": [
         "0EodhzA6yW1bIdD5B4tcmJ"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/c548d30e535d83c4e90162a7435f8764669fd381",
+      "previewUrl": "",
       "albumTitle": "The Ultimate Bobby Darin",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0232ca9d1b933d95925e170c90",
-      "year": "",
-      "addedAt": "",
+      "year": "2004",
+      "addedAt": "2016-12-16T21:02:56Z",
       "externalUrl": "https://open.spotify.com/track/0YTgZJfVLmJ0b8XAMZKRKg",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -408,11 +408,11 @@
       "artistIds": [
         "1eYhYunlNJlDoQhtYBvPsi"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/425d081433204c6ded4ae8f852ee89e5d5bcdc0d",
+      "previewUrl": "",
       "albumTitle": "Ray Charles (aka: Hallelujah, I Love Her So)",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f0e951707ca49b533fdbf64e",
-      "year": "",
-      "addedAt": "",
+      "year": "1957",
+      "addedAt": "2016-12-16T21:03:01Z",
       "externalUrl": "https://open.spotify.com/track/2xar08Fq5xra2KKZs5Bw9j",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -427,11 +427,11 @@
       "artistIds": [
         "2cevwbv7ISD92VMNLYLHZA"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/e9eeee1b253b19a9a6b86bb179f92027456ee8c3",
+      "previewUrl": "",
       "albumTitle": "The Execution Of All Things",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020fc393d89bb5480b4f064b8f",
-      "year": "",
-      "addedAt": "",
+      "year": "2002",
+      "addedAt": "2016-12-16T21:03:05Z",
       "externalUrl": "https://open.spotify.com/track/5it6O1Z84HVK4A4E8OIufF",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -448,11 +448,11 @@
         "5K4W6rqBFWDnAN6FQUkS6x",
         "7LnaAXbDVIL75IVPnndf7w"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/c07d8315fb8fc3a820a312e29961c96a2e7d7229",
+      "previewUrl": "",
       "albumTitle": "Late Registration",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02428d2255141c2119409a31b2",
-      "year": "",
-      "addedAt": "",
+      "year": "2005",
+      "addedAt": "2016-12-16T21:03:10Z",
       "externalUrl": "https://open.spotify.com/track/1PS1QMdUqOal0ai3Gt7sDQ",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -467,11 +467,11 @@
       "artistIds": [
         "1SQRv42e4PjEYfPhS0Tk9E"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/3d65c6135fdf7a99e180e0356b6f79c6c8f273b9",
+      "previewUrl": "",
       "albumTitle": "Everybody's in Show-Biz (Legacy Edition)",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020a5c906230c7a64e21570d9e",
-      "year": "",
-      "addedAt": "",
+      "year": "2016",
+      "addedAt": "2016-12-16T21:03:16Z",
       "externalUrl": "https://open.spotify.com/track/3qKo1AurAhl5KEMyWMoXLf",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -486,11 +486,11 @@
       "artistIds": [
         "3rxIQc9kWT6Ueg4BhnOwRK"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/c130d0455c99ba3289ec684ec661429bd5650df1",
+      "previewUrl": "",
       "albumTitle": "The Color Purple",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02893ec4584195ccbcea27d3df",
-      "year": "",
-      "addedAt": "",
+      "year": "1989",
+      "addedAt": "2016-12-16T21:03:19Z",
       "externalUrl": "https://open.spotify.com/track/0jODWcPXpqg2f54P1O64y6",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -505,11 +505,11 @@
       "artistIds": [
         "5LfGQac0EIXyAN8aUwmNAQ"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/aba0f950459ff2e9b78c0338d4c6b4166887d018",
+      "previewUrl": "",
       "albumTitle": "Americana",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020fdb7379076fe5c08ac55c38",
-      "year": "",
-      "addedAt": "",
+      "year": "1998",
+      "addedAt": "2016-12-16T21:03:29Z",
       "externalUrl": "https://open.spotify.com/track/5JzF2iymNwCyFz9MTmojd0",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -524,11 +524,11 @@
       "artistIds": [
         "3Dzj993UEz8Z5ovxuirzFO"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/9e053218f3ff741e9c467c47e900955569894a89",
+      "previewUrl": "",
       "albumTitle": "Holiday Road",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02217c0066ccc25db60b58e7aa",
-      "year": "",
-      "addedAt": "",
+      "year": "1983",
+      "addedAt": "2016-12-16T21:03:34Z",
       "externalUrl": "https://open.spotify.com/track/38i0QcGQ9hu8PMk4QObUTj",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -543,11 +543,11 @@
       "artistIds": [
         "1M3BVQ36cqPQix8lQNCh4K"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/8837ca061b1bc0a4f6b62a7059b47393cc216059",
+      "previewUrl": "",
       "albumTitle": "St. Anne's Parade",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027d0ea07d7e9d6b1ab7189dad",
-      "year": "",
-      "addedAt": "",
+      "year": "2016",
+      "addedAt": "2016-12-16T21:03:52Z",
       "externalUrl": "https://open.spotify.com/track/48BNSgeaNqQXKMSlCC8JdT",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -562,11 +562,11 @@
       "artistIds": [
         "70cRZdQywnSFp9pnc2WTCE"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/8d9b74974ad656a3c84032b0b5c1f8ecda2a467e",
+      "previewUrl": "",
       "albumTitle": "The Graduate",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02172b67ed85f8899d5695752e",
-      "year": "",
-      "addedAt": "",
+      "year": "1968",
+      "addedAt": "2016-12-16T21:03:58Z",
       "externalUrl": "https://open.spotify.com/track/2LkaNhCrNVmcYgXJeLVmsw",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     },
@@ -581,12 +581,4455 @@
       "artistIds": [
         "4lxfqrEsLX6N1N4OCSkILp"
       ],
-      "previewUrl": "https://p.scdn.co/mp3-preview/153e910b0235f6460be80b228872d954bd4c96c2",
+      "previewUrl": "",
       "albumTitle": "Hello, I Must Be Going! (Deluxe Edition)",
       "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ab0a92e5cd20c2224c44a8a6",
-      "year": "",
-      "addedAt": "",
+      "year": "1982",
+      "addedAt": "2016-12-16T21:04:18Z",
       "externalUrl": "https://open.spotify.com/track/4YwbSZaYeYja8Umyt222Qf",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1P49MJhU5vzttesFxw3dOM",
+      "spotifyTrackId": "1P49MJhU5vzttesFxw3dOM",
+      "spotifyTrackUri": "spotify:track:1P49MJhU5vzttesFxw3dOM",
+      "title": "Three Little Birds",
+      "artists": [
+        "Bob Marley & The Wailers"
+      ],
+      "artistIds": [
+        "2QsynagSdAqZj3U9HgDzjD"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Exodus",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026c8e68955407f9b14c06b7c4",
+      "year": "1977",
+      "addedAt": "2016-12-16T21:04:24Z",
+      "externalUrl": "https://open.spotify.com/track/1P49MJhU5vzttesFxw3dOM",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1b7LMtXCXGc2EwOIplI35z",
+      "spotifyTrackId": "1b7LMtXCXGc2EwOIplI35z",
+      "spotifyTrackUri": "spotify:track:1b7LMtXCXGc2EwOIplI35z",
+      "title": "Stuck In The Middle With You",
+      "artists": [
+        "Stealers Wheel"
+      ],
+      "artistIds": [
+        "7bPU7cvfoD20ixGD9Qnqki"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Reservoir Dogs (Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e024becd2321d8c4044a67f49b0",
+      "year": "2009",
+      "addedAt": "2016-12-16T21:04:25Z",
+      "externalUrl": "https://open.spotify.com/track/1b7LMtXCXGc2EwOIplI35z",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4z4FkLKYDoHmKMg1H5hzDl",
+      "spotifyTrackId": "4z4FkLKYDoHmKMg1H5hzDl",
+      "spotifyTrackUri": "spotify:track:4z4FkLKYDoHmKMg1H5hzDl",
+      "title": "Dammit Janet",
+      "artists": [
+        "Lo Mejor del Rock de Los 70"
+      ],
+      "artistIds": [
+        "7hg8OI5CPGuXzBCLLx0xIm"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Lo Mejor del Rock de Los 70 Vol. 28",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0262d281f6272da8656fae5aa3",
+      "year": "2015",
+      "addedAt": "2016-12-16T21:04:27Z",
+      "externalUrl": "https://open.spotify.com/track/4z4FkLKYDoHmKMg1H5hzDl",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1qE7hsgCd1OA7Ob7FcERR7",
+      "spotifyTrackId": "1qE7hsgCd1OA7Ob7FcERR7",
+      "spotifyTrackUri": "spotify:track:1qE7hsgCd1OA7Ob7FcERR7",
+      "title": "Skid Row (Downtown)",
+      "artists": [
+        "Michelle Weeks",
+        "Tisha Campbell",
+        "Tichina Arnold",
+        "Ellen Greene",
+        "Rick Moranis"
+      ],
+      "artistIds": [
+        "2RxiB8hxxiJ9qM4e1ahHru",
+        "2HOOjUvKpL2l8gXMfWEf39",
+        "2ZIgadiTFMv5A3PiNVWpzq",
+        "6CAxtHXbWx9FdJFhgBEtBJ",
+        "2rjQ9QqeJOXxYbTzvbP8BF"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Little Shop Of Horrors (Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02841ff3a0698816a278579298",
+      "year": "1986",
+      "addedAt": "2016-12-16T21:04:36Z",
+      "externalUrl": "https://open.spotify.com/track/1qE7hsgCd1OA7Ob7FcERR7",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0H9XU1OfAnR4O1IEeIbnB7",
+      "spotifyTrackId": "0H9XU1OfAnR4O1IEeIbnB7",
+      "spotifyTrackUri": "spotify:track:0H9XU1OfAnR4O1IEeIbnB7",
+      "title": "Sweet Transvestite",
+      "artists": [
+        "Lo Mejor del Rock de Los 70"
+      ],
+      "artistIds": [
+        "7hg8OI5CPGuXzBCLLx0xIm"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Lo Mejor del Rock de Los 70 Vol. 21",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021fbd8381c1d9daf5b6e8822a",
+      "year": "2015",
+      "addedAt": "2016-12-16T21:04:46Z",
+      "externalUrl": "https://open.spotify.com/track/0H9XU1OfAnR4O1IEeIbnB7",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7whTD313AcTQf4opDoAjLZ",
+      "spotifyTrackId": "7whTD313AcTQf4opDoAjLZ",
+      "spotifyTrackUri": "spotify:track:7whTD313AcTQf4opDoAjLZ",
+      "title": "I'd Do Anything For Love (But I Won't Do That)",
+      "artists": [
+        "Meat Loaf"
+      ],
+      "artistIds": [
+        "7dnB1wSxbYa8CejeVg98hz"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Best Of",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0219e3097df15ca329b3d41481",
+      "year": "2014",
+      "addedAt": "2016-12-16T22:00:42Z",
+      "externalUrl": "https://open.spotify.com/track/7whTD313AcTQf4opDoAjLZ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3tm6LVXZJg0lG4hQm5ytrT",
+      "spotifyTrackId": "3tm6LVXZJg0lG4hQm5ytrT",
+      "spotifyTrackUri": "spotify:track:3tm6LVXZJg0lG4hQm5ytrT",
+      "title": "Brand New Key",
+      "artists": [
+        "Melanie"
+      ],
+      "artistIds": [
+        "6sOP8RUFR0q0nBOBOXGdBK"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Beautiful People: The Greatest Hits of Melanie",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02275a3e31ea8b473fad22de0a",
+      "year": "1999",
+      "addedAt": "2016-12-16T22:28:51Z",
+      "externalUrl": "https://open.spotify.com/track/3tm6LVXZJg0lG4hQm5ytrT",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4D6i2CM29NHkUDI3jQ2afk",
+      "spotifyTrackId": "4D6i2CM29NHkUDI3jQ2afk",
+      "spotifyTrackUri": "spotify:track:4D6i2CM29NHkUDI3jQ2afk",
+      "title": "I Don't Wanna Fight - Single Edit",
+      "artists": [
+        "Tina Turner"
+      ],
+      "artistIds": [
+        "1zuJe6b1roixEKMOtyrEak"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Love Songs",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e029ce8d312a9248df78b61fbad",
+      "year": "2014",
+      "addedAt": "2016-12-17T20:09:07Z",
+      "externalUrl": "https://open.spotify.com/track/4D6i2CM29NHkUDI3jQ2afk",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "27L8sESb3KR79asDUBu8nW",
+      "spotifyTrackId": "27L8sESb3KR79asDUBu8nW",
+      "spotifyTrackUri": "spotify:track:27L8sESb3KR79asDUBu8nW",
+      "title": "Stacy's Mom",
+      "artists": [
+        "Fountains Of Wayne"
+      ],
+      "artistIds": [
+        "1pgtr4nhBQjp9oCUBPyYWh"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Welcome Interstate Managers",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02079e826265dffc3a8a26bac5",
+      "year": "2003",
+      "addedAt": "2016-12-17T21:44:08Z",
+      "externalUrl": "https://open.spotify.com/track/27L8sESb3KR79asDUBu8nW",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5prTs2HAw2G4idHZyeFp8o",
+      "spotifyTrackId": "5prTs2HAw2G4idHZyeFp8o",
+      "spotifyTrackUri": "spotify:track:5prTs2HAw2G4idHZyeFp8o",
+      "title": "Total Eclipse of the Heart",
+      "artists": [
+        "Bonnie Tyler"
+      ],
+      "artistIds": [
+        "0SD4eZCN4Kr0wQk56hCdh2"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Very Best Of Bonnie Tyler",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0293d73d10075d96b65ba04dcb",
+      "year": "1999",
+      "addedAt": "2016-12-21T23:51:09Z",
+      "externalUrl": "https://open.spotify.com/track/5prTs2HAw2G4idHZyeFp8o",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0T4c5J0rJO3qC9KdgJ9tik",
+      "spotifyTrackId": "0T4c5J0rJO3qC9KdgJ9tik",
+      "spotifyTrackUri": "spotify:track:0T4c5J0rJO3qC9KdgJ9tik",
+      "title": "Danny's Song",
+      "artists": [
+        "Neko Case",
+        "Vinyl on HBO"
+      ],
+      "artistIds": [
+        "4Cedjq5BQL3MhapRvDpFED",
+        "52yUzlU6QBN8NxqTXOWCnW"
+      ],
+      "previewUrl": "",
+      "albumTitle": "VINYL: Music From The HBO® Original Series - Vol. 1.3",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02802bb71809e59f71fc0e9873",
+      "year": "2016",
+      "addedAt": "2016-12-22T18:41:45Z",
+      "externalUrl": "https://open.spotify.com/track/0T4c5J0rJO3qC9KdgJ9tik",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3sCczHhL1Jv4Yn4aJm889E",
+      "spotifyTrackId": "3sCczHhL1Jv4Yn4aJm889E",
+      "spotifyTrackUri": "spotify:track:3sCczHhL1Jv4Yn4aJm889E",
+      "title": "I'll Stand by You",
+      "artists": [
+        "Pretenders"
+      ],
+      "artistIds": [
+        "0GByy3DcfbQwDvXGCWmzv9"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Le Coeur des hommes 2 (Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0292609d1d8f75ec4947dce1c4",
+      "year": "2007",
+      "addedAt": "2016-12-22T18:42:02Z",
+      "externalUrl": "https://open.spotify.com/track/3sCczHhL1Jv4Yn4aJm889E",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4veE1jrMbVSy9FRCiYDGkD",
+      "spotifyTrackId": "4veE1jrMbVSy9FRCiYDGkD",
+      "spotifyTrackUri": "spotify:track:4veE1jrMbVSy9FRCiYDGkD",
+      "title": "I'm The Only One",
+      "artists": [
+        "Melissa Etheridge"
+      ],
+      "artistIds": [
+        "01Ppu7N8uYJI8SAONo2YZA"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Yes I Am",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e35d3afe0720c97b60ade3c8",
+      "year": "1993",
+      "addedAt": "2016-12-22T18:42:56Z",
+      "externalUrl": "https://open.spotify.com/track/4veE1jrMbVSy9FRCiYDGkD",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1SJ4ycWow4yz6z4oFz8NAG",
+      "spotifyTrackId": "1SJ4ycWow4yz6z4oFz8NAG",
+      "spotifyTrackUri": "spotify:track:1SJ4ycWow4yz6z4oFz8NAG",
+      "title": "Rainbow Connection",
+      "artists": [
+        "The Muppets"
+      ],
+      "artistIds": [
+        "0czJqnJDu3vWrLHmsbLunu"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Muppets (Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0249975a26b5562064db3a552b",
+      "year": "2011",
+      "addedAt": "2016-12-22T18:48:52Z",
+      "externalUrl": "https://open.spotify.com/track/1SJ4ycWow4yz6z4oFz8NAG",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2xZPpUIcajScKX99PH0fD9",
+      "spotifyTrackId": "2xZPpUIcajScKX99PH0fD9",
+      "spotifyTrackUri": "spotify:track:2xZPpUIcajScKX99PH0fD9",
+      "title": "Iko Iko",
+      "artists": [
+        "The Dixie Cups"
+      ],
+      "artistIds": [
+        "7ICvZfP4VHAPZ5Wdt03772"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Chapel of Love",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e023787a86e05c74e8f1e60ccd9",
+      "year": "1964",
+      "addedAt": "2016-12-22T18:49:02Z",
+      "externalUrl": "https://open.spotify.com/track/2xZPpUIcajScKX99PH0fD9",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "05wIrZSwuaVWhcv5FfqeH0",
+      "spotifyTrackId": "05wIrZSwuaVWhcv5FfqeH0",
+      "spotifyTrackUri": "spotify:track:05wIrZSwuaVWhcv5FfqeH0",
+      "title": "Walking On Sunshine",
+      "artists": [
+        "Katrina & The Waves"
+      ],
+      "artistIds": [
+        "2TzHIUhVpeeDxyJPpQfnV3"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Katrina & The Waves",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02eafaf556eda644a745d0144d",
+      "year": "1985",
+      "addedAt": "2016-12-22T18:50:00Z",
+      "externalUrl": "https://open.spotify.com/track/05wIrZSwuaVWhcv5FfqeH0",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "58mFu3oIpBa0HLNeJIxsw3",
+      "spotifyTrackId": "58mFu3oIpBa0HLNeJIxsw3",
+      "spotifyTrackUri": "spotify:track:58mFu3oIpBa0HLNeJIxsw3",
+      "title": "Heaven Is A Place On Earth",
+      "artists": [
+        "Belinda Carlisle"
+      ],
+      "artistIds": [
+        "7xkAwz0bQTGDSbkofyQt3U"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Heaven On Earth",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a50fa51325803da5ddb48659",
+      "year": "1987",
+      "addedAt": "2016-12-22T18:51:02Z",
+      "externalUrl": "https://open.spotify.com/track/58mFu3oIpBa0HLNeJIxsw3",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3xKsPtA5XG91Zlh0SyycmM",
+      "spotifyTrackId": "3xKsPtA5XG91Zlh0SyycmM",
+      "spotifyTrackUri": "spotify:track:3xKsPtA5XG91Zlh0SyycmM",
+      "title": "Come On Eileen",
+      "artists": [
+        "Dexys Midnight Runners"
+      ],
+      "artistIds": [
+        "4QTVePrFu1xuGM9K0kNXkk"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Come On Eileen / Dubious",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026836984a7584d5669c7657d2",
+      "year": "2009",
+      "addedAt": "2016-12-22T18:51:46Z",
+      "externalUrl": "https://open.spotify.com/track/3xKsPtA5XG91Zlh0SyycmM",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0ZU16412zWibvPbqfoFeqn",
+      "spotifyTrackId": "0ZU16412zWibvPbqfoFeqn",
+      "spotifyTrackUri": "spotify:track:0ZU16412zWibvPbqfoFeqn",
+      "title": "Yesterday Once More",
+      "artists": [
+        "Aimee Mann",
+        "Vinyl on HBO"
+      ],
+      "artistIds": [
+        "3UpIbyXfGzmHG6TMH4dJEk",
+        "52yUzlU6QBN8NxqTXOWCnW"
+      ],
+      "previewUrl": "",
+      "albumTitle": "VINYL: Music From The HBO® Original Series - Vol. 1.2",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02271b530a71f7503fb44c7da4",
+      "year": "2016",
+      "addedAt": "2016-12-22T18:53:24Z",
+      "externalUrl": "https://open.spotify.com/track/0ZU16412zWibvPbqfoFeqn",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6vQN2a9QSgWcm74KEZYfDL",
+      "spotifyTrackId": "6vQN2a9QSgWcm74KEZYfDL",
+      "spotifyTrackUri": "spotify:track:6vQN2a9QSgWcm74KEZYfDL",
+      "title": "Take A Chance On Me",
+      "artists": [
+        "ABBA"
+      ],
+      "artistIds": [
+        "0LcJLqbBmaGUft1e9Mm8HV"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Album",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02dca40205d34a5975ef2f04ac",
+      "year": "1977",
+      "addedAt": "2016-12-22T18:55:25Z",
+      "externalUrl": "https://open.spotify.com/track/6vQN2a9QSgWcm74KEZYfDL",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "26PwuMotZqcczKLHi4Htz3",
+      "spotifyTrackId": "26PwuMotZqcczKLHi4Htz3",
+      "spotifyTrackUri": "spotify:track:26PwuMotZqcczKLHi4Htz3",
+      "title": "Redemption Song",
+      "artists": [
+        "Bob Marley & The Wailers"
+      ],
+      "artistIds": [
+        "2QsynagSdAqZj3U9HgDzjD"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Uprising",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021c40418d1c37d727e8e91b04",
+      "year": "1980",
+      "addedAt": "2016-12-22T21:18:46Z",
+      "externalUrl": "https://open.spotify.com/track/26PwuMotZqcczKLHi4Htz3",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "31gRx91ewsm3wKN5eFOJZX",
+      "spotifyTrackId": "31gRx91ewsm3wKN5eFOJZX",
+      "spotifyTrackUri": "spotify:track:31gRx91ewsm3wKN5eFOJZX",
+      "title": "KRS-One",
+      "artists": [
+        "Sublime"
+      ],
+      "artistIds": [
+        "0EdvGhlC1FkGItLOWQzG4J"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Gold",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0249e976d28845d9f145125ad4",
+      "year": "2005",
+      "addedAt": "2016-12-22T21:19:32Z",
+      "externalUrl": "https://open.spotify.com/track/31gRx91ewsm3wKN5eFOJZX",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1EKhZRURaeTNo4AN4I4luS",
+      "spotifyTrackId": "1EKhZRURaeTNo4AN4I4luS",
+      "spotifyTrackUri": "spotify:track:1EKhZRURaeTNo4AN4I4luS",
+      "title": "Einstein On The Beach (For An Eggman)",
+      "artists": [
+        "Counting Crows"
+      ],
+      "artistIds": [
+        "0vEsuISMWAKNctLlUAhSZC"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Films About Ghosts: The Best Of...",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02fbeda7a653871a612241b6b3",
+      "year": "2003",
+      "addedAt": "2016-12-29T20:25:03Z",
+      "externalUrl": "https://open.spotify.com/track/1EKhZRURaeTNo4AN4I4luS",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1FHNctV68GUNLgXclG2DtR",
+      "spotifyTrackId": "1FHNctV68GUNLgXclG2DtR",
+      "spotifyTrackUri": "spotify:track:1FHNctV68GUNLgXclG2DtR",
+      "title": "Dancing in the Moonlight",
+      "artists": [
+        "Toploader"
+      ],
+      "artistIds": [
+        "6xeFne1rkxMhKSW3ipvkdV"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Dancing In The Moonlight: The Best Of Toploader",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a3ebdfcbd1a5336b2920b699",
+      "year": "2009",
+      "addedAt": "2016-12-29T20:51:03Z",
+      "externalUrl": "https://open.spotify.com/track/1FHNctV68GUNLgXclG2DtR",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "26nr9XnFCYWxBTIP7HyWXg",
+      "spotifyTrackId": "26nr9XnFCYWxBTIP7HyWXg",
+      "spotifyTrackUri": "spotify:track:26nr9XnFCYWxBTIP7HyWXg",
+      "title": "Toxic",
+      "artists": [
+        "Britney Spears"
+      ],
+      "artistIds": [
+        "26dSoYclwsYLMAKD3tpOr4"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Greatest Hits: My Prerogative",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0238a33970ad21a2a1d1315875",
+      "year": "2004",
+      "addedAt": "2016-12-29T21:11:10Z",
+      "externalUrl": "https://open.spotify.com/track/26nr9XnFCYWxBTIP7HyWXg",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2nwCO1PqpvyoFIvq3Vrj8N",
+      "spotifyTrackId": "2nwCO1PqpvyoFIvq3Vrj8N",
+      "spotifyTrackUri": "spotify:track:2nwCO1PqpvyoFIvq3Vrj8N",
+      "title": "These Boots Are Made For Walkin'",
+      "artists": [
+        "Nancy Sinatra"
+      ],
+      "artistIds": [
+        "3IZrrNonYELubLPJmqOci2"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Boots",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b16991c5257c7d27033dd50a",
+      "year": "1966",
+      "addedAt": "2016-12-29T21:16:56Z",
+      "externalUrl": "https://open.spotify.com/track/2nwCO1PqpvyoFIvq3Vrj8N",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "75JFxkI2RXiU7L9VXzMkle",
+      "spotifyTrackId": "75JFxkI2RXiU7L9VXzMkle",
+      "spotifyTrackUri": "spotify:track:75JFxkI2RXiU7L9VXzMkle",
+      "title": "The Scientist",
+      "artists": [
+        "Coldplay"
+      ],
+      "artistIds": [
+        "4gzpq5DPGxSnKTe4SA8HAU"
+      ],
+      "previewUrl": "",
+      "albumTitle": "A Rush of Blood to the Head",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02de09e02aa7febf30b7c02d82",
+      "year": "2002",
+      "addedAt": "2016-12-29T21:38:47Z",
+      "externalUrl": "https://open.spotify.com/track/75JFxkI2RXiU7L9VXzMkle",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5jE48hhRu8E6zBDPRSkEq7",
+      "spotifyTrackId": "5jE48hhRu8E6zBDPRSkEq7",
+      "spotifyTrackUri": "spotify:track:5jE48hhRu8E6zBDPRSkEq7",
+      "title": "All About That Bass",
+      "artists": [
+        "Meghan Trainor"
+      ],
+      "artistIds": [
+        "6JL8zeS1NmiOftqZTRgdTz"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Title (Deluxe)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027aef0a9ce5c2a75e77404b77",
+      "year": "2015",
+      "addedAt": "2016-12-29T21:45:11Z",
+      "externalUrl": "https://open.spotify.com/track/5jE48hhRu8E6zBDPRSkEq7",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2udw7RDkldLFIPG9WYdVtT",
+      "spotifyTrackId": "2udw7RDkldLFIPG9WYdVtT",
+      "spotifyTrackUri": "spotify:track:2udw7RDkldLFIPG9WYdVtT",
+      "title": "Sir Duke",
+      "artists": [
+        "Stevie Wonder"
+      ],
+      "artistIds": [
+        "7guDJrEfX3qb6FEbdPA5qi"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Songs In The Key Of Life (Reissue)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b152cf640e96d1d6cf4e17a7",
+      "year": "1976",
+      "addedAt": "2016-12-29T22:25:14Z",
+      "externalUrl": "https://open.spotify.com/track/2udw7RDkldLFIPG9WYdVtT",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5xoUgPXbMNUmoHU0Enwtwq",
+      "spotifyTrackId": "5xoUgPXbMNUmoHU0Enwtwq",
+      "spotifyTrackUri": "spotify:track:5xoUgPXbMNUmoHU0Enwtwq",
+      "title": "She Moves In Her Own Way",
+      "artists": [
+        "The Kooks"
+      ],
+      "artistIds": [
+        "1GLtl8uqKmnyCWxHmw9tL4"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Inside In / Inside Out",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0263a28c5ecb7b13e9b329fe47",
+      "year": "2006",
+      "addedAt": "2016-12-29T23:03:39Z",
+      "externalUrl": "https://open.spotify.com/track/5xoUgPXbMNUmoHU0Enwtwq",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "11fNLqDB47gMKj7BHhR2Qr",
+      "spotifyTrackId": "11fNLqDB47gMKj7BHhR2Qr",
+      "spotifyTrackUri": "spotify:track:11fNLqDB47gMKj7BHhR2Qr",
+      "title": "Wake up Little Susie",
+      "artists": [
+        "The Everly Brothers"
+      ],
+      "artistIds": [
+        "4ACplpEqD6JIVgKrafauzs"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Very Best of The Everly Brothers",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e9a522d43a304d4d433ff251",
+      "year": "1964",
+      "addedAt": "2017-01-04T22:39:54Z",
+      "externalUrl": "https://open.spotify.com/track/11fNLqDB47gMKj7BHhR2Qr",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3zxklD2EGecZre9MjEEvIU",
+      "spotifyTrackId": "3zxklD2EGecZre9MjEEvIU",
+      "spotifyTrackUri": "spotify:track:3zxklD2EGecZre9MjEEvIU",
+      "title": "Blue Bayou",
+      "artists": [
+        "Linda Ronstadt"
+      ],
+      "artistIds": [
+        "1sXbwvCQLGZnaH0Jp2HTVc"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Simple Dreams",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0231acb630eebcccc76943237f",
+      "year": "1977",
+      "addedAt": "2017-01-06T16:55:51Z",
+      "externalUrl": "https://open.spotify.com/track/3zxklD2EGecZre9MjEEvIU",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6L89mwZXSOwYl76YXfX13s",
+      "spotifyTrackId": "6L89mwZXSOwYl76YXfX13s",
+      "spotifyTrackUri": "spotify:track:6L89mwZXSOwYl76YXfX13s",
+      "title": "Basket Case",
+      "artists": [
+        "Green Day"
+      ],
+      "artistIds": [
+        "7oPftvlwr6VrsViSDV7fJY"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Dookie",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02db89b08034de626ebee6823d",
+      "year": "1994",
+      "addedAt": "2017-01-15T21:04:16Z",
+      "externalUrl": "https://open.spotify.com/track/6L89mwZXSOwYl76YXfX13s",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4JGKZS7h4Qa16gOU3oNETV",
+      "spotifyTrackId": "4JGKZS7h4Qa16gOU3oNETV",
+      "spotifyTrackUri": "spotify:track:4JGKZS7h4Qa16gOU3oNETV",
+      "title": "Dreams",
+      "artists": [
+        "The Cranberries"
+      ],
+      "artistIds": [
+        "7t0rwkOPGlDPEhaOcVtOt9"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Everybody Else Is Doing It, So Why Can't We?",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f6325f361d7803ad0d908451",
+      "year": "1993",
+      "addedAt": "2017-01-15T21:52:52Z",
+      "externalUrl": "https://open.spotify.com/track/4JGKZS7h4Qa16gOU3oNETV",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "092fSrn3BqKEZNvwk5SmeA",
+      "spotifyTrackId": "092fSrn3BqKEZNvwk5SmeA",
+      "spotifyTrackUri": "spotify:track:092fSrn3BqKEZNvwk5SmeA",
+      "title": "It's Not Easy",
+      "artists": [
+        "Reel Big Fish"
+      ],
+      "artistIds": [
+        "3bXhZFreBJF4QDUUiMmtZW"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Duet All Night Long",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02fae2ecf2bba92ff72fa4440d",
+      "year": "2007",
+      "addedAt": "2017-01-18T20:36:19Z",
+      "externalUrl": "https://open.spotify.com/track/092fSrn3BqKEZNvwk5SmeA",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1NrbnHlR2BFREcyWXHIHip",
+      "spotifyTrackId": "1NrbnHlR2BFREcyWXHIHip",
+      "spotifyTrackUri": "spotify:track:1NrbnHlR2BFREcyWXHIHip",
+      "title": "When I'm Sixty Four - Remastered 2009",
+      "artists": [
+        "The Beatles"
+      ],
+      "artistIds": [
+        "3WrFJ7ztbogyGnTHbHJFl2"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Sgt. Pepper's Lonely Hearts Club Band (Remastered)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0234ef8f7d06cf2fc2146f420a",
+      "year": "1967",
+      "addedAt": "2017-01-18T20:43:21Z",
+      "externalUrl": "https://open.spotify.com/track/1NrbnHlR2BFREcyWXHIHip",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6kXGGyEPSRS1g9Ltm70jo9",
+      "spotifyTrackId": "6kXGGyEPSRS1g9Ltm70jo9",
+      "spotifyTrackUri": "spotify:track:6kXGGyEPSRS1g9Ltm70jo9",
+      "title": "Love the One You're With",
+      "artists": [
+        "Crosby, Stills & Nash"
+      ],
+      "artistIds": [
+        "2pdvghEHZJtgSXZ7cvNLou"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Replay",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021fce24e5e0896809397a3210",
+      "year": "1980",
+      "addedAt": "2017-01-18T20:43:50Z",
+      "externalUrl": "https://open.spotify.com/track/6kXGGyEPSRS1g9Ltm70jo9",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "466QMr5bVL5dEjtGxgaXyC",
+      "spotifyTrackId": "466QMr5bVL5dEjtGxgaXyC",
+      "spotifyTrackUri": "spotify:track:466QMr5bVL5dEjtGxgaXyC",
+      "title": "Banditos",
+      "artists": [
+        "The Refreshments"
+      ],
+      "artistIds": [
+        "5Fhey8VIfTavg9F99QlipO"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Fizzy Fuzzy Big & Buzzy",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0203e7ab644f13d228063d39d2",
+      "year": "1996",
+      "addedAt": "2017-01-20T22:45:43Z",
+      "externalUrl": "https://open.spotify.com/track/466QMr5bVL5dEjtGxgaXyC",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5OkKOkdVTKFrYi6GWXkMzR",
+      "spotifyTrackId": "5OkKOkdVTKFrYi6GWXkMzR",
+      "spotifyTrackUri": "spotify:track:5OkKOkdVTKFrYi6GWXkMzR",
+      "title": "Volare (Nel Blu Di Pinto Di Blu) - Remastered 1998",
+      "artists": [
+        "Dean Martin"
+      ],
+      "artistIds": [
+        "49e4v89VmlDcFCMyDv9wQ9"
+      ],
+      "previewUrl": "",
+      "albumTitle": "This Is Dean Martin",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e022f13fcfe011d340e9c69923e",
+      "year": "1958",
+      "addedAt": "2017-01-20T23:19:02Z",
+      "externalUrl": "https://open.spotify.com/track/5OkKOkdVTKFrYi6GWXkMzR",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0mWXrr6HQZUhCQG4JMkT2e",
+      "spotifyTrackId": "0mWXrr6HQZUhCQG4JMkT2e",
+      "spotifyTrackUri": "spotify:track:0mWXrr6HQZUhCQG4JMkT2e",
+      "title": "Oo-De-Lally - From \"Robin Hood\"",
+      "artists": [
+        "Roger Miller"
+      ],
+      "artistIds": [
+        "1RP2UpEaRzkF0Id3JigqD8"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Oo-De-Lally (From \"Robin Hood\")",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0213d52f2dc6820554eebc4ef8",
+      "year": "1988",
+      "addedAt": "2017-01-21T21:20:00Z",
+      "externalUrl": "https://open.spotify.com/track/0mWXrr6HQZUhCQG4JMkT2e",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6X3ZUzox3zOgKA5l7BDF81",
+      "spotifyTrackId": "6X3ZUzox3zOgKA5l7BDF81",
+      "spotifyTrackUri": "spotify:track:6X3ZUzox3zOgKA5l7BDF81",
+      "title": "That Was A Crazy Game of Poker",
+      "artists": [
+        "O.A.R."
+      ],
+      "artistIds": [
+        "1Cq0LAHFfvUTBEtMPXUidI"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Wanderer",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027a90e98f74ac805b7a9909ae",
+      "year": "1997",
+      "addedAt": "2017-01-22T20:02:59Z",
+      "externalUrl": "https://open.spotify.com/track/6X3ZUzox3zOgKA5l7BDF81",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7FZ9mjW0OFCUjGF0aLyGWA",
+      "spotifyTrackId": "7FZ9mjW0OFCUjGF0aLyGWA",
+      "spotifyTrackUri": "spotify:track:7FZ9mjW0OFCUjGF0aLyGWA",
+      "title": "People in Your Neighborhood",
+      "artists": [
+        "Sesame Street",
+        "Bob Marylou, Cookie Monster, Ernie, Anything Muppets, Bob, Oscar, Big Bird, Bert, Simon Soundman, Grover"
+      ],
+      "artistIds": [
+        "50bY8HGxT0SuDgJX3AilTT",
+        "5vh3qcSFDxZLssCCILxk8y"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Sesame Street: What Time Is It On Sesame Street?",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02cdfc6a9bffe47a2b4f0317db",
+      "year": "1977",
+      "addedAt": "2017-01-24T22:31:07Z",
+      "externalUrl": "https://open.spotify.com/track/7FZ9mjW0OFCUjGF0aLyGWA",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7Fn84f1WeWabP3aFXW5TA8",
+      "spotifyTrackId": "7Fn84f1WeWabP3aFXW5TA8",
+      "spotifyTrackUri": "spotify:track:7Fn84f1WeWabP3aFXW5TA8",
+      "title": "Faithfully (Glee Cast Version)",
+      "artists": [
+        "Glee Cast"
+      ],
+      "artistIds": [
+        "0SCbttzoZTnLFebDYmAWCm"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Glee: The Music, Journey To Regionals",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e029392d737b8c24ab150b30940",
+      "year": "2010",
+      "addedAt": "2017-01-27T01:39:49Z",
+      "externalUrl": "https://open.spotify.com/track/7Fn84f1WeWabP3aFXW5TA8",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6pmuu4qSz2WrtGkBjUfyuz",
+      "spotifyTrackId": "6pmuu4qSz2WrtGkBjUfyuz",
+      "spotifyTrackUri": "spotify:track:6pmuu4qSz2WrtGkBjUfyuz",
+      "title": "Birdhouse in Your Soul",
+      "artists": [
+        "They Might Be Giants"
+      ],
+      "artistIds": [
+        "6zB02lwP6L6ZH32nggQiJT"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Flood",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e6c14f0dc854e7d3c7c40007",
+      "year": "1990",
+      "addedAt": "2017-02-01T22:07:38Z",
+      "externalUrl": "https://open.spotify.com/track/6pmuu4qSz2WrtGkBjUfyuz",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1KU5EHSz04JhGg3rReGJ0N",
+      "spotifyTrackId": "1KU5EHSz04JhGg3rReGJ0N",
+      "spotifyTrackUri": "spotify:track:1KU5EHSz04JhGg3rReGJ0N",
+      "title": "Black Velvet",
+      "artists": [
+        "Alannah Myles"
+      ],
+      "artistIds": [
+        "6IYnSXO40Bh7Zdqhf6rQoj"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Alannah Myles",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e022deb62442d38d6e6fff5efa8",
+      "year": "1989",
+      "addedAt": "2017-02-03T23:28:12Z",
+      "externalUrl": "https://open.spotify.com/track/1KU5EHSz04JhGg3rReGJ0N",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "194iHn32nKcqWH8TOLWaov",
+      "spotifyTrackId": "194iHn32nKcqWH8TOLWaov",
+      "spotifyTrackUri": "spotify:track:194iHn32nKcqWH8TOLWaov",
+      "title": "Caress Me Down",
+      "artists": [
+        "Sublime"
+      ],
+      "artistIds": [
+        "0EdvGhlC1FkGItLOWQzG4J"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Gold",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0249e976d28845d9f145125ad4",
+      "year": "2005",
+      "addedAt": "2017-02-08T00:05:27Z",
+      "externalUrl": "https://open.spotify.com/track/194iHn32nKcqWH8TOLWaov",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4m3OS54KWywYhP7WD7z1cg",
+      "spotifyTrackId": "4m3OS54KWywYhP7WD7z1cg",
+      "spotifyTrackUri": "spotify:track:4m3OS54KWywYhP7WD7z1cg",
+      "title": "Life in a Northern Town",
+      "artists": [
+        "The Dream Academy"
+      ],
+      "artistIds": [
+        "1JVoO5bwfU8GNuAZLpBoHe"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Dream Academy",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0265ad3497dc02a54091a7c6db",
+      "year": "1985",
+      "addedAt": "2017-02-20T23:51:49Z",
+      "externalUrl": "https://open.spotify.com/track/4m3OS54KWywYhP7WD7z1cg",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4Q4w8aRdfhIIEhBututktL",
+      "spotifyTrackId": "4Q4w8aRdfhIIEhBututktL",
+      "spotifyTrackUri": "spotify:track:4Q4w8aRdfhIIEhBututktL",
+      "title": "Story of My Life",
+      "artists": [
+        "Social Distortion"
+      ],
+      "artistIds": [
+        "16nn7kCHPWIB6uK09GQCNI"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Social Distortion",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02417363f52fbedabb42b26761",
+      "year": "1990",
+      "addedAt": "2017-03-04T21:24:58Z",
+      "externalUrl": "https://open.spotify.com/track/4Q4w8aRdfhIIEhBututktL",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4geS82DsFeSLeQrmKZLxdX",
+      "spotifyTrackId": "4geS82DsFeSLeQrmKZLxdX",
+      "spotifyTrackUri": "spotify:track:4geS82DsFeSLeQrmKZLxdX",
+      "title": "Invisible Man",
+      "artists": [
+        "Shovels & Rope"
+      ],
+      "artistIds": [
+        "1M3BVQ36cqPQix8lQNCh4K"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Little Seeds",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f3696d34d79d70ac5c00a97b",
+      "year": "2016",
+      "addedAt": "2017-03-09T21:56:18Z",
+      "externalUrl": "https://open.spotify.com/track/4geS82DsFeSLeQrmKZLxdX",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4LEZGxgtNtnILHuHmwZLJ6",
+      "spotifyTrackId": "4LEZGxgtNtnILHuHmwZLJ6",
+      "spotifyTrackUri": "spotify:track:4LEZGxgtNtnILHuHmwZLJ6",
+      "title": "Che La Luna",
+      "artists": [
+        "Louis Prima with Sam Butera & The Witnesses",
+        "Sam Butera & The Witnesses"
+      ],
+      "artistIds": [
+        "11E1r4UOaCPUXxrEp1hLnb",
+        "70njzKgLbLbWkCPhKEu2oV"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Angelina",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02d9272b7badd237dfb5cd1a2c",
+      "year": "1973",
+      "addedAt": "2017-03-10T22:24:17Z",
+      "externalUrl": "https://open.spotify.com/track/4LEZGxgtNtnILHuHmwZLJ6",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2HnJpAwRQpthFeRba8DiJT",
+      "spotifyTrackId": "2HnJpAwRQpthFeRba8DiJT",
+      "spotifyTrackUri": "spotify:track:2HnJpAwRQpthFeRba8DiJT",
+      "title": "San Andreas Fault Line Blues",
+      "artists": [
+        "Shovels & Rope"
+      ],
+      "artistIds": [
+        "1M3BVQ36cqPQix8lQNCh4K"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Little Seeds",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f3696d34d79d70ac5c00a97b",
+      "year": "2016",
+      "addedAt": "2017-03-11T00:14:47Z",
+      "externalUrl": "https://open.spotify.com/track/2HnJpAwRQpthFeRba8DiJT",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0bAM9qivrntXnHyklRRx39",
+      "spotifyTrackId": "0bAM9qivrntXnHyklRRx39",
+      "spotifyTrackUri": "spotify:track:0bAM9qivrntXnHyklRRx39",
+      "title": "World Spins Madly On",
+      "artists": [
+        "The Weepies",
+        "Deb Talan",
+        "Steve Tannen"
+      ],
+      "artistIds": [
+        "6pwHWKweuoCyx3OoFaD0Q5",
+        "7tFFagB7kjwoCTP3QMlzJD",
+        "6vvDymlJBME7J2SPsyY3td"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Say I Am You",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e90ed6b1030eb270943c67dd",
+      "year": "2006",
+      "addedAt": "2017-03-12T18:58:48Z",
+      "externalUrl": "https://open.spotify.com/track/0bAM9qivrntXnHyklRRx39",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2FfZg072w8RoxlMOR7M4CT",
+      "spotifyTrackId": "2FfZg072w8RoxlMOR7M4CT",
+      "spotifyTrackUri": "spotify:track:2FfZg072w8RoxlMOR7M4CT",
+      "title": "Ants Marching",
+      "artists": [
+        "Dave Matthews Band"
+      ],
+      "artistIds": [
+        "2TI7qyDE0QfyOlnbtfDo7L"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Under the Table and Dreaming (Expanded Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028691f3580a9747e8c5c1093e",
+      "year": "1994",
+      "addedAt": "2017-03-12T19:03:46Z",
+      "externalUrl": "https://open.spotify.com/track/2FfZg072w8RoxlMOR7M4CT",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7wck5ORA8dJB8To9rc10gi",
+      "spotifyTrackId": "7wck5ORA8dJB8To9rc10gi",
+      "spotifyTrackUri": "spotify:track:7wck5ORA8dJB8To9rc10gi",
+      "title": "Video Killed The Radio Star",
+      "artists": [
+        "The Presidents Of The United States Of America"
+      ],
+      "artistIds": [
+        "1lZvg4fNAqHoj6I9N8naBM"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Pure Frosting",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c6ccae9458497af370b027d9",
+      "year": "1998",
+      "addedAt": "2017-03-13T21:51:07Z",
+      "externalUrl": "https://open.spotify.com/track/7wck5ORA8dJB8To9rc10gi",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3pOGWxK9Dvmu0Ev6eLgWgw",
+      "spotifyTrackId": "3pOGWxK9Dvmu0Ev6eLgWgw",
+      "spotifyTrackUri": "spotify:track:3pOGWxK9Dvmu0Ev6eLgWgw",
+      "title": "Rivers Of Babylon",
+      "artists": [
+        "Sublime"
+      ],
+      "artistIds": [
+        "0EdvGhlC1FkGItLOWQzG4J"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Gold",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0249e976d28845d9f145125ad4",
+      "year": "2005",
+      "addedAt": "2017-03-13T23:25:43Z",
+      "externalUrl": "https://open.spotify.com/track/3pOGWxK9Dvmu0Ev6eLgWgw",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "737c89v3Zdit8EUyNJ7KeS",
+      "spotifyTrackId": "737c89v3Zdit8EUyNJ7KeS",
+      "spotifyTrackUri": "spotify:track:737c89v3Zdit8EUyNJ7KeS",
+      "title": "Wildfire",
+      "artists": [
+        "Michael Martin Murphey"
+      ],
+      "artistIds": [
+        "4jL1usPiGDK8TD46zJP4gu"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Best Of Michael Martin Murphey",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02216f3b53ba3095efcb310c9b",
+      "year": "1982",
+      "addedAt": "2017-03-14T20:46:38Z",
+      "externalUrl": "https://open.spotify.com/track/737c89v3Zdit8EUyNJ7KeS",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7xRemq7GLu0Tbqe9OckG87",
+      "spotifyTrackId": "7xRemq7GLu0Tbqe9OckG87",
+      "spotifyTrackUri": "spotify:track:7xRemq7GLu0Tbqe9OckG87",
+      "title": "The Man in Me",
+      "artists": [
+        "Bob Dylan"
+      ],
+      "artistIds": [
+        "74ASZWbe4lXaubB36ztrGX"
+      ],
+      "previewUrl": "",
+      "albumTitle": "New Morning",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0200395da7ce063ed4b1d202bd",
+      "year": "1970",
+      "addedAt": "2017-03-15T22:17:51Z",
+      "externalUrl": "https://open.spotify.com/track/7xRemq7GLu0Tbqe9OckG87",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "08kB9HSfrcIi83rymwgjMz",
+      "spotifyTrackId": "08kB9HSfrcIi83rymwgjMz",
+      "spotifyTrackUri": "spotify:track:08kB9HSfrcIi83rymwgjMz",
+      "title": "Weapon of Choice",
+      "artists": [
+        "Fatboy Slim"
+      ],
+      "artistIds": [
+        "4Y7tXHSEejGu1vQ9bwDdXW"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Greatest Hits: Why Try Harder",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02bec2d7f1e2e518ccf4af1ce1",
+      "year": "2006",
+      "addedAt": "2017-03-26T17:55:52Z",
+      "externalUrl": "https://open.spotify.com/track/08kB9HSfrcIi83rymwgjMz",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1ELY3KTgI83N1k0xXqabMe",
+      "spotifyTrackId": "1ELY3KTgI83N1k0xXqabMe",
+      "spotifyTrackUri": "spotify:track:1ELY3KTgI83N1k0xXqabMe",
+      "title": "Sexx Laws",
+      "artists": [
+        "Beck"
+      ],
+      "artistIds": [
+        "3vbKDsSS70ZX9D2OcvbZmS"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Midnite Vultures",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02fbfb68023efd979aec1cc925",
+      "year": "1999",
+      "addedAt": "2017-03-26T17:56:15Z",
+      "externalUrl": "https://open.spotify.com/track/1ELY3KTgI83N1k0xXqabMe",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6nZOutMBlGD8rGMb8POIYr",
+      "spotifyTrackId": "6nZOutMBlGD8rGMb8POIYr",
+      "spotifyTrackUri": "spotify:track:6nZOutMBlGD8rGMb8POIYr",
+      "title": "Maria",
+      "artists": [
+        "Blondie"
+      ],
+      "artistIds": [
+        "4tpUmLEVLCGFr93o8hFFIB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Maria",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026b2d84a3f47a16dec71cdd97",
+      "year": "1999",
+      "addedAt": "2017-03-29T03:15:13Z",
+      "externalUrl": "https://open.spotify.com/track/6nZOutMBlGD8rGMb8POIYr",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3Ti0GdlrotgwsAVBBugv0I",
+      "spotifyTrackId": "3Ti0GdlrotgwsAVBBugv0I",
+      "spotifyTrackUri": "spotify:track:3Ti0GdlrotgwsAVBBugv0I",
+      "title": "Can I Kick It?",
+      "artists": [
+        "A Tribe Called Quest"
+      ],
+      "artistIds": [
+        "09hVIj6vWgoCDtT03h8ZCa"
+      ],
+      "previewUrl": "",
+      "albumTitle": "People's Instinctive Travels and the Paths of Rhythm (25th Anniversary Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e024ba1fe238a517021ebcc2ace",
+      "year": "1990",
+      "addedAt": "2017-04-04T22:26:25Z",
+      "externalUrl": "https://open.spotify.com/track/3Ti0GdlrotgwsAVBBugv0I",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2NtqZmfRIDkXJ2YvY2Kv1F",
+      "spotifyTrackId": "2NtqZmfRIDkXJ2YvY2Kv1F",
+      "spotifyTrackUri": "spotify:track:2NtqZmfRIDkXJ2YvY2Kv1F",
+      "title": "Lido Shuffle",
+      "artists": [
+        "Boz Scaggs"
+      ],
+      "artistIds": [
+        "46njgd2Rq9tZc4ZjeQMgbh"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Silk Degrees",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0294676ce6aa5288318b4ca52a",
+      "year": "1976",
+      "addedAt": "2017-04-09T18:26:28Z",
+      "externalUrl": "https://open.spotify.com/track/2NtqZmfRIDkXJ2YvY2Kv1F",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4irTLRUytsITLRC9KEW4p2",
+      "spotifyTrackId": "4irTLRUytsITLRC9KEW4p2",
+      "spotifyTrackUri": "spotify:track:4irTLRUytsITLRC9KEW4p2",
+      "title": "Eastern Continental Divide",
+      "artists": [
+        "Cary Ann Hearst"
+      ],
+      "artistIds": [
+        "2Fwqnm1kpxK4BZgWrsG5qm"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Lions And Lambs",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02855dbc70a6756a3a202fb0d6",
+      "year": "2011",
+      "addedAt": "2017-04-20T23:09:44Z",
+      "externalUrl": "https://open.spotify.com/track/4irTLRUytsITLRC9KEW4p2",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "01puOndAec0R3I0zPI76P6",
+      "spotifyTrackId": "01puOndAec0R3I0zPI76P6",
+      "spotifyTrackUri": "spotify:track:01puOndAec0R3I0zPI76P6",
+      "title": "Jane",
+      "artists": [
+        "Starship"
+      ],
+      "artistIds": [
+        "0kObWap02DEg9EAJ3PBxzf"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Greatest Hits Of The '80s",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b8cbe1f69808e0ab15458f51",
+      "year": "2007",
+      "addedAt": "2017-04-28T21:18:28Z",
+      "externalUrl": "https://open.spotify.com/track/01puOndAec0R3I0zPI76P6",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3NGzaY9pJjoMvP4gnnajGF",
+      "spotifyTrackId": "3NGzaY9pJjoMvP4gnnajGF",
+      "spotifyTrackUri": "spotify:track:3NGzaY9pJjoMvP4gnnajGF",
+      "title": "Devil's Right Hand",
+      "artists": [
+        "Johnny Cash"
+      ],
+      "artistIds": [
+        "6kACVPfCOnqzgfEF5ryl0x"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Unearthed",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b905a2b99e3510c2fd7d07c2",
+      "year": "2003",
+      "addedAt": "2017-05-15T23:29:09Z",
+      "externalUrl": "https://open.spotify.com/track/3NGzaY9pJjoMvP4gnnajGF",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2nqUFHREsi4olsi7knIcxJ",
+      "spotifyTrackId": "2nqUFHREsi4olsi7knIcxJ",
+      "spotifyTrackUri": "spotify:track:2nqUFHREsi4olsi7knIcxJ",
+      "title": "Dreaming - Remastered 2001",
+      "artists": [
+        "Blondie"
+      ],
+      "artistIds": [
+        "4tpUmLEVLCGFr93o8hFFIB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Dreaming",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021b760a11fc2608afd3c3486b",
+      "year": "1979",
+      "addedAt": "2017-06-27T03:24:16Z",
+      "externalUrl": "https://open.spotify.com/track/2nqUFHREsi4olsi7knIcxJ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4TOMI010Sd4ZAX4aZ5TS85",
+      "spotifyTrackId": "4TOMI010Sd4ZAX4aZ5TS85",
+      "spotifyTrackUri": "spotify:track:4TOMI010Sd4ZAX4aZ5TS85",
+      "title": "Perfect Day",
+      "artists": [
+        "Lou Reed"
+      ],
+      "artistIds": [
+        "42TFhl7WlMRXiNqzSrnzPL"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Transformer",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02fe5213edd4f8550a8030efcf",
+      "year": "1972",
+      "addedAt": "2018-03-07T18:28:58Z",
+      "externalUrl": "https://open.spotify.com/track/4TOMI010Sd4ZAX4aZ5TS85",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4jDhI4nE32u8meRN1aOu8u",
+      "spotifyTrackId": "4jDhI4nE32u8meRN1aOu8u",
+      "spotifyTrackUri": "spotify:track:4jDhI4nE32u8meRN1aOu8u",
+      "title": "Maria",
+      "artists": [
+        "Blondie"
+      ],
+      "artistIds": [
+        "4tpUmLEVLCGFr93o8hFFIB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Blondie 4(0)-Ever: Greatest Hits Deluxe Redux / Ghosts Of Download",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0241e16dd2db5af0f5340cee2f",
+      "year": "2013",
+      "addedAt": "2018-06-09T19:15:03Z",
+      "externalUrl": "https://open.spotify.com/track/4jDhI4nE32u8meRN1aOu8u",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7LyIoUsiMtelB1I0I4drEF",
+      "spotifyTrackId": "7LyIoUsiMtelB1I0I4drEF",
+      "spotifyTrackUri": "spotify:track:7LyIoUsiMtelB1I0I4drEF",
+      "title": "Modern Love - 1999 Remaster",
+      "artists": [
+        "David Bowie"
+      ],
+      "artistIds": [
+        "0oSGxfWSnnOXhD2fKuz2Gy"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Let's Dance (1999 Remaster)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e024b4cc5866bd793ab9caa8bb5",
+      "year": "1983",
+      "addedAt": "2018-06-20T18:23:35Z",
+      "externalUrl": "https://open.spotify.com/track/7LyIoUsiMtelB1I0I4drEF",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3nQuDlaVZApyrG6tdsETe0",
+      "spotifyTrackId": "3nQuDlaVZApyrG6tdsETe0",
+      "spotifyTrackUri": "spotify:track:3nQuDlaVZApyrG6tdsETe0",
+      "title": "Valerie",
+      "artists": [
+        "Steve Winwood"
+      ],
+      "artistIds": [
+        "5gxynDEKwNDgxGJmJjZyte"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Talking Back To The Night",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02fec03d54fc5d55a8314749e2",
+      "year": "1982",
+      "addedAt": "2018-07-18T17:07:07Z",
+      "externalUrl": "https://open.spotify.com/track/3nQuDlaVZApyrG6tdsETe0",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7cdnq45E9aP2XDStHg5vd7",
+      "spotifyTrackId": "7cdnq45E9aP2XDStHg5vd7",
+      "spotifyTrackUri": "spotify:track:7cdnq45E9aP2XDStHg5vd7",
+      "title": "Cherry Bomb",
+      "artists": [
+        "The Runaways"
+      ],
+      "artistIds": [
+        "5eTq3PxbOh5vgeRXKNqPyV"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Runaways",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a1c553575418ca43404cb48b",
+      "year": "1976",
+      "addedAt": "2018-11-16T21:17:20Z",
+      "externalUrl": "https://open.spotify.com/track/7cdnq45E9aP2XDStHg5vd7",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3SnXIPWciHwAS04oKdPC0l",
+      "spotifyTrackId": "3SnXIPWciHwAS04oKdPC0l",
+      "spotifyTrackUri": "spotify:track:3SnXIPWciHwAS04oKdPC0l",
+      "title": "Seasons of Love - From the Motion Picture RENT",
+      "artists": [
+        "Cast Of Rent"
+      ],
+      "artistIds": [
+        "0ZAibQ1lZh5UbUaQybsn62"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Seasons of Love (From the Motion Picture RENT)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020e0778596bb47c08774875d4",
+      "year": "2005",
+      "addedAt": "2018-11-19T20:16:24Z",
+      "externalUrl": "https://open.spotify.com/track/3SnXIPWciHwAS04oKdPC0l",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "65lHwG8JFJs67PnOUhCYPq",
+      "spotifyTrackId": "65lHwG8JFJs67PnOUhCYPq",
+      "spotifyTrackUri": "spotify:track:65lHwG8JFJs67PnOUhCYPq",
+      "title": "Fire",
+      "artists": [
+        "The Pointer Sisters"
+      ],
+      "artistIds": [
+        "2kreKea2n96dXjcyAU9j5N"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Energy (Expanded Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02de3c79d554c8d1857543089c",
+      "year": "1978",
+      "addedAt": "2019-01-25T01:47:34Z",
+      "externalUrl": "https://open.spotify.com/track/65lHwG8JFJs67PnOUhCYPq",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1Cj2vqUwlJVG27gJrun92y",
+      "spotifyTrackId": "1Cj2vqUwlJVG27gJrun92y",
+      "spotifyTrackUri": "spotify:track:1Cj2vqUwlJVG27gJrun92y",
+      "title": "The Sound of Silence",
+      "artists": [
+        "Disturbed"
+      ],
+      "artistIds": [
+        "3TOqt5oJwL9BE2NG9MEwDa"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Immortalized",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02d7bd0f8e4d2a399020b333e8",
+      "year": "2015",
+      "addedAt": "2019-01-29T00:02:15Z",
+      "externalUrl": "https://open.spotify.com/track/1Cj2vqUwlJVG27gJrun92y",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3SPcBPzvbmWLl8NU5efx4W",
+      "spotifyTrackId": "3SPcBPzvbmWLl8NU5efx4W",
+      "spotifyTrackUri": "spotify:track:3SPcBPzvbmWLl8NU5efx4W",
+      "title": "Telephone Line",
+      "artists": [
+        "Electric Light Orchestra"
+      ],
+      "artistIds": [
+        "7jefIIksOi1EazgRTfW2Pk"
+      ],
+      "previewUrl": "",
+      "albumTitle": "A New World Record",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02bf6bcf8620b29052a85c60fd",
+      "year": "1976",
+      "addedAt": "2019-01-29T00:12:10Z",
+      "externalUrl": "https://open.spotify.com/track/3SPcBPzvbmWLl8NU5efx4W",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5Y9Hqg5Z3EHUDDwd54FDQb",
+      "spotifyTrackId": "5Y9Hqg5Z3EHUDDwd54FDQb",
+      "spotifyTrackUri": "spotify:track:5Y9Hqg5Z3EHUDDwd54FDQb",
+      "title": "Fields Of Gold",
+      "artists": [
+        "Sting"
+      ],
+      "artistIds": [
+        "0Ty63ceoRnnJKVEYP0VQpk"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Ten Summoner's Tales",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026f2044d1a83fa2989f958244",
+      "year": "1993",
+      "addedAt": "2019-02-27T02:25:25Z",
+      "externalUrl": "https://open.spotify.com/track/5Y9Hqg5Z3EHUDDwd54FDQb",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7LVHVU3tWfcxj5aiPFEW4Q",
+      "spotifyTrackId": "7LVHVU3tWfcxj5aiPFEW4Q",
+      "spotifyTrackUri": "spotify:track:7LVHVU3tWfcxj5aiPFEW4Q",
+      "title": "Fix You",
+      "artists": [
+        "Coldplay"
+      ],
+      "artistIds": [
+        "4gzpq5DPGxSnKTe4SA8HAU"
+      ],
+      "previewUrl": "",
+      "albumTitle": "X&Y",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e024e0362c225863f6ae2432651",
+      "year": "2005",
+      "addedAt": "2019-03-23T17:44:58Z",
+      "externalUrl": "https://open.spotify.com/track/7LVHVU3tWfcxj5aiPFEW4Q",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6120uJUyg6QDzaAJUosTx5",
+      "spotifyTrackId": "6120uJUyg6QDzaAJUosTx5",
+      "spotifyTrackUri": "spotify:track:6120uJUyg6QDzaAJUosTx5",
+      "title": "Knock On Wood",
+      "artists": [
+        "Amii Stewart"
+      ],
+      "artistIds": [
+        "7GPNaPWw3STF8NYp39pd8G"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Greatest Hits",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027962998d8941673c1cea3083",
+      "year": "2012",
+      "addedAt": "2019-05-03T23:00:20Z",
+      "externalUrl": "https://open.spotify.com/track/6120uJUyg6QDzaAJUosTx5",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "78TnMTAFmWUWWCgNXR7D3K",
+      "spotifyTrackId": "78TnMTAFmWUWWCgNXR7D3K",
+      "spotifyTrackUri": "spotify:track:78TnMTAFmWUWWCgNXR7D3K",
+      "title": "Listen To Your Heart",
+      "artists": [
+        "Roxette"
+      ],
+      "artistIds": [
+        "2SHhfs4BiDxGQ3oxqf0UHY"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Look Sharp! (2009 Version)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02dc9cb1ac37f5131948ddc257",
+      "year": "1988",
+      "addedAt": "2019-05-04T18:55:21Z",
+      "externalUrl": "https://open.spotify.com/track/78TnMTAFmWUWWCgNXR7D3K",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7JFoeg0arawADjGcz9gBnq",
+      "spotifyTrackId": "7JFoeg0arawADjGcz9gBnq",
+      "spotifyTrackUri": "spotify:track:7JFoeg0arawADjGcz9gBnq",
+      "title": "I Don't Like Mondays",
+      "artists": [
+        "The Boomtown Rats"
+      ],
+      "artistIds": [
+        "40oYPr305MsT2lsiXr9fX9"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Fine Art Of Surfacing",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e023d5652bd490f832d75c6f45b",
+      "year": "1979",
+      "addedAt": "2019-06-06T01:13:56Z",
+      "externalUrl": "https://open.spotify.com/track/7JFoeg0arawADjGcz9gBnq",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4gPpDeHntIaxvJXP53QtIj",
+      "spotifyTrackId": "4gPpDeHntIaxvJXP53QtIj",
+      "spotifyTrackUri": "spotify:track:4gPpDeHntIaxvJXP53QtIj",
+      "title": "No One Is to Blame",
+      "artists": [
+        "Howard Jones"
+      ],
+      "artistIds": [
+        "6loBF9iQdE11WSX29fNKqY"
+      ],
+      "previewUrl": "",
+      "albumTitle": "One To One",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0284a6d5d879f5259225af14ca",
+      "year": "1986",
+      "addedAt": "2019-08-24T17:24:24Z",
+      "externalUrl": "https://open.spotify.com/track/4gPpDeHntIaxvJXP53QtIj",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2Oam4p5G5GfyzLLBuMTJty",
+      "spotifyTrackId": "2Oam4p5G5GfyzLLBuMTJty",
+      "spotifyTrackUri": "spotify:track:2Oam4p5G5GfyzLLBuMTJty",
+      "title": "Maybe This Time",
+      "artists": [
+        "Liza Minnelli"
+      ],
+      "artistIds": [
+        "3lQpSzdPxoF1FYk7ilbe37"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Cabaret (Original Soundtrack Recording)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e023f0ddaafb889a16220871372",
+      "year": "1972",
+      "addedAt": "2020-10-16T14:14:01Z",
+      "externalUrl": "https://open.spotify.com/track/2Oam4p5G5GfyzLLBuMTJty",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3nvuPQTw2zuFAVuLsC9IYQ",
+      "spotifyTrackId": "3nvuPQTw2zuFAVuLsC9IYQ",
+      "spotifyTrackUri": "spotify:track:3nvuPQTw2zuFAVuLsC9IYQ",
+      "title": "Nothing Compares 2 U",
+      "artists": [
+        "Sinéad O'Connor"
+      ],
+      "artistIds": [
+        "4sD9znwiVFx9cgRPZ42aQ1"
+      ],
+      "previewUrl": "",
+      "albumTitle": "I Do Not Want What I Haven't Got",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026f6536c2e326fb2b42db90f8",
+      "year": "1990",
+      "addedAt": "2020-10-16T14:20:57Z",
+      "externalUrl": "https://open.spotify.com/track/3nvuPQTw2zuFAVuLsC9IYQ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3WRUjZD3UOE0XIQYFVDI0I",
+      "spotifyTrackId": "3WRUjZD3UOE0XIQYFVDI0I",
+      "spotifyTrackUri": "spotify:track:3WRUjZD3UOE0XIQYFVDI0I",
+      "title": "Leave Virginia Alone",
+      "artists": [
+        "Tom Petty"
+      ],
+      "artistIds": [
+        "2UZMlIwnkgAEDBsw1Rejkn"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Leave Virginia Alone",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02274c5d9e393af6d95518dbd2",
+      "year": "2020",
+      "addedAt": "2020-10-16T14:21:53Z",
+      "externalUrl": "https://open.spotify.com/track/3WRUjZD3UOE0XIQYFVDI0I",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0CcL4kSHKIEwF3IW0BGgb6",
+      "spotifyTrackId": "0CcL4kSHKIEwF3IW0BGgb6",
+      "spotifyTrackUri": "spotify:track:0CcL4kSHKIEwF3IW0BGgb6",
+      "title": "I Can't Stand the Rain",
+      "artists": [
+        "Ann Peebles"
+      ],
+      "artistIds": [
+        "5dM7jA0PXh0Ozz8LT2YOCB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "I Can't Stand the Rain",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02943b4cc92b7af0f22190eaef",
+      "year": "1974",
+      "addedAt": "2020-11-18T22:00:35Z",
+      "externalUrl": "https://open.spotify.com/track/0CcL4kSHKIEwF3IW0BGgb6",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4DR5MStkWtDYf17jBUOo0V",
+      "spotifyTrackId": "4DR5MStkWtDYf17jBUOo0V",
+      "spotifyTrackUri": "spotify:track:4DR5MStkWtDYf17jBUOo0V",
+      "title": "Little Green Bag",
+      "artists": [
+        "George Baker Selection"
+      ],
+      "artistIds": [
+        "2MGJBRRGEj9m6MxJIq7fLn"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Tarantino Connection",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0290a69e9489e3402bd2268181",
+      "year": "1997",
+      "addedAt": "2021-01-28T02:32:15Z",
+      "externalUrl": "https://open.spotify.com/track/4DR5MStkWtDYf17jBUOo0V",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0Y2QejubtJugRGvfPgOQ1w",
+      "spotifyTrackId": "0Y2QejubtJugRGvfPgOQ1w",
+      "spotifyTrackUri": "spotify:track:0Y2QejubtJugRGvfPgOQ1w",
+      "title": "Jane Fonda",
+      "artists": [
+        "Mickey Avalon"
+      ],
+      "artistIds": [
+        "546WiMGysEqWZTzP8hJvB2"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Mickey Avalon",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ef4b07e653544a82fa25a6de",
+      "year": "2006",
+      "addedAt": "2021-02-18T20:29:44Z",
+      "externalUrl": "https://open.spotify.com/track/0Y2QejubtJugRGvfPgOQ1w",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2QzMJkYUhThZxM94ahgOzN",
+      "spotifyTrackId": "2QzMJkYUhThZxM94ahgOzN",
+      "spotifyTrackUri": "spotify:track:2QzMJkYUhThZxM94ahgOzN",
+      "title": "Burn One Down",
+      "artists": [
+        "Ben Harper"
+      ],
+      "artistIds": [
+        "45lorWzrKLxfKlWpV7r9CN"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Fight For Your Mind",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02fa6ace66cb62060b11fea503",
+      "year": "1995",
+      "addedAt": "2021-02-18T21:36:43Z",
+      "externalUrl": "https://open.spotify.com/track/2QzMJkYUhThZxM94ahgOzN",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7MutmAL7btZWW6S50zgoCQ",
+      "spotifyTrackId": "7MutmAL7btZWW6S50zgoCQ",
+      "spotifyTrackUri": "spotify:track:7MutmAL7btZWW6S50zgoCQ",
+      "title": "Let Me Clear My Throat - Live",
+      "artists": [
+        "DJ Kool"
+      ],
+      "artistIds": [
+        "1SWGyp2nxNSyQkRX1eqoUp"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Let Me Clear My Throat",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0274cacf1617408f745cad3ca1",
+      "year": "1996",
+      "addedAt": "2021-02-19T21:35:38Z",
+      "externalUrl": "https://open.spotify.com/track/7MutmAL7btZWW6S50zgoCQ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2OqkSQe1kA8oRgEbw064dS",
+      "spotifyTrackId": "2OqkSQe1kA8oRgEbw064dS",
+      "spotifyTrackUri": "spotify:track:2OqkSQe1kA8oRgEbw064dS",
+      "title": "Insensitive",
+      "artists": [
+        "Jann Arden"
+      ],
+      "artistIds": [
+        "1aftUCES5zD5xXI7O9ZF9F"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Insensitive",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0212ad451151c6d56a1cf55346",
+      "year": "1995",
+      "addedAt": "2021-02-25T15:49:11Z",
+      "externalUrl": "https://open.spotify.com/track/2OqkSQe1kA8oRgEbw064dS",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "56lhDZNQ5J47aog6mGKeGk",
+      "spotifyTrackId": "56lhDZNQ5J47aog6mGKeGk",
+      "spotifyTrackUri": "spotify:track:56lhDZNQ5J47aog6mGKeGk",
+      "title": "Thunder Road",
+      "artists": [
+        "Bruce Springsteen"
+      ],
+      "artistIds": [
+        "3eqjTLE0HfPfh78zjh6TqT"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Born To Run",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028c5b6f7dcdc5817dc5050b2a",
+      "year": "1975",
+      "addedAt": "2021-03-01T17:45:59Z",
+      "externalUrl": "https://open.spotify.com/track/56lhDZNQ5J47aog6mGKeGk",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2hw2fDtNPkIowTNuQRmlnN",
+      "spotifyTrackId": "2hw2fDtNPkIowTNuQRmlnN",
+      "spotifyTrackUri": "spotify:track:2hw2fDtNPkIowTNuQRmlnN",
+      "title": "Sometimes When We Touch",
+      "artists": [
+        "Dan Hill"
+      ],
+      "artistIds": [
+        "5rOhfAsK4uxq9OdREiQRKa"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Longer Fuse",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02441d6e613cd0cd07d7201e10",
+      "year": "1977",
+      "addedAt": "2021-03-14T16:38:30Z",
+      "externalUrl": "https://open.spotify.com/track/2hw2fDtNPkIowTNuQRmlnN",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1qaS4rwkm52lpkDZVmvF52",
+      "spotifyTrackId": "1qaS4rwkm52lpkDZVmvF52",
+      "spotifyTrackUri": "spotify:track:1qaS4rwkm52lpkDZVmvF52",
+      "title": "Steppin' Out",
+      "artists": [
+        "Joe Jackson"
+      ],
+      "artistIds": [
+        "6KOqPxwfNAmZPkiCnDE9yT"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Night And Day",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02270b3ab8b8749888879cccaa",
+      "year": "1982",
+      "addedAt": "2021-03-30T19:46:03Z",
+      "externalUrl": "https://open.spotify.com/track/1qaS4rwkm52lpkDZVmvF52",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5CKHhg31HcYYhwUeeGqvhq",
+      "spotifyTrackId": "5CKHhg31HcYYhwUeeGqvhq",
+      "spotifyTrackUri": "spotify:track:5CKHhg31HcYYhwUeeGqvhq",
+      "title": "I Wish I Knew How It Would Feel to Be Free",
+      "artists": [
+        "Nina Simone"
+      ],
+      "artistIds": [
+        "7G1GBhoKtEPnP86X2PvEYO"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Silk & Soul (Expanded Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020cf2e3d1e85c5bd6d7bedee0",
+      "year": "1967",
+      "addedAt": "2021-04-15T01:19:45Z",
+      "externalUrl": "https://open.spotify.com/track/5CKHhg31HcYYhwUeeGqvhq",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6N7gPTru90HYLRUIVDQ185",
+      "spotifyTrackId": "6N7gPTru90HYLRUIVDQ185",
+      "spotifyTrackUri": "spotify:track:6N7gPTru90HYLRUIVDQ185",
+      "title": "More Than This",
+      "artists": [
+        "Roxy Music"
+      ],
+      "artistIds": [
+        "3fhOTtm0LBJ3Ojn4hIljLo"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Avalon",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c7972702cff224328b39f8a6",
+      "year": "1982",
+      "addedAt": "2021-04-29T12:22:19Z",
+      "externalUrl": "https://open.spotify.com/track/6N7gPTru90HYLRUIVDQ185",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6m5mVZckUxG2spCFzSxQX8",
+      "spotifyTrackId": "6m5mVZckUxG2spCFzSxQX8",
+      "spotifyTrackUri": "spotify:track:6m5mVZckUxG2spCFzSxQX8",
+      "title": "Waiting For The Bus",
+      "artists": [
+        "Violent Femmes"
+      ],
+      "artistIds": [
+        "0rpMdBzQXf7aYRnu5fDBJy"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Waiting For The Bus",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025498c8610286923591b3d319",
+      "year": "2021",
+      "addedAt": "2021-05-07T20:47:32Z",
+      "externalUrl": "https://open.spotify.com/track/6m5mVZckUxG2spCFzSxQX8",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6qQJBjuWNFyziEPkAGLesG",
+      "spotifyTrackId": "6qQJBjuWNFyziEPkAGLesG",
+      "spotifyTrackUri": "spotify:track:6qQJBjuWNFyziEPkAGLesG",
+      "title": "Come-On-A-My House",
+      "artists": [
+        "Della Reese"
+      ],
+      "artistIds": [
+        "63qOOnxbI8rVgpakjpnFBp"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Della Della Cha Cha Cha",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027add74ffc3b2877a4d6c4c7a",
+      "year": "1990",
+      "addedAt": "2021-05-23T19:28:18Z",
+      "externalUrl": "https://open.spotify.com/track/6qQJBjuWNFyziEPkAGLesG",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1rIy3lkFJnMsTLZpxFmYU8",
+      "spotifyTrackId": "1rIy3lkFJnMsTLZpxFmYU8",
+      "spotifyTrackUri": "spotify:track:1rIy3lkFJnMsTLZpxFmYU8",
+      "title": "Release Me",
+      "artists": [
+        "Wilson Phillips"
+      ],
+      "artistIds": [
+        "1yMYjh77WgOVafRkI50mim"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Wilson Phillips",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e023168e1f416b81862ccc83594",
+      "year": "1990",
+      "addedAt": "2021-08-28T19:55:41Z",
+      "externalUrl": "https://open.spotify.com/track/1rIy3lkFJnMsTLZpxFmYU8",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5kcsc92tGAjS0uvhDY3Mok",
+      "spotifyTrackId": "5kcsc92tGAjS0uvhDY3Mok",
+      "spotifyTrackUri": "spotify:track:5kcsc92tGAjS0uvhDY3Mok",
+      "title": "Ode To My Family",
+      "artists": [
+        "The Cranberries"
+      ],
+      "artistIds": [
+        "7t0rwkOPGlDPEhaOcVtOt9"
+      ],
+      "previewUrl": "",
+      "albumTitle": "No Need To Argue (The Complete Sessions 1994-1995)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0272d481a5999197ef5f42f796",
+      "year": "1994",
+      "addedAt": "2021-09-10T13:14:02Z",
+      "externalUrl": "https://open.spotify.com/track/5kcsc92tGAjS0uvhDY3Mok",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5QJAFbTDWls7HYtBeSIg4K",
+      "spotifyTrackId": "5QJAFbTDWls7HYtBeSIg4K",
+      "spotifyTrackUri": "spotify:track:5QJAFbTDWls7HYtBeSIg4K",
+      "title": "Perfect Day",
+      "artists": [
+        "Shovels & Rope",
+        "Preservation Hall Jazz Band"
+      ],
+      "artistIds": [
+        "1M3BVQ36cqPQix8lQNCh4K",
+        "2S0rCVs10P1Q0v51wmOrM5"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Busted Jukebox, Volume 1",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02821d5f21089911bce0d9447a",
+      "year": "2015",
+      "addedAt": "2021-09-19T00:00:18Z",
+      "externalUrl": "https://open.spotify.com/track/5QJAFbTDWls7HYtBeSIg4K",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1XAY4zlJWqJl3d6Eqy1A7q",
+      "spotifyTrackId": "1XAY4zlJWqJl3d6Eqy1A7q",
+      "spotifyTrackUri": "spotify:track:1XAY4zlJWqJl3d6Eqy1A7q",
+      "title": "Little Plastic Castle",
+      "artists": [
+        "Ani DiFranco"
+      ],
+      "artistIds": [
+        "0AiTwNtYX8m4uhfU7rJ8RD"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Little Plastic Castle",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02101b7e28274ea7ac3ba0d035",
+      "year": "1998",
+      "addedAt": "2021-10-06T17:15:19Z",
+      "externalUrl": "https://open.spotify.com/track/1XAY4zlJWqJl3d6Eqy1A7q",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6NF8MZ2trxckVBr82pyyPt",
+      "spotifyTrackId": "6NF8MZ2trxckVBr82pyyPt",
+      "spotifyTrackUri": "spotify:track:6NF8MZ2trxckVBr82pyyPt",
+      "title": "Mercy, Mercy, Mercy",
+      "artists": [
+        "Cannonball Adderley"
+      ],
+      "artistIds": [
+        "5v74mT11KGJqadf9sLw4dA"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Jazz Profile: Cannonball Adderley",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0285827d636962ea87b858ab32",
+      "year": "1997",
+      "addedAt": "2021-10-13T19:02:39Z",
+      "externalUrl": "https://open.spotify.com/track/6NF8MZ2trxckVBr82pyyPt",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0GmkQUWZjqHmiShWyFFXvi",
+      "spotifyTrackId": "0GmkQUWZjqHmiShWyFFXvi",
+      "spotifyTrackUri": "spotify:track:0GmkQUWZjqHmiShWyFFXvi",
+      "title": "It's Oh So Quiet",
+      "artists": [
+        "Betty Hutton"
+      ],
+      "artistIds": [
+        "6JcWhUd6K5suazlrWsMgGZ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Best of the RCA Years",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c0dd31a032999a83ca8e703d",
+      "year": "1996",
+      "addedAt": "2021-11-11T16:32:19Z",
+      "externalUrl": "https://open.spotify.com/track/0GmkQUWZjqHmiShWyFFXvi",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3wrwdy7pgdATAwopscRM1Y",
+      "spotifyTrackId": "3wrwdy7pgdATAwopscRM1Y",
+      "spotifyTrackUri": "spotify:track:3wrwdy7pgdATAwopscRM1Y",
+      "title": "Who Kicked the Light Plug (Out of the Socket)",
+      "artists": [
+        "Betty Hutton"
+      ],
+      "artistIds": [
+        "6JcWhUd6K5suazlrWsMgGZ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Best of the RCA Years",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c0dd31a032999a83ca8e703d",
+      "year": "1996",
+      "addedAt": "2021-11-11T16:51:16Z",
+      "externalUrl": "https://open.spotify.com/track/3wrwdy7pgdATAwopscRM1Y",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5z55ViAxkPWLOMhlPoyw14",
+      "spotifyTrackId": "5z55ViAxkPWLOMhlPoyw14",
+      "spotifyTrackUri": "spotify:track:5z55ViAxkPWLOMhlPoyw14",
+      "title": "Oh, What A Beautiful Mornin' - From \"Oklahoma!\" Soundtrack",
+      "artists": [
+        "Gordon MacRae",
+        "Darcy M. Proper"
+      ],
+      "artistIds": [
+        "3dvIPsJH7o9xnBwFxowzof",
+        "2LaIJDDpfnZ333bEuONwtJ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Oklahoma! (Expanded Edition/Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025ae43018095303787e20ee89",
+      "year": "2001",
+      "addedAt": "2021-11-19T15:16:32Z",
+      "externalUrl": "https://open.spotify.com/track/5z55ViAxkPWLOMhlPoyw14",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0TLD1RLFqPmpVR5ATWdMz6",
+      "spotifyTrackId": "0TLD1RLFqPmpVR5ATWdMz6",
+      "spotifyTrackUri": "spotify:track:0TLD1RLFqPmpVR5ATWdMz6",
+      "title": "Is That All There Is?",
+      "artists": [
+        "Peggy Lee"
+      ],
+      "artistIds": [
+        "602DnpaSXJB4b9DZrvxbDc"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Is That All There Is?",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e022cf46721ea626ead910366a6",
+      "year": "1969",
+      "addedAt": "2021-12-08T18:41:55Z",
+      "externalUrl": "https://open.spotify.com/track/0TLD1RLFqPmpVR5ATWdMz6",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0kPB1IhhqEm9A7OztJ6yjs",
+      "spotifyTrackId": "0kPB1IhhqEm9A7OztJ6yjs",
+      "spotifyTrackUri": "spotify:track:0kPB1IhhqEm9A7OztJ6yjs",
+      "title": "Me And My Shadow",
+      "artists": [
+        "Peggy Lee"
+      ],
+      "artistIds": [
+        "602DnpaSXJB4b9DZrvxbDc"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Is That All There Is?",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e022cf46721ea626ead910366a6",
+      "year": "1969",
+      "addedAt": "2021-12-09T00:50:16Z",
+      "externalUrl": "https://open.spotify.com/track/0kPB1IhhqEm9A7OztJ6yjs",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7BIj2EumM3JA6NmxPcF6C5",
+      "spotifyTrackId": "7BIj2EumM3JA6NmxPcF6C5",
+      "spotifyTrackUri": "spotify:track:7BIj2EumM3JA6NmxPcF6C5",
+      "title": "上を向いて歩こう",
+      "artists": [
+        "Kyu Sakamoto"
+      ],
+      "artistIds": [
+        "3WKkjW8B7x5UZmfC9pnDmN"
+      ],
+      "previewUrl": "",
+      "albumTitle": "ベスト9!",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025ca640a51c19062c680cd829",
+      "year": "2009",
+      "addedAt": "2021-12-12T16:47:26Z",
+      "externalUrl": "https://open.spotify.com/track/7BIj2EumM3JA6NmxPcF6C5",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2vr8X2FyP8PD5SfexkfDcu",
+      "spotifyTrackId": "2vr8X2FyP8PD5SfexkfDcu",
+      "spotifyTrackUri": "spotify:track:2vr8X2FyP8PD5SfexkfDcu",
+      "title": "Games People Play",
+      "artists": [
+        "Mel Tormé"
+      ],
+      "artistIds": [
+        "4X8QFzZ1HqwPfwDfyjtwXC"
+      ],
+      "previewUrl": "",
+      "albumTitle": "A Time For Us",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a10884176b5db201bdd1279b",
+      "year": "1969",
+      "addedAt": "2021-12-20T01:23:45Z",
+      "externalUrl": "https://open.spotify.com/track/2vr8X2FyP8PD5SfexkfDcu",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0kFM6t9htbB53Dg8frGDGh",
+      "spotifyTrackId": "0kFM6t9htbB53Dg8frGDGh",
+      "spotifyTrackUri": "spotify:track:0kFM6t9htbB53Dg8frGDGh",
+      "title": "Kiss Me Deadly",
+      "artists": [
+        "Lita Ford"
+      ],
+      "artistIds": [
+        "77tBvvyd6SD4Y9Um1xcbxP"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Lita",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e022dbf0cc843a4a0fe8c8f5482",
+      "year": "1988",
+      "addedAt": "2021-12-22T02:10:04Z",
+      "externalUrl": "https://open.spotify.com/track/0kFM6t9htbB53Dg8frGDGh",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0SoKsZVQhKQdiVkgA7sSk0",
+      "spotifyTrackId": "0SoKsZVQhKQdiVkgA7sSk0",
+      "spotifyTrackUri": "spotify:track:0SoKsZVQhKQdiVkgA7sSk0",
+      "title": "Well All Right! - Jojo Effect Latin Remix",
+      "artists": [
+        "The Andrews Sisters",
+        "Jojo Effect"
+      ],
+      "artistIds": [
+        "2NCGI6dLTxLdI9XHdv7QfM",
+        "3kHTdAZm5aaYxF2WowH1nL"
+      ],
+      "previewUrl": "",
+      "albumTitle": "True Sky Heroes",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02de1d4cf840bf3e7c9b2b5b66",
+      "year": "2020",
+      "addedAt": "2022-01-12T18:52:17Z",
+      "externalUrl": "https://open.spotify.com/track/0SoKsZVQhKQdiVkgA7sSk0",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4OnqJ1ml4Jgr5AAKNrrYCD",
+      "spotifyTrackId": "4OnqJ1ml4Jgr5AAKNrrYCD",
+      "spotifyTrackUri": "spotify:track:4OnqJ1ml4Jgr5AAKNrrYCD",
+      "title": "Down in Mexico",
+      "artists": [
+        "The Coasters"
+      ],
+      "artistIds": [
+        "3QZKZBEmr54lAVI5XvmjnM"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Coasters",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028006dcbf0e7ad512534c5fe2",
+      "year": "2005",
+      "addedAt": "2022-02-10T15:47:39Z",
+      "externalUrl": "https://open.spotify.com/track/4OnqJ1ml4Jgr5AAKNrrYCD",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0kYUrLVQOfx21xuXu7OGrT",
+      "spotifyTrackId": "0kYUrLVQOfx21xuXu7OGrT",
+      "spotifyTrackUri": "spotify:track:0kYUrLVQOfx21xuXu7OGrT",
+      "title": "All These Things That I've Done",
+      "artists": [
+        "The Killers"
+      ],
+      "artistIds": [
+        "0C0XlULifJtAgn6ZNCW2eu"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Hot Fuss",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0256a6d6e493a8f338be63fc49",
+      "year": "2004",
+      "addedAt": "2022-06-01T19:00:47Z",
+      "externalUrl": "https://open.spotify.com/track/0kYUrLVQOfx21xuXu7OGrT",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3xjTuTBaihydhSC7ByNoSb",
+      "spotifyTrackId": "3xjTuTBaihydhSC7ByNoSb",
+      "spotifyTrackUri": "spotify:track:3xjTuTBaihydhSC7ByNoSb",
+      "title": "Stuck In A Moment You Can't Get Out Of",
+      "artists": [
+        "U2"
+      ],
+      "artistIds": [
+        "51Blml2LZPmy7TTiAg47vQ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "All That You Can't Leave Behind",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e3f4221446f724b575a9aafb",
+      "year": "2000",
+      "addedAt": "2022-07-08T10:30:29Z",
+      "externalUrl": "https://open.spotify.com/track/3xjTuTBaihydhSC7ByNoSb",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1OQztPI2L8Nwjb5ueTrFCd",
+      "spotifyTrackId": "1OQztPI2L8Nwjb5ueTrFCd",
+      "spotifyTrackUri": "spotify:track:1OQztPI2L8Nwjb5ueTrFCd",
+      "title": "Stuck In A Moment You Can't Get Out Of",
+      "artists": [
+        "Scarlett Johansson"
+      ],
+      "artistIds": [
+        "2KAaJOwfu8n93byx6YPRPa"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Sing 2 (Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025551adb75cf7c4737f93ed1d",
+      "year": "2021",
+      "addedAt": "2022-07-08T11:01:38Z",
+      "externalUrl": "https://open.spotify.com/track/1OQztPI2L8Nwjb5ueTrFCd",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3NWpG50DNlO8IiVdx6Ig3w",
+      "spotifyTrackId": "3NWpG50DNlO8IiVdx6Ig3w",
+      "spotifyTrackUri": "spotify:track:3NWpG50DNlO8IiVdx6Ig3w",
+      "title": "Dead Skunk",
+      "artists": [
+        "Loudon Wainwright III"
+      ],
+      "artistIds": [
+        "3loACRmkzdtOMNJEaB6j8L"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Album III",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028d4c80af74160fefd02e3154",
+      "year": "1972",
+      "addedAt": "2022-08-04T17:46:38Z",
+      "externalUrl": "https://open.spotify.com/track/3NWpG50DNlO8IiVdx6Ig3w",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "33wrvvpayAUKPPSVkcib2D",
+      "spotifyTrackId": "33wrvvpayAUKPPSVkcib2D",
+      "spotifyTrackUri": "spotify:track:33wrvvpayAUKPPSVkcib2D",
+      "title": "Shine on Harvest Moon",
+      "artists": [
+        "Leon Redbone"
+      ],
+      "artistIds": [
+        "7hYKC5uBED0V5rpKQkqgQ5"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Double Time",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e029008c7164bbc3cc16e76e55d",
+      "year": "1977",
+      "addedAt": "2022-08-08T00:38:05Z",
+      "externalUrl": "https://open.spotify.com/track/33wrvvpayAUKPPSVkcib2D",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1k691v8ChLgDiuLLKnjyj6",
+      "spotifyTrackId": "1k691v8ChLgDiuLLKnjyj6",
+      "spotifyTrackUri": "spotify:track:1k691v8ChLgDiuLLKnjyj6",
+      "title": "In Spite of Ourselves (feat. Iris DeMent)",
+      "artists": [
+        "John Prine",
+        "Iris DeMent"
+      ],
+      "artistIds": [
+        "0nJUwPwC9Ti4vvuJ0q3MfT",
+        "3NPZs8XgXtaWslUcnIw6rY"
+      ],
+      "previewUrl": "",
+      "albumTitle": "In Spite of Ourselves",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e029f2f98f4c84381ed01907855",
+      "year": "1999",
+      "addedAt": "2022-08-09T01:25:32Z",
+      "externalUrl": "https://open.spotify.com/track/1k691v8ChLgDiuLLKnjyj6",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5bqNu0YfNOZpgl34bcJiFQ",
+      "spotifyTrackId": "5bqNu0YfNOZpgl34bcJiFQ",
+      "spotifyTrackUri": "spotify:track:5bqNu0YfNOZpgl34bcJiFQ",
+      "title": "I Wanna Be Rich",
+      "artists": [
+        "Calloway"
+      ],
+      "artistIds": [
+        "3MKSm2U72NzNdxRjMhzyHh"
+      ],
+      "previewUrl": "",
+      "albumTitle": "All the Way",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02707db7bce292f067ae942ed0",
+      "year": "1989",
+      "addedAt": "2022-08-19T16:25:42Z",
+      "externalUrl": "https://open.spotify.com/track/5bqNu0YfNOZpgl34bcJiFQ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "71LsKf3xISiOlY1mj7FFPP",
+      "spotifyTrackId": "71LsKf3xISiOlY1mj7FFPP",
+      "spotifyTrackUri": "spotify:track:71LsKf3xISiOlY1mj7FFPP",
+      "title": "Happiness Is A Warm Gun - Remastered 2009",
+      "artists": [
+        "The Beatles"
+      ],
+      "artistIds": [
+        "3WrFJ7ztbogyGnTHbHJFl2"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Beatles (Remastered)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e024ce8b4e42588bf18182a1ad2",
+      "year": "1968",
+      "addedAt": "2022-08-27T19:28:52Z",
+      "externalUrl": "https://open.spotify.com/track/71LsKf3xISiOlY1mj7FFPP",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "60jiVisajksU2GzlRp1xSG",
+      "spotifyTrackId": "60jiVisajksU2GzlRp1xSG",
+      "spotifyTrackUri": "spotify:track:60jiVisajksU2GzlRp1xSG",
+      "title": "The Ballad Of Lucy Jordan - Original Mix",
+      "artists": [
+        "Marianne Faithfull"
+      ],
+      "artistIds": [
+        "7mlge4peaoNgzTsY6M32RB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Broken English (Deluxe Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028a3a3ff85dbbb5d891ca6ab3",
+      "year": "1979",
+      "addedAt": "2024-05-01T18:30:20Z",
+      "externalUrl": "https://open.spotify.com/track/60jiVisajksU2GzlRp1xSG",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1mE8QtaSFxEQnr3SgxmIRf",
+      "spotifyTrackId": "1mE8QtaSFxEQnr3SgxmIRf",
+      "spotifyTrackUri": "spotify:track:1mE8QtaSFxEQnr3SgxmIRf",
+      "title": "Running Bear",
+      "artists": [
+        "Johnny Preston"
+      ],
+      "artistIds": [
+        "1B8n8vtEeexQ5NKehHTkeo"
+      ],
+      "previewUrl": "",
+      "albumTitle": "ROCK",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026bfef6bca72f1606bbbcb534",
+      "year": "1960",
+      "addedAt": "2024-05-02T00:09:35Z",
+      "externalUrl": "https://open.spotify.com/track/1mE8QtaSFxEQnr3SgxmIRf",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "18osa1s3PwYRkxM8ARgLnN",
+      "spotifyTrackId": "18osa1s3PwYRkxM8ARgLnN",
+      "spotifyTrackUri": "spotify:track:18osa1s3PwYRkxM8ARgLnN",
+      "title": "Happy-Go-Lucky-Me",
+      "artists": [
+        "Paul Evans"
+      ],
+      "artistIds": [
+        "1VCjlBPsXgs5YMMFDWw6nA"
+      ],
+      "previewUrl": "",
+      "albumTitle": "In Your Home Tonight!",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027f8c28b2c64ff184e2bc5861",
+      "year": "1961",
+      "addedAt": "2024-05-02T00:09:44Z",
+      "externalUrl": "https://open.spotify.com/track/18osa1s3PwYRkxM8ARgLnN",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1j6TZTiHXLvphfUz1yKYRZ",
+      "spotifyTrackId": "1j6TZTiHXLvphfUz1yKYRZ",
+      "spotifyTrackUri": "spotify:track:1j6TZTiHXLvphfUz1yKYRZ",
+      "title": "All The Gold In California",
+      "artists": [
+        "Brother Marshall and The Choir of Fire"
+      ],
+      "artistIds": [
+        "0Yow3acfwREDMILNJRat7h"
+      ],
+      "previewUrl": "",
+      "albumTitle": "All The Gold In California",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02113d4217db6d7956c91af6a4",
+      "year": "2023",
+      "addedAt": "2024-05-02T00:09:52Z",
+      "externalUrl": "https://open.spotify.com/track/1j6TZTiHXLvphfUz1yKYRZ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6fytIPBMx7R7xXR06qEJej",
+      "spotifyTrackId": "6fytIPBMx7R7xXR06qEJej",
+      "spotifyTrackUri": "spotify:track:6fytIPBMx7R7xXR06qEJej",
+      "title": "Picking Tea Leaves and Catching Butterflies",
+      "artists": [
+        "Lily Chao"
+      ],
+      "artistIds": [
+        "4WC1ZqFePeitVi49Q0ekFE"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Chinese Folks Songs",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e029a90d654196491f5889bfeee",
+      "year": "1968",
+      "addedAt": "2024-05-02T00:10:00Z",
+      "externalUrl": "https://open.spotify.com/track/6fytIPBMx7R7xXR06qEJej",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2fE1hcjUxlLxXrZusTEJlq",
+      "spotifyTrackId": "2fE1hcjUxlLxXrZusTEJlq",
+      "spotifyTrackUri": "spotify:track:2fE1hcjUxlLxXrZusTEJlq",
+      "title": "Hey Ma",
+      "artists": [
+        "Cam'ron",
+        "Juelz Santana",
+        "Freekey Zeekey",
+        "Toya"
+      ],
+      "artistIds": [
+        "7iMvwE8qANp3aIfAGKEAwS",
+        "6Uh8uJyN9g7oFjDK16nJgb",
+        "6EjZmcZTs67OVOG511gGn3",
+        "02ehFoytLUjat0JMYpYsml"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Come Home With Me",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02df5352d458100973dbb329cc",
+      "year": "2002",
+      "addedAt": "2024-05-02T00:10:49Z",
+      "externalUrl": "https://open.spotify.com/track/2fE1hcjUxlLxXrZusTEJlq",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0Fwm8Fn4EHjrgKtbUGtrZ9",
+      "spotifyTrackId": "0Fwm8Fn4EHjrgKtbUGtrZ9",
+      "spotifyTrackUri": "spotify:track:0Fwm8Fn4EHjrgKtbUGtrZ9",
+      "title": "Patricia The Stripper",
+      "artists": [
+        "Chris de Burgh"
+      ],
+      "artistIds": [
+        "2RpHsROrX075xfIwHn6B2U"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Spanish Train And Other Stories",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0293b3819c81b5d1e3191de73f",
+      "year": "1975",
+      "addedAt": "2024-05-02T00:11:02Z",
+      "externalUrl": "https://open.spotify.com/track/0Fwm8Fn4EHjrgKtbUGtrZ9",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6WRAy5wsbsgZBP3ptpZyIe",
+      "spotifyTrackId": "6WRAy5wsbsgZBP3ptpZyIe",
+      "spotifyTrackUri": "spotify:track:6WRAy5wsbsgZBP3ptpZyIe",
+      "title": "That's All",
+      "artists": [
+        "Frank Sinatra"
+      ],
+      "artistIds": [
+        "1Mxqyy3pSjf8kZZL4QVxS0"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Sinatra & Strings",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025975c241f06d48b7ffe65c6b",
+      "year": "1962",
+      "addedAt": "2024-05-02T00:11:14Z",
+      "externalUrl": "https://open.spotify.com/track/6WRAy5wsbsgZBP3ptpZyIe",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4q2p4js4UgAxWfaWYjdtIT",
+      "spotifyTrackId": "4q2p4js4UgAxWfaWYjdtIT",
+      "spotifyTrackUri": "spotify:track:4q2p4js4UgAxWfaWYjdtIT",
+      "title": "Forever Young",
+      "artists": [
+        "Daniel Grindstaff",
+        "Paul Brewster",
+        "Dolly Parton"
+      ],
+      "artistIds": [
+        "7vaq3DIBu61yGPpwHbl5Ln",
+        "7nBOumt7hKimqNrAQHbQdq",
+        "32vWCbZh0xZ4o9gkz4PsEU"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Forever Young",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028678dd1aea756aa4ad3be32c",
+      "year": "2023",
+      "addedAt": "2024-05-02T00:11:29Z",
+      "externalUrl": "https://open.spotify.com/track/4q2p4js4UgAxWfaWYjdtIT",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7x7e1SUAPo71OltgySzSy5",
+      "spotifyTrackId": "7x7e1SUAPo71OltgySzSy5",
+      "spotifyTrackUri": "spotify:track:7x7e1SUAPo71OltgySzSy5",
+      "title": "How Glad I Am",
+      "artists": [
+        "The Greyboy Allstars",
+        "The Living Sisters"
+      ],
+      "artistIds": [
+        "3G8x1XQX8nCXYouEfMrP07",
+        "53tm77lKt6nFAbGVqEB3Vi"
+      ],
+      "previewUrl": "",
+      "albumTitle": "What Happened to Television?",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020e1f04e38b772c1a5a332990",
+      "year": "2007",
+      "addedAt": "2024-05-02T00:12:12Z",
+      "externalUrl": "https://open.spotify.com/track/7x7e1SUAPo71OltgySzSy5",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7hoWkhuHv9b3jiCbxX1kMm",
+      "spotifyTrackId": "7hoWkhuHv9b3jiCbxX1kMm",
+      "spotifyTrackUri": "spotify:track:7hoWkhuHv9b3jiCbxX1kMm",
+      "title": "It's All Over Now Baby Blue",
+      "artists": [
+        "Marianne Faithfull"
+      ],
+      "artistIds": [
+        "7mlge4peaoNgzTsY6M32RB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Rich Kid Blues",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e024cb668dfcbd6cc27417a586a",
+      "year": "1985",
+      "addedAt": "2024-05-02T00:12:21Z",
+      "externalUrl": "https://open.spotify.com/track/7hoWkhuHv9b3jiCbxX1kMm",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5e3isD5st7PGYzSJuoRSIV",
+      "spotifyTrackId": "5e3isD5st7PGYzSJuoRSIV",
+      "spotifyTrackUri": "spotify:track:5e3isD5st7PGYzSJuoRSIV",
+      "title": "A Well Respected Man",
+      "artists": [
+        "The Kinks"
+      ],
+      "artistIds": [
+        "1SQRv42e4PjEYfPhS0Tk9E"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Kinda Kinks (Deluxe)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02105c2dfd3ea84d2ee5c72e44",
+      "year": "1965",
+      "addedAt": "2024-05-02T00:12:48Z",
+      "externalUrl": "https://open.spotify.com/track/5e3isD5st7PGYzSJuoRSIV",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4atXNtusJCAF2kjqbzW6AV",
+      "spotifyTrackId": "4atXNtusJCAF2kjqbzW6AV",
+      "spotifyTrackUri": "spotify:track:4atXNtusJCAF2kjqbzW6AV",
+      "title": "I Ain't Drunk",
+      "artists": [
+        "Jimmy Liggins"
+      ],
+      "artistIds": [
+        "5vBfHviQ6oBuIJw4yZ1NNF"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Jumpin' Like Mad: Cool Cats & Hip Chicks Non-Stop Dancin'",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0255d9924e62e00e082785a459",
+      "year": "1996",
+      "addedAt": "2024-05-02T00:13:09Z",
+      "externalUrl": "https://open.spotify.com/track/4atXNtusJCAF2kjqbzW6AV",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4nAJtcmiyoL0ARY5WZY9IN",
+      "spotifyTrackId": "4nAJtcmiyoL0ARY5WZY9IN",
+      "spotifyTrackUri": "spotify:track:4nAJtcmiyoL0ARY5WZY9IN",
+      "title": "Rebel Rouser",
+      "artists": [
+        "Duane Eddy"
+      ],
+      "artistIds": [
+        "1I5Cu7bqjkRg85idwYsD91"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Best Of Duane Eddy",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02d456998144adaaf66673153b",
+      "year": "1965",
+      "addedAt": "2024-05-02T00:13:24Z",
+      "externalUrl": "https://open.spotify.com/track/4nAJtcmiyoL0ARY5WZY9IN",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6abvu3x6fUlOniPRF8WCII",
+      "spotifyTrackId": "6abvu3x6fUlOniPRF8WCII",
+      "spotifyTrackUri": "spotify:track:6abvu3x6fUlOniPRF8WCII",
+      "title": "Pearl's A Singer",
+      "artists": [
+        "Elkie Brooks"
+      ],
+      "artistIds": [
+        "4Xn6fPXDrarY8LxXWqlE2M"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Two Days Away",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025bbed7109445635592a82837",
+      "year": "1977",
+      "addedAt": "2024-05-02T00:14:11Z",
+      "externalUrl": "https://open.spotify.com/track/6abvu3x6fUlOniPRF8WCII",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7sebGGaTnAyb7RbJDMHTwv",
+      "spotifyTrackId": "7sebGGaTnAyb7RbJDMHTwv",
+      "spotifyTrackUri": "spotify:track:7sebGGaTnAyb7RbJDMHTwv",
+      "title": "Hail Holy Queen",
+      "artists": [
+        "Deloris & The Sisters"
+      ],
+      "artistIds": [
+        "70vs2LavnAolqcvsmGFlwU"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Sister Act (Music from the Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ea3481eee259108b693ba5ee",
+      "year": "2022",
+      "addedAt": "2024-05-02T00:14:23Z",
+      "externalUrl": "https://open.spotify.com/track/7sebGGaTnAyb7RbJDMHTwv",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6BvZwDYctgPbAO2zYkCCNR",
+      "spotifyTrackId": "6BvZwDYctgPbAO2zYkCCNR",
+      "spotifyTrackUri": "spotify:track:6BvZwDYctgPbAO2zYkCCNR",
+      "title": "He's A Tramp",
+      "artists": [
+        "Peggy Lee",
+        "Sonny Burke & His Orchestra"
+      ],
+      "artistIds": [
+        "602DnpaSXJB4b9DZrvxbDc",
+        "4PyPlV92e4yMGcVEJhQxsV"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Ultimate Peggy Lee",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e022093ef0429b9cc5111986ff1",
+      "year": "2020",
+      "addedAt": "2024-05-02T00:14:40Z",
+      "externalUrl": "https://open.spotify.com/track/6BvZwDYctgPbAO2zYkCCNR",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "63EQVLdtGL6rZf8mPKW7QY",
+      "spotifyTrackId": "63EQVLdtGL6rZf8mPKW7QY",
+      "spotifyTrackUri": "spotify:track:63EQVLdtGL6rZf8mPKW7QY",
+      "title": "Harper Valley P.T.A. - Remastered 2022",
+      "artists": [
+        "Jeannie C. Riley"
+      ],
+      "artistIds": [
+        "3MIwMeYV8vmgQFbbRiJTp2"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Harper Valley P.T.A. (Sun Records 70th / Remastered 2022)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f6eaab11b079cf4dfab19466",
+      "year": "1968",
+      "addedAt": "2024-05-02T00:16:00Z",
+      "externalUrl": "https://open.spotify.com/track/63EQVLdtGL6rZf8mPKW7QY",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3jkr8AFsTPpBpSQQj6MB8A",
+      "spotifyTrackId": "3jkr8AFsTPpBpSQQj6MB8A",
+      "spotifyTrackUri": "spotify:track:3jkr8AFsTPpBpSQQj6MB8A",
+      "title": "Nickel Song",
+      "artists": [
+        "Melanie"
+      ],
+      "artistIds": [
+        "6sOP8RUFR0q0nBOBOXGdBK"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Good Book",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02287649f373047cd200b26b52",
+      "year": "1971",
+      "addedAt": "2024-05-07T12:06:01Z",
+      "externalUrl": "https://open.spotify.com/track/3jkr8AFsTPpBpSQQj6MB8A",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "611jHMpEEeXLn8iOSccZ9S",
+      "spotifyTrackId": "611jHMpEEeXLn8iOSccZ9S",
+      "spotifyTrackUri": "spotify:track:611jHMpEEeXLn8iOSccZ9S",
+      "title": "The Lottery Song",
+      "artists": [
+        "Harry Nilsson"
+      ],
+      "artistIds": [
+        "3RTzAwFprBqiskp550eSJX"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Son Of Schmilsson",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0247d2f12a7eddcb25b5f8e427",
+      "year": "1972",
+      "addedAt": "2024-06-10T00:00:08Z",
+      "externalUrl": "https://open.spotify.com/track/611jHMpEEeXLn8iOSccZ9S",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5o89Bf80t8ko3uNXJkYoVs",
+      "spotifyTrackId": "5o89Bf80t8ko3uNXJkYoVs",
+      "spotifyTrackUri": "spotify:track:5o89Bf80t8ko3uNXJkYoVs",
+      "title": "Shake Your Groove Thing",
+      "artists": [
+        "Peaches & Herb"
+      ],
+      "artistIds": [
+        "6qI4LTzMRpTxRzMZPvv2C6"
+      ],
+      "previewUrl": "",
+      "albumTitle": "2 Hot!",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b25e0056227d071a2c7393b9",
+      "year": "1978",
+      "addedAt": "2024-07-20T15:05:54Z",
+      "externalUrl": "https://open.spotify.com/track/5o89Bf80t8ko3uNXJkYoVs",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5QiLMbkYocbcJeAc5QP948",
+      "spotifyTrackId": "5QiLMbkYocbcJeAc5QP948",
+      "spotifyTrackUri": "spotify:track:5QiLMbkYocbcJeAc5QP948",
+      "title": "Bend It",
+      "artists": [
+        "Dave Dee, Dozy, Beaky, Mick & Tich"
+      ],
+      "artistIds": [
+        "3tKmZgJAXrog8SnYpzWSbe"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Dave Dee Dozy Beaky Mick & Tich",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e67dc67dcf25c0c46efa7e6e",
+      "year": "2006",
+      "addedAt": "2024-07-20T15:06:42Z",
+      "externalUrl": "https://open.spotify.com/track/5QiLMbkYocbcJeAc5QP948",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3Bh370SaZZ0BPHKKOqvAgy",
+      "spotifyTrackId": "3Bh370SaZZ0BPHKKOqvAgy",
+      "spotifyTrackUri": "spotify:track:3Bh370SaZZ0BPHKKOqvAgy",
+      "title": "Love Is Strange",
+      "artists": [
+        "Mickey Baker"
+      ],
+      "artistIds": [
+        "2PnyEnxPA8H95IhFEBu5u7"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Presenting Mickey Baker",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027a2ec8ee34934ac8353e3ba6",
+      "year": "1957",
+      "addedAt": "2024-08-07T01:01:21Z",
+      "externalUrl": "https://open.spotify.com/track/3Bh370SaZZ0BPHKKOqvAgy",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5TdObYbAfMpkmlRmd9UsFj",
+      "spotifyTrackId": "5TdObYbAfMpkmlRmd9UsFj",
+      "spotifyTrackUri": "spotify:track:5TdObYbAfMpkmlRmd9UsFj",
+      "title": "Angel Eyes",
+      "artists": [
+        "The Jeff Healey Band"
+      ],
+      "artistIds": [
+        "3d2hJTVTwo08F9b0ZFQukJ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "See the Light",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02fdbab2719c36671309c5d2cb",
+      "year": "1988",
+      "addedAt": "2024-08-23T22:26:37Z",
+      "externalUrl": "https://open.spotify.com/track/5TdObYbAfMpkmlRmd9UsFj",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1GJCJpKYfzRUsYnSRy4Mfz",
+      "spotifyTrackId": "1GJCJpKYfzRUsYnSRy4Mfz",
+      "spotifyTrackUri": "spotify:track:1GJCJpKYfzRUsYnSRy4Mfz",
+      "title": "Mrs. Brown, You've Got A Lovely Daughter",
+      "artists": [
+        "Herman's Hermits"
+      ],
+      "artistIds": [
+        "48YxSlb23RAaCd4RyHcV9V"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Herman's Hermits Retrospective",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02947d3d6dc953fe02048b817d",
+      "year": "1966",
+      "addedAt": "2024-09-20T20:44:20Z",
+      "externalUrl": "https://open.spotify.com/track/1GJCJpKYfzRUsYnSRy4Mfz",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6vr1sLoeL987BxGJW7XYaZ",
+      "spotifyTrackId": "6vr1sLoeL987BxGJW7XYaZ",
+      "spotifyTrackUri": "spotify:track:6vr1sLoeL987BxGJW7XYaZ",
+      "title": "Ruby Tuesday",
+      "artists": [
+        "Melanie"
+      ],
+      "artistIds": [
+        "6sOP8RUFR0q0nBOBOXGdBK"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Candles In The Rain",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0266f4799f2ef3a78fbccd46dc",
+      "year": "1970",
+      "addedAt": "2024-10-09T19:33:33Z",
+      "externalUrl": "https://open.spotify.com/track/6vr1sLoeL987BxGJW7XYaZ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7aQMDWPJC3Zas5OR3Ih0Y0",
+      "spotifyTrackId": "7aQMDWPJC3Zas5OR3Ih0Y0",
+      "spotifyTrackUri": "spotify:track:7aQMDWPJC3Zas5OR3Ih0Y0",
+      "title": "Majestic",
+      "artists": [
+        "Wax Fang"
+      ],
+      "artistIds": [
+        "28apqXruaLOhD1nGDhrr9Q"
+      ],
+      "previewUrl": "",
+      "albumTitle": "La La Land",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02143064f259bf56d145f24d34",
+      "year": "2010",
+      "addedAt": "2024-10-26T05:15:25Z",
+      "externalUrl": "https://open.spotify.com/track/7aQMDWPJC3Zas5OR3Ih0Y0",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0jPOSh5nKCJ0396LLFGADv",
+      "spotifyTrackId": "0jPOSh5nKCJ0396LLFGADv",
+      "spotifyTrackUri": "spotify:track:0jPOSh5nKCJ0396LLFGADv",
+      "title": "Never Ending Story",
+      "artists": [
+        "Limahl"
+      ],
+      "artistIds": [
+        "7LTzUnZaptYfAFmvqW5M6D"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Very Best Of Kajagoogoo And Limahl",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c5767538e4f8c493be55d4b1",
+      "year": "2003",
+      "addedAt": "2024-11-30T23:38:44Z",
+      "externalUrl": "https://open.spotify.com/track/0jPOSh5nKCJ0396LLFGADv",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3fnL2JDgy4QD04araOl0eY",
+      "spotifyTrackId": "3fnL2JDgy4QD04araOl0eY",
+      "spotifyTrackUri": "spotify:track:3fnL2JDgy4QD04araOl0eY",
+      "title": "Androgynous",
+      "artists": [
+        "The Replacements"
+      ],
+      "artistIds": [
+        "4WPY0N74T3KUja57xMQTZ3"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Let It Be (Expanded)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02008cfa8fb96ef0befcbc615a",
+      "year": "1984",
+      "addedAt": "2024-11-30T23:39:50Z",
+      "externalUrl": "https://open.spotify.com/track/3fnL2JDgy4QD04araOl0eY",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2L93TdW2GMue1H2zlkt30F",
+      "spotifyTrackId": "2L93TdW2GMue1H2zlkt30F",
+      "spotifyTrackUri": "spotify:track:2L93TdW2GMue1H2zlkt30F",
+      "title": "Suzanne",
+      "artists": [
+        "Leonard Cohen"
+      ],
+      "artistIds": [
+        "5l8VQNuIg0turYE1VtM9zV"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Songs Of Leonard Cohen",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020633b57b08b40f3e776e7151",
+      "year": "1967",
+      "addedAt": "2024-11-30T23:39:58Z",
+      "externalUrl": "https://open.spotify.com/track/2L93TdW2GMue1H2zlkt30F",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2mgn77UfgYfPvXSRpxpOeg",
+      "spotifyTrackId": "2mgn77UfgYfPvXSRpxpOeg",
+      "spotifyTrackUri": "spotify:track:2mgn77UfgYfPvXSRpxpOeg",
+      "title": "The Ballad Of Lucy Jordan",
+      "artists": [
+        "Marianne Faithfull"
+      ],
+      "artistIds": [
+        "7mlge4peaoNgzTsY6M32RB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Broken English (Deluxe Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028a3a3ff85dbbb5d891ca6ab3",
+      "year": "1979",
+      "addedAt": "2024-11-30T23:40:05Z",
+      "externalUrl": "https://open.spotify.com/track/2mgn77UfgYfPvXSRpxpOeg",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4FdDorlbJTVHcH3djLbIfn",
+      "spotifyTrackId": "4FdDorlbJTVHcH3djLbIfn",
+      "spotifyTrackUri": "spotify:track:4FdDorlbJTVHcH3djLbIfn",
+      "title": "Ode To Billie Joe",
+      "artists": [
+        "Bobbie Gentry"
+      ],
+      "artistIds": [
+        "4E9w0bms6HcEppFlWjeW2d"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Ode To Billie Joe",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c052a03d8f5e9e2bff95b99d",
+      "year": "1967",
+      "addedAt": "2024-11-30T23:40:19Z",
+      "externalUrl": "https://open.spotify.com/track/4FdDorlbJTVHcH3djLbIfn",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4y7YMKVaXwOB7F6tyVLrF9",
+      "spotifyTrackId": "4y7YMKVaXwOB7F6tyVLrF9",
+      "spotifyTrackUri": "spotify:track:4y7YMKVaXwOB7F6tyVLrF9",
+      "title": "I Can't Help Myself",
+      "artists": [
+        "Orange Juice"
+      ],
+      "artistIds": [
+        "2u7xZP39dtED9EuRX9MUwu"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Rip It Up",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0255e7c78ec58c4670bc0180fb",
+      "year": "1982",
+      "addedAt": "2024-11-30T23:40:30Z",
+      "externalUrl": "https://open.spotify.com/track/4y7YMKVaXwOB7F6tyVLrF9",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0Iz3UcEFdFQnhWXjOCnYBt",
+      "spotifyTrackId": "0Iz3UcEFdFQnhWXjOCnYBt",
+      "spotifyTrackUri": "spotify:track:0Iz3UcEFdFQnhWXjOCnYBt",
+      "title": "Money (That's What I Want)",
+      "artists": [
+        "The Flying Lizards"
+      ],
+      "artistIds": [
+        "2L9iHIK8h5HvZe6VXb0aOI"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Lust For Life",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ee93e84ff59980e2dc37d5ff",
+      "year": "2016",
+      "addedAt": "2024-11-30T23:40:40Z",
+      "externalUrl": "https://open.spotify.com/track/0Iz3UcEFdFQnhWXjOCnYBt",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "11607FzqoipskTsXrwEHnJ",
+      "spotifyTrackId": "11607FzqoipskTsXrwEHnJ",
+      "spotifyTrackUri": "spotify:track:11607FzqoipskTsXrwEHnJ",
+      "title": "Sunday Morning",
+      "artists": [
+        "The Velvet Underground",
+        "Nico"
+      ],
+      "artistIds": [
+        "1nJvji2KIlWSseXRSlNYsC",
+        "0IwlY33zbBXN7zlS9DP2Cj"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Velvet Underground & Nico 45th Anniversary",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0298260c528e6eec9dd431c1d7",
+      "year": "1967",
+      "addedAt": "2024-11-30T23:40:54Z",
+      "externalUrl": "https://open.spotify.com/track/11607FzqoipskTsXrwEHnJ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5Zpy2HR2vYLjlTQVd81DLH",
+      "spotifyTrackId": "5Zpy2HR2vYLjlTQVd81DLH",
+      "spotifyTrackUri": "spotify:track:5Zpy2HR2vYLjlTQVd81DLH",
+      "title": "Paris 1919",
+      "artists": [
+        "John Cale"
+      ],
+      "artistIds": [
+        "5MWBg16f5UYiaSlyVhzlIW"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Paris 1919",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02795ab2f58fc8d94ffd01d5bf",
+      "year": "1973",
+      "addedAt": "2024-11-30T23:41:07Z",
+      "externalUrl": "https://open.spotify.com/track/5Zpy2HR2vYLjlTQVd81DLH",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "31DvHUCSioX0JD7B4kZMJ9",
+      "spotifyTrackId": "31DvHUCSioX0JD7B4kZMJ9",
+      "spotifyTrackUri": "spotify:track:31DvHUCSioX0JD7B4kZMJ9",
+      "title": "Money For Nothing",
+      "artists": [
+        "Dire Straits"
+      ],
+      "artistIds": [
+        "0WwSkZ7LtFUFjGjMZBMt6T"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Brothers In Arms",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02995239a0e35a898037ec4b29",
+      "year": "1985",
+      "addedAt": "2024-11-30T23:41:14Z",
+      "externalUrl": "https://open.spotify.com/track/31DvHUCSioX0JD7B4kZMJ9",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1LjPCQHkAYnJbQUgSoHaye",
+      "spotifyTrackId": "1LjPCQHkAYnJbQUgSoHaye",
+      "spotifyTrackUri": "spotify:track:1LjPCQHkAYnJbQUgSoHaye",
+      "title": "This Time Tomorrow",
+      "artists": [
+        "The Kinks"
+      ],
+      "artistIds": [
+        "1SQRv42e4PjEYfPhS0Tk9E"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Lola Versus Powerman and the Moneygoround, Pt. One",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0222874c7fad7dee046bd69594",
+      "year": "1970",
+      "addedAt": "2024-11-30T23:41:21Z",
+      "externalUrl": "https://open.spotify.com/track/1LjPCQHkAYnJbQUgSoHaye",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5wWvavjmqH3LpYKSgw9E92",
+      "spotifyTrackId": "5wWvavjmqH3LpYKSgw9E92",
+      "spotifyTrackUri": "spotify:track:5wWvavjmqH3LpYKSgw9E92",
+      "title": "Heroin",
+      "artists": [
+        "The Velvet Underground",
+        "Nico"
+      ],
+      "artistIds": [
+        "1nJvji2KIlWSseXRSlNYsC",
+        "0IwlY33zbBXN7zlS9DP2Cj"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Gold",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028b5f05753072d4c0305f2339",
+      "year": "2005",
+      "addedAt": "2024-11-30T23:41:33Z",
+      "externalUrl": "https://open.spotify.com/track/5wWvavjmqH3LpYKSgw9E92",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5eM6Rrk8rwLpUhrh7Kk5R1",
+      "spotifyTrackId": "5eM6Rrk8rwLpUhrh7Kk5R1",
+      "spotifyTrackUri": "spotify:track:5eM6Rrk8rwLpUhrh7Kk5R1",
+      "title": "California",
+      "artists": [
+        "Joni Mitchell"
+      ],
+      "artistIds": [
+        "5hW4L92KnC6dX9t7tYM4Ve"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Blue",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e79dc1438d650f426b5e99a7",
+      "year": "1971",
+      "addedAt": "2024-11-30T23:41:43Z",
+      "externalUrl": "https://open.spotify.com/track/5eM6Rrk8rwLpUhrh7Kk5R1",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5NdzToomqRRxNSR0F0nUHg",
+      "spotifyTrackId": "5NdzToomqRRxNSR0F0nUHg",
+      "spotifyTrackUri": "spotify:track:5NdzToomqRRxNSR0F0nUHg",
+      "title": "Music Box Dancer",
+      "artists": [
+        "Frank Mills"
+      ],
+      "artistIds": [
+        "1rlNSO7W5SWGspO6fgrHPS"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Music Box Dancer",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02efafdefaacd26aae1d1ea3df",
+      "year": "1978",
+      "addedAt": "2024-12-13T14:06:14Z",
+      "externalUrl": "https://open.spotify.com/track/5NdzToomqRRxNSR0F0nUHg",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1nAexCn3dPoFSmE7h6P5S7",
+      "spotifyTrackId": "1nAexCn3dPoFSmE7h6P5S7",
+      "spotifyTrackUri": "spotify:track:1nAexCn3dPoFSmE7h6P5S7",
+      "title": "Sometimes When We Touch",
+      "artists": [
+        "Dan Hill"
+      ],
+      "artistIds": [
+        "5rOhfAsK4uxq9OdREiQRKa"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Longer Fuse",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0203415aaaada0c9c28cda20ee",
+      "year": "1977",
+      "addedAt": "2024-12-15T19:33:44Z",
+      "externalUrl": "https://open.spotify.com/track/1nAexCn3dPoFSmE7h6P5S7",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3uCkIqD0VzQUijbs8WIizs",
+      "spotifyTrackId": "3uCkIqD0VzQUijbs8WIizs",
+      "spotifyTrackUri": "spotify:track:3uCkIqD0VzQUijbs8WIizs",
+      "title": "These Days",
+      "artists": [
+        "Nico"
+      ],
+      "artistIds": [
+        "0IwlY33zbBXN7zlS9DP2Cj"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Chelsea Girl",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b1235c0092f6658466e96819",
+      "year": "1967",
+      "addedAt": "2024-12-30T19:26:22Z",
+      "externalUrl": "https://open.spotify.com/track/3uCkIqD0VzQUijbs8WIizs",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5FgPwJ7Nh2FVmIXviKl2VF",
+      "spotifyTrackId": "5FgPwJ7Nh2FVmIXviKl2VF",
+      "spotifyTrackUri": "spotify:track:5FgPwJ7Nh2FVmIXviKl2VF",
+      "title": "Make You Feel My Love",
+      "artists": [
+        "Adele"
+      ],
+      "artistIds": [
+        "4dpARuHxo51G3z768sgnrY"
+      ],
+      "previewUrl": "",
+      "albumTitle": "19",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0262e62cf225b72fca8d765168",
+      "year": "2008",
+      "addedAt": "2025-01-02T14:10:04Z",
+      "externalUrl": "https://open.spotify.com/track/5FgPwJ7Nh2FVmIXviKl2VF",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6nLvaCZFR1wEzW3sIKpsnr",
+      "spotifyTrackId": "6nLvaCZFR1wEzW3sIKpsnr",
+      "spotifyTrackUri": "spotify:track:6nLvaCZFR1wEzW3sIKpsnr",
+      "title": "Valerie - Live At BBC Radio 1 Live Lounge, London / 2007",
+      "artists": [
+        "Amy Winehouse"
+      ],
+      "artistIds": [
+        "6Q192DXotxtaysaqNPy5yR"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Back To Black (Deluxe Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0276ffb5b5ab045d22c81235c1",
+      "year": "2006",
+      "addedAt": "2025-01-12T04:14:22Z",
+      "externalUrl": "https://open.spotify.com/track/6nLvaCZFR1wEzW3sIKpsnr",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3wCJGNuWIoeKHsrZdAybiO",
+      "spotifyTrackId": "3wCJGNuWIoeKHsrZdAybiO",
+      "spotifyTrackUri": "spotify:track:3wCJGNuWIoeKHsrZdAybiO",
+      "title": "Cuntology 101",
+      "artists": [
+        "Lambrini Girls"
+      ],
+      "artistIds": [
+        "6VR4TJ20WGiho2xZWMuuWb"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Who Let The Dogs Out",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a8c6fca043ed3e87f90fbffa",
+      "year": "2025",
+      "addedAt": "2025-02-01T23:53:32Z",
+      "externalUrl": "https://open.spotify.com/track/3wCJGNuWIoeKHsrZdAybiO",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6YSF0u64K0xreRh1uOJuPw",
+      "spotifyTrackId": "6YSF0u64K0xreRh1uOJuPw",
+      "spotifyTrackUri": "spotify:track:6YSF0u64K0xreRh1uOJuPw",
+      "title": "88 Lines about 44 Women",
+      "artists": [
+        "The Nails"
+      ],
+      "artistIds": [
+        "2onSkuDhuGUdwQLOYVcEBD"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Mood Swing",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02bf66194ad302ccac192fca8c",
+      "year": "1984",
+      "addedAt": "2025-02-10T02:57:54Z",
+      "externalUrl": "https://open.spotify.com/track/6YSF0u64K0xreRh1uOJuPw",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0Z7nGFVCLfixWctgePsRk9",
+      "spotifyTrackId": "0Z7nGFVCLfixWctgePsRk9",
+      "spotifyTrackUri": "spotify:track:0Z7nGFVCLfixWctgePsRk9",
+      "title": "TEXAS HOLD 'EM",
+      "artists": [
+        "Beyoncé"
+      ],
+      "artistIds": [
+        "6vWDO969PvNqNYHIOW5v0m"
+      ],
+      "previewUrl": "",
+      "albumTitle": "TEXAS HOLD 'EM",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02585092635309cc99caf097fa",
+      "year": "2024",
+      "addedAt": "2025-02-02T19:18:27Z",
+      "externalUrl": "https://open.spotify.com/track/0Z7nGFVCLfixWctgePsRk9",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2XKMIB0VzXF22pJpBKV6xn",
+      "spotifyTrackId": "2XKMIB0VzXF22pJpBKV6xn",
+      "spotifyTrackUri": "spotify:track:2XKMIB0VzXF22pJpBKV6xn",
+      "title": "Right Time of the Night",
+      "artists": [
+        "Jennifer Warnes"
+      ],
+      "artistIds": [
+        "1BwHztAQKypBuy5WBEdJnG"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Jennifer Warnes",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c8bba30c52ec44dd6450296b",
+      "year": "1976",
+      "addedAt": "2025-02-22T19:04:45Z",
+      "externalUrl": "https://open.spotify.com/track/2XKMIB0VzXF22pJpBKV6xn",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "090OJddWzQFGpN6NGIjkIi",
+      "spotifyTrackId": "090OJddWzQFGpN6NGIjkIi",
+      "spotifyTrackUri": "spotify:track:090OJddWzQFGpN6NGIjkIi",
+      "title": "Keep Your Skirts Down, Mary Ann - Remastered 2002",
+      "artists": [
+        "The Andrews Sisters"
+      ],
+      "artistIds": [
+        "2NCGI6dLTxLdI9XHdv7QfM"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Ultimate Andrews Sisters",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c78f65ac6e61773ea2470171",
+      "year": "2003",
+      "addedAt": "2025-02-22T20:29:41Z",
+      "externalUrl": "https://open.spotify.com/track/090OJddWzQFGpN6NGIjkIi",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1v9iJFBaJCxBCdBNdvXeMd",
+      "spotifyTrackId": "1v9iJFBaJCxBCdBNdvXeMd",
+      "spotifyTrackUri": "spotify:track:1v9iJFBaJCxBCdBNdvXeMd",
+      "title": "Closer To Fine (From Barbie The Album)",
+      "artists": [
+        "Brandi Carlile",
+        "Catherine Carlile"
+      ],
+      "artistIds": [
+        "2sG4zTOLvjKG1PSoOyf5Ej",
+        "6AYTFdGwtMZiuHhmTMO4Ig"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Closer To Fine (From Barbie The Album)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0200dcd63d31d53ac6df7fb808",
+      "year": "2023",
+      "addedAt": "2025-03-02T01:47:02Z",
+      "externalUrl": "https://open.spotify.com/track/1v9iJFBaJCxBCdBNdvXeMd",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2R6UrJ8uWbSIiHWmvRQvN8",
+      "spotifyTrackId": "2R6UrJ8uWbSIiHWmvRQvN8",
+      "spotifyTrackUri": "spotify:track:2R6UrJ8uWbSIiHWmvRQvN8",
+      "title": "Whiskey In The Jar",
+      "artists": [
+        "Metallica"
+      ],
+      "artistIds": [
+        "2ye2Wgw4gimLv2eAKyk1NB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Garage Inc.",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0275e6375e11550746705a9645",
+      "year": "1998",
+      "addedAt": "2025-03-02T02:14:06Z",
+      "externalUrl": "https://open.spotify.com/track/2R6UrJ8uWbSIiHWmvRQvN8",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5k0rTL9Da51UCZid4MTgKJ",
+      "spotifyTrackId": "5k0rTL9Da51UCZid4MTgKJ",
+      "spotifyTrackUri": "spotify:track:5k0rTL9Da51UCZid4MTgKJ",
+      "title": "Loch Lomond",
+      "artists": [
+        "The Clydesiders"
+      ],
+      "artistIds": [
+        "4VaCrHsZJMX9PmlITEsJPt"
+      ],
+      "previewUrl": "",
+      "albumTitle": "All the Best From Scotland Vol.2",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f59280cc6543eb94a09915d7",
+      "year": "1994",
+      "addedAt": "2025-03-04T00:07:57Z",
+      "externalUrl": "https://open.spotify.com/track/5k0rTL9Da51UCZid4MTgKJ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1dJuteDIOkGfDSN7zPkzNv",
+      "spotifyTrackId": "1dJuteDIOkGfDSN7zPkzNv",
+      "spotifyTrackUri": "spotify:track:1dJuteDIOkGfDSN7zPkzNv",
+      "title": "She Don't Use Jelly",
+      "artists": [
+        "The Flaming Lips"
+      ],
+      "artistIds": [
+        "16eRpMNXSQ15wuJoeqguaB"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Transmissions From the Satellite Heart",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026a80217584484a9372d95b66",
+      "year": "1993",
+      "addedAt": "2025-03-04T00:21:30Z",
+      "externalUrl": "https://open.spotify.com/track/1dJuteDIOkGfDSN7zPkzNv",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1PtBEdgSOYujwHrRZv72sl",
+      "spotifyTrackId": "1PtBEdgSOYujwHrRZv72sl",
+      "spotifyTrackUri": "spotify:track:1PtBEdgSOYujwHrRZv72sl",
+      "title": "Ten Rounds with Jose Cuervo",
+      "artists": [
+        "Tracy Byrd"
+      ],
+      "artistIds": [
+        "0xxJO75NeIAF5jYruLYIDT"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Live at Billy Bob's Texas",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f0e44347a25d743b3db9395a",
+      "year": "2019",
+      "addedAt": "2025-03-08T01:10:20Z",
+      "externalUrl": "https://open.spotify.com/track/1PtBEdgSOYujwHrRZv72sl",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0f7YNe7M6HDX0e1aBQdpXt",
+      "spotifyTrackId": "0f7YNe7M6HDX0e1aBQdpXt",
+      "spotifyTrackUri": "spotify:track:0f7YNe7M6HDX0e1aBQdpXt",
+      "title": "After the Goldrush",
+      "artists": [
+        "Prelude"
+      ],
+      "artistIds": [
+        "3O0M2g3WAmUno2GUe4x5yi"
+      ],
+      "previewUrl": "",
+      "albumTitle": "After the Gold Rush: The Dawn/Pye Anthology 1973-77",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a70d2feb79d9aba2c2945501",
+      "year": "2006",
+      "addedAt": "2025-03-14T22:59:42Z",
+      "externalUrl": "https://open.spotify.com/track/0f7YNe7M6HDX0e1aBQdpXt",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5ZZUiyj54MixbMrky8MAL5",
+      "spotifyTrackId": "5ZZUiyj54MixbMrky8MAL5",
+      "spotifyTrackUri": "spotify:track:5ZZUiyj54MixbMrky8MAL5",
+      "title": "Bye Bye Birdie",
+      "artists": [
+        "Ann-Margret"
+      ],
+      "artistIds": [
+        "69LGCmz5gH56OxMRVmyMte"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Bye Bye Birdie (Original Motion Picture Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f1c6f9f1587ae611e40ef07c",
+      "year": "1963",
+      "addedAt": "2025-03-21T16:35:20Z",
+      "externalUrl": "https://open.spotify.com/track/5ZZUiyj54MixbMrky8MAL5",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "46VyuennkUnbU00JJsPysN",
+      "spotifyTrackId": "46VyuennkUnbU00JJsPysN",
+      "spotifyTrackUri": "spotify:track:46VyuennkUnbU00JJsPysN",
+      "title": "Everything's Coming up Roses",
+      "artists": [
+        "Bette Midler"
+      ],
+      "artistIds": [
+        "13y0kncDD4J9wxCyfKr10W"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Gypsy",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028b3f0c410a71ab52a6f7754f",
+      "year": "1993",
+      "addedAt": "2025-03-22T14:04:44Z",
+      "externalUrl": "https://open.spotify.com/track/46VyuennkUnbU00JJsPysN",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5Lan4wfdP0Gy9iiON0hk2v",
+      "spotifyTrackId": "5Lan4wfdP0Gy9iiON0hk2v",
+      "spotifyTrackUri": "spotify:track:5Lan4wfdP0Gy9iiON0hk2v",
+      "title": "If You Really Love Me",
+      "artists": [
+        "Stevie Wonder"
+      ],
+      "artistIds": [
+        "7guDJrEfX3qb6FEbdPA5qi"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Definitive Collection (Deluxe Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02835ed5fb9b70f46c3177ffde",
+      "year": "2002",
+      "addedAt": "2025-03-25T17:53:27Z",
+      "externalUrl": "https://open.spotify.com/track/5Lan4wfdP0Gy9iiON0hk2v",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7kixCGSpKVDPF7nOqfWQcx",
+      "spotifyTrackId": "7kixCGSpKVDPF7nOqfWQcx",
+      "spotifyTrackUri": "spotify:track:7kixCGSpKVDPF7nOqfWQcx",
+      "title": "The Third Man Theme (The Harry Lime Theme) - Original Version",
+      "artists": [
+        "Anton Karas"
+      ],
+      "artistIds": [
+        "1N6hAy84Nd6KdUhr4BjXWS"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Anton Karas plays \"The Third Man Theme\"",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ff13f203d3046a909d650cf9",
+      "year": "2002",
+      "addedAt": "2025-03-31T16:58:55Z",
+      "externalUrl": "https://open.spotify.com/track/7kixCGSpKVDPF7nOqfWQcx",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5hF5VODEuBVFNTVu7j3NrL",
+      "spotifyTrackId": "5hF5VODEuBVFNTVu7j3NrL",
+      "spotifyTrackUri": "spotify:track:5hF5VODEuBVFNTVu7j3NrL",
+      "title": "This Land is Your Land",
+      "artists": [
+        "Judy Collins",
+        "John Mellencamp",
+        "Ramblin' Jack Elliott",
+        "Jackson Browne"
+      ],
+      "artistIds": [
+        "5yzE49FicYiSxN61oaxkNn",
+        "3lPQ2Fk5JOwGWAF3ORFCqH",
+        "6iuM8yp1x2N0l6SONhyq4b",
+        "5lkiCO9UQ8B23dZ1o0UV4m"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Woody Guthrie: At 100! (Live At The Kennedy Center)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0281ee0bd8bcab9883df97e2e4",
+      "year": "2013",
+      "addedAt": "2025-04-01T13:19:14Z",
+      "externalUrl": "https://open.spotify.com/track/5hF5VODEuBVFNTVu7j3NrL",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1iT7jHbMiyVaGSikisjhGm",
+      "spotifyTrackId": "1iT7jHbMiyVaGSikisjhGm",
+      "spotifyTrackUri": "spotify:track:1iT7jHbMiyVaGSikisjhGm",
+      "title": "Biggie Smalls",
+      "artists": [
+        "Roblito2",
+        "Thomas the Tank Engine"
+      ],
+      "artistIds": [
+        "51HWSYLG2pNCdGTpN0jCev",
+        "73vsXWptrm3uohZXlJO6rL"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Biggie Smalls",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020374677b7cca44be04df3c1e",
+      "year": "2013",
+      "addedAt": "2025-05-07T00:59:33Z",
+      "externalUrl": "https://open.spotify.com/track/1iT7jHbMiyVaGSikisjhGm",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3e7CZGtg3ViBeksYv2TukD",
+      "spotifyTrackId": "3e7CZGtg3ViBeksYv2TukD",
+      "spotifyTrackUri": "spotify:track:3e7CZGtg3ViBeksYv2TukD",
+      "title": "I'll Never Fall In Love Again",
+      "artists": [
+        "Kristin Chenoweth",
+        "Sean Hayes"
+      ],
+      "artistIds": [
+        "3DgcBA7P0ji5co7Z1Gfp2Q",
+        "6R9JQa35VVwMqQUNV1FVS5"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Promises, Promises (New Broadway Cast Recording (2010))",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e021021d19e83a4cef8ca255db6",
+      "year": "2010",
+      "addedAt": "2025-05-09T22:34:25Z",
+      "externalUrl": "https://open.spotify.com/track/3e7CZGtg3ViBeksYv2TukD",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2h8naDznnxudbFKUpYShVE",
+      "spotifyTrackId": "2h8naDznnxudbFKUpYShVE",
+      "spotifyTrackUri": "spotify:track:2h8naDznnxudbFKUpYShVE",
+      "title": "A Lil' Ole Bitty Pissant Country Place - The Best Little Whorehouse In Texas/1978 Original Broadway Cast/Remastered",
+      "artists": [
+        "Carol Hall",
+        "Carlin Glynn",
+        "Lisa Brown",
+        "Carol Chambers",
+        "Donna King",
+        "Marta Sanders",
+        "Jan Merchant",
+        "Louise Quick-Bowen",
+        "Debra Zalkind",
+        "Becky Gelke"
+      ],
+      "artistIds": [
+        "628P4ddMH5rnbqIVK1Royz",
+        "1AFHMscjh9XTvrzR4OFpia",
+        "06osfRzPcWTxuxwsGFSjTj",
+        "0E2d7QI9bnFN3wucPcVzDm",
+        "4BlarH2Qbfhc3DR4LhHrqp",
+        "2HGyD7AgIjGH6lvt9PJ8An",
+        "7gWf8cpxDS6j8IZyl2XdrU",
+        "4ea28dvlhbpmvBupKZkzwD",
+        "03xPkEFgYhM85SHjHv0dg0",
+        "1Vgvw3iZpeXvHX1FAvLFa1"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Best Little Whorehouse In Texas",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a6a29bd6577af6227671d3dc",
+      "year": "1978",
+      "addedAt": "2025-05-09T22:51:37Z",
+      "externalUrl": "https://open.spotify.com/track/2h8naDznnxudbFKUpYShVE",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0VKk0nkdafQWQZAs3HfpNP",
+      "spotifyTrackId": "0VKk0nkdafQWQZAs3HfpNP",
+      "spotifyTrackUri": "spotify:track:0VKk0nkdafQWQZAs3HfpNP",
+      "title": "So Long & Thanks For All The Fish (Reprise) - Reprise / Score",
+      "artists": [
+        "Neil Hannon"
+      ],
+      "artistIds": [
+        "2l63iudiU3bT4p94a2hHa4"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Hitchhiker's Guide To The Galaxy",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e029c20869d8da1df8a409f57ef",
+      "year": "2005",
+      "addedAt": "2025-06-04T00:36:44Z",
+      "externalUrl": "https://open.spotify.com/track/0VKk0nkdafQWQZAs3HfpNP",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3s4bue9BJAghjeaPcwHQur",
+      "spotifyTrackId": "3s4bue9BJAghjeaPcwHQur",
+      "spotifyTrackUri": "spotify:track:3s4bue9BJAghjeaPcwHQur",
+      "title": "How Can You Mend A Broken Heart (feat. Sheryl Crow)",
+      "artists": [
+        "Barry Gibb",
+        "Sheryl Crow"
+      ],
+      "artistIds": [
+        "7Hd38PVp634oGEb9pIDs5d",
+        "4TKTii6gnOnUXQHyuo9JaD"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Greenfields: The Gibb Brothers' Songbook (Vol. 1)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e5fb7b3e2e5cceb8f4f8a1b8",
+      "year": "2021",
+      "addedAt": "2025-05-15T12:53:59Z",
+      "externalUrl": "https://open.spotify.com/track/3s4bue9BJAghjeaPcwHQur",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6qsngfhruE792s577j5VwN",
+      "spotifyTrackId": "6qsngfhruE792s577j5VwN",
+      "spotifyTrackUri": "spotify:track:6qsngfhruE792s577j5VwN",
+      "title": "Simple Song of Freedom",
+      "artists": [
+        "Tim Hardin"
+      ],
+      "artistIds": [
+        "39GVRVaqlKh7JL8Yl5ZKcb"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Simple Songs Of Freedom: The Tim Hardin Collection",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02d90ced22b8adbd4550dff6db",
+      "year": "1996",
+      "addedAt": "2025-05-16T00:17:31Z",
+      "externalUrl": "https://open.spotify.com/track/6qsngfhruE792s577j5VwN",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6208B8Utmd2fTqgGMjeNr6",
+      "spotifyTrackId": "6208B8Utmd2fTqgGMjeNr6",
+      "spotifyTrackUri": "spotify:track:6208B8Utmd2fTqgGMjeNr6",
+      "title": "Right Back Where We Started From",
+      "artists": [
+        "Maxine Nightingale"
+      ],
+      "artistIds": [
+        "6jQ9UtYXqNfVnPkrH1Xxwi"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Right Back Where We Started From",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02cfa6a3679b1471b340e15c4c",
+      "year": "2020",
+      "addedAt": "2025-05-22T20:58:29Z",
+      "externalUrl": "https://open.spotify.com/track/6208B8Utmd2fTqgGMjeNr6",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0k47miuOs8YtjN21YPOPO2",
+      "spotifyTrackId": "0k47miuOs8YtjN21YPOPO2",
+      "spotifyTrackUri": "spotify:track:0k47miuOs8YtjN21YPOPO2",
+      "title": "Cheers Theme (Original Demo)",
+      "artists": [
+        "Gary Portnoy"
+      ],
+      "artistIds": [
+        "53U1IJqr6Hhmn53UcbgF7D"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Songs Along the Way",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026e5ad8183f4b6f874d90e28e",
+      "year": "2010",
+      "addedAt": "2025-05-18T02:22:06Z",
+      "externalUrl": "https://open.spotify.com/track/0k47miuOs8YtjN21YPOPO2",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4rvNQPmHpJPilHNIRzQhhQ",
+      "spotifyTrackId": "4rvNQPmHpJPilHNIRzQhhQ",
+      "spotifyTrackUri": "spotify:track:4rvNQPmHpJPilHNIRzQhhQ",
+      "title": "I'm Still Here",
+      "artists": [
+        "Elaine Stritch"
+      ],
+      "artistIds": [
+        "0Pvf86Mzr7iXVTcexjZ4RZ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Elaine Stritch At Liberty - Original Broadway Cast",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a3d6f926a06f0bd845ef7909",
+      "year": "2002",
+      "addedAt": "2025-06-05T20:15:19Z",
+      "externalUrl": "https://open.spotify.com/track/4rvNQPmHpJPilHNIRzQhhQ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6vUssnJuFxgw1EFG717Kd5",
+      "spotifyTrackId": "6vUssnJuFxgw1EFG717Kd5",
+      "spotifyTrackUri": "spotify:track:6vUssnJuFxgw1EFG717Kd5",
+      "title": "This Will Be Our Year [Mono]",
+      "artists": [
+        "The Zombies"
+      ],
+      "artistIds": [
+        "2jgPkn6LuUazBoBk6vvjh5"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Odessey & Oracle_ 30th Anniversary Edition",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0298ce064ab1bb36180d1b02ea",
+      "year": "1968",
+      "addedAt": "2025-06-04T00:47:00Z",
+      "externalUrl": "https://open.spotify.com/track/6vUssnJuFxgw1EFG717Kd5",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0AWN35e76cvPxAUms8SojX",
+      "spotifyTrackId": "0AWN35e76cvPxAUms8SojX",
+      "spotifyTrackUri": "spotify:track:0AWN35e76cvPxAUms8SojX",
+      "title": "Sugar Town",
+      "artists": [
+        "Nancy Sinatra"
+      ],
+      "artistIds": [
+        "3IZrrNonYELubLPJmqOci2"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Sugar",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02c4b8a92a2a21a93fea669be6",
+      "year": "2006",
+      "addedAt": "2025-06-04T00:48:05Z",
+      "externalUrl": "https://open.spotify.com/track/0AWN35e76cvPxAUms8SojX",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3VyJPsb2ucaaVptLSDpJNH",
+      "spotifyTrackId": "3VyJPsb2ucaaVptLSDpJNH",
+      "spotifyTrackUri": "spotify:track:3VyJPsb2ucaaVptLSDpJNH",
+      "title": "I Love You",
+      "artists": [
+        "Climax Blues Band"
+      ],
+      "artistIds": [
+        "4eeRviM714mXXeILmKHxh2"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Flying the Flag",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025d52a9fde375a88160f4dde6",
+      "year": "1980",
+      "addedAt": "2025-06-14T19:34:42Z",
+      "externalUrl": "https://open.spotify.com/track/3VyJPsb2ucaaVptLSDpJNH",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0368Q6HAfrfkINwtMJfqy0",
+      "spotifyTrackId": "0368Q6HAfrfkINwtMJfqy0",
+      "spotifyTrackUri": "spotify:track:0368Q6HAfrfkINwtMJfqy0",
+      "title": "Blue Moon of Kentucky (From the Lifetime Feature Movie \"Patsy & Loretta\")",
+      "artists": [
+        "Megan Hilty",
+        "Jessie Mueller"
+      ],
+      "artistIds": [
+        "7ks2IcGrojAKIxnUdkHBGk",
+        "4okEmrM2O6CEW6en3fRWUy"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Blue Moon of Kentucky (From the Lifetime Feature Movie \"Patsy & Loretta\")",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025585a914f7bafdceb3437776",
+      "year": "2019",
+      "addedAt": "2025-06-13T21:16:04Z",
+      "externalUrl": "https://open.spotify.com/track/0368Q6HAfrfkINwtMJfqy0",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5kJez8nvgq0HqhWy3UTQFx",
+      "spotifyTrackId": "5kJez8nvgq0HqhWy3UTQFx",
+      "spotifyTrackUri": "spotify:track:5kJez8nvgq0HqhWy3UTQFx",
+      "title": "Deep Purple",
+      "artists": [
+        "Nino Tempo & April Stevens"
+      ],
+      "artistIds": [
+        "5s1WKkWyMzhGnLZ0ClgyTN"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Deep Purple",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0250040154eb764e21ae11fd27",
+      "year": "2001",
+      "addedAt": "2025-06-16T13:43:24Z",
+      "externalUrl": "https://open.spotify.com/track/5kJez8nvgq0HqhWy3UTQFx",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2dKxzd3AMmGpBvKhtsWzI8",
+      "spotifyTrackId": "2dKxzd3AMmGpBvKhtsWzI8",
+      "spotifyTrackUri": "spotify:track:2dKxzd3AMmGpBvKhtsWzI8",
+      "title": "Queen Of The House",
+      "artists": [
+        "Jody Miller"
+      ],
+      "artistIds": [
+        "656TGMl6uRQSQlFRVCKt7w"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Queen Of The House",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02e0004a86828752cb84dea7cc",
+      "year": "1965",
+      "addedAt": "2025-06-16T13:05:04Z",
+      "externalUrl": "https://open.spotify.com/track/2dKxzd3AMmGpBvKhtsWzI8",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "39DHnMZemnvjHD8baE0RcO",
+      "spotifyTrackId": "39DHnMZemnvjHD8baE0RcO",
+      "spotifyTrackUri": "spotify:track:39DHnMZemnvjHD8baE0RcO",
+      "title": "Blue Moon Of Kentucky",
+      "artists": [
+        "Patsy Cline"
+      ],
+      "artistIds": [
+        "7dNsHhGeGU5MV01r06O8gK"
+      ],
+      "previewUrl": "",
+      "albumTitle": "A Portrait Of Patsy Cline",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e028f882d06282d9f8862489804",
+      "year": "1964",
+      "addedAt": "2025-06-23T13:22:54Z",
+      "externalUrl": "https://open.spotify.com/track/39DHnMZemnvjHD8baE0RcO",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0stu2tqtfFVrVGtcdKOxvr",
+      "spotifyTrackId": "0stu2tqtfFVrVGtcdKOxvr",
+      "spotifyTrackUri": "spotify:track:0stu2tqtfFVrVGtcdKOxvr",
+      "title": "You Don't Know Me",
+      "artists": [
+        "Cindy Walker"
+      ],
+      "artistIds": [
+        "1DVRsNLTxRug7RxJJXEs6P"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Words & Music",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026911b2e34b932c75e02e899a",
+      "year": "1964",
+      "addedAt": "2025-06-23T13:41:52Z",
+      "externalUrl": "https://open.spotify.com/track/0stu2tqtfFVrVGtcdKOxvr",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0Nav1LjMLdSi9RUKqzbBmV",
+      "spotifyTrackId": "0Nav1LjMLdSi9RUKqzbBmV",
+      "spotifyTrackUri": "spotify:track:0Nav1LjMLdSi9RUKqzbBmV",
+      "title": "Morning Has Broken",
+      "artists": [
+        "Ellen Greene"
+      ],
+      "artistIds": [
+        "6CAxtHXbWx9FdJFhgBEtBJ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Pushing Daisies (Original Television Soundtrack)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02814f8df67e3f32858177b402",
+      "year": "2008",
+      "addedAt": "2025-06-28T21:02:19Z",
+      "externalUrl": "https://open.spotify.com/track/0Nav1LjMLdSi9RUKqzbBmV",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5pXwg8JmRLIMUQRc1N3mXg",
+      "spotifyTrackId": "5pXwg8JmRLIMUQRc1N3mXg",
+      "spotifyTrackUri": "spotify:track:5pXwg8JmRLIMUQRc1N3mXg",
+      "title": "Goodnight Saigon (Live)",
+      "artists": [
+        "Alan Cumming"
+      ],
+      "artistIds": [
+        "66T9wYAojCjsnxM4R5KAhW"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Alan Cumming Sings Sappy Songs: Live at the Cafe Carlyle",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02053fbe776210cf888e29b637",
+      "year": "2016",
+      "addedAt": "2025-06-28T21:04:25Z",
+      "externalUrl": "https://open.spotify.com/track/5pXwg8JmRLIMUQRc1N3mXg",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4cMHCRLPNoEbpnl2rz6GS9",
+      "spotifyTrackId": "4cMHCRLPNoEbpnl2rz6GS9",
+      "spotifyTrackUri": "spotify:track:4cMHCRLPNoEbpnl2rz6GS9",
+      "title": "Back on the Chain Gang - 2007 Remaster",
+      "artists": [
+        "Pretenders"
+      ],
+      "artistIds": [
+        "0GByy3DcfbQwDvXGCWmzv9"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Learning to Crawl (Expanded & Remastered)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e025436a01d3b621036889cffe6",
+      "year": "1984",
+      "addedAt": "2025-06-30T12:54:15Z",
+      "externalUrl": "https://open.spotify.com/track/4cMHCRLPNoEbpnl2rz6GS9",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6NFyX6dQKJ5vvnAHOfi6Jy",
+      "spotifyTrackId": "6NFyX6dQKJ5vvnAHOfi6Jy",
+      "spotifyTrackUri": "spotify:track:6NFyX6dQKJ5vvnAHOfi6Jy",
+      "title": "I Won't Grow Up",
+      "artists": [
+        "Rickie Lee Jones"
+      ],
+      "artistIds": [
+        "0dYkMe3wK29DulSa0uR8Rq"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Pop Pop",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02decf0738920a96fbfbe78b42",
+      "year": "1991",
+      "addedAt": "2025-07-05T17:26:59Z",
+      "externalUrl": "https://open.spotify.com/track/6NFyX6dQKJ5vvnAHOfi6Jy",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0LR6n3rNRr0gbezXHEBEfc",
+      "spotifyTrackId": "0LR6n3rNRr0gbezXHEBEfc",
+      "spotifyTrackUri": "spotify:track:0LR6n3rNRr0gbezXHEBEfc",
+      "title": "Little Bit O'Soul",
+      "artists": [
+        "Music Explosion"
+      ],
+      "artistIds": [
+        "1DVs21DjifVH0pgsjPlokN"
+      ],
+      "previewUrl": "",
+      "albumTitle": "UK Records 80 Great Hits From The 60s & 70s",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e022c4a2e47b00f77798a0cea55",
+      "year": "2013",
+      "addedAt": "2025-07-22T16:23:14Z",
+      "externalUrl": "https://open.spotify.com/track/0LR6n3rNRr0gbezXHEBEfc",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6cX9HbjCK20dfd5C1fftUE",
+      "spotifyTrackId": "6cX9HbjCK20dfd5C1fftUE",
+      "spotifyTrackUri": "spotify:track:6cX9HbjCK20dfd5C1fftUE",
+      "title": "Master Of The House",
+      "artists": [
+        "Alun Armstrong",
+        "Sue Jane Tanner",
+        "\"Les Misérables Original London Cast\" Ensemble"
+      ],
+      "artistIds": [
+        "7nLwAediRAqzX6Oha4k1mm",
+        "1TG4WLOSCCALQnHGjHD5OR",
+        "4nciyIOnej3po7gqTN0fr1"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Les Misérables (Original 1985 London Cast Recording)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02fbb690abbb502edd3c70f933",
+      "year": "1985",
+      "addedAt": "2025-07-30T20:14:48Z",
+      "externalUrl": "https://open.spotify.com/track/6cX9HbjCK20dfd5C1fftUE",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "25FTMokYEbEWHEdss5JLZS",
+      "spotifyTrackId": "25FTMokYEbEWHEdss5JLZS",
+      "spotifyTrackUri": "spotify:track:25FTMokYEbEWHEdss5JLZS",
+      "title": "Teenage Dirtbag",
+      "artists": [
+        "Wheatus"
+      ],
+      "artistIds": [
+        "4mYFgEjpQT4IKOrjOUKyXu"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Wheatus",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020a3740efa638f10f14fabc46",
+      "year": "1999",
+      "addedAt": "2025-08-04T17:19:56Z",
+      "externalUrl": "https://open.spotify.com/track/25FTMokYEbEWHEdss5JLZS",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0ARoborzrtiYaTFUge7f9H",
+      "spotifyTrackId": "0ARoborzrtiYaTFUge7f9H",
+      "spotifyTrackUri": "spotify:track:0ARoborzrtiYaTFUge7f9H",
+      "title": "Ol' Man River (from Show Boat) - 1985 Digital Remaster",
+      "artists": [
+        "Paul Robeson"
+      ],
+      "artistIds": [
+        "6ccc2jvU6SYt0OyInCkIbG"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Ol' Man River & Other Favourites",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02a1f3c9b969b58b5863d4ffeb",
+      "year": "1985",
+      "addedAt": "2025-08-05T12:26:59Z",
+      "externalUrl": "https://open.spotify.com/track/0ARoborzrtiYaTFUge7f9H",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "31cjIYJpRk1zABYlF2bVb6",
+      "spotifyTrackId": "31cjIYJpRk1zABYlF2bVb6",
+      "spotifyTrackUri": "spotify:track:31cjIYJpRk1zABYlF2bVb6",
+      "title": "Wand'rin' Star (from \"Paint Your Wagon\")",
+      "artists": [
+        "The Paul Masters Orchestra"
+      ],
+      "artistIds": [
+        "0EQXgsUFb6uqE3YHLO1a4e"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Paint Your Wagon Soundtrack",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02306bd0298ebd8d5278aa630a",
+      "year": "1970",
+      "addedAt": "2025-08-19T15:48:38Z",
+      "externalUrl": "https://open.spotify.com/track/31cjIYJpRk1zABYlF2bVb6",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0feqkkD0tgAZddC0uB3uwU",
+      "spotifyTrackId": "0feqkkD0tgAZddC0uB3uwU",
+      "spotifyTrackUri": "spotify:track:0feqkkD0tgAZddC0uB3uwU",
+      "title": "If I Only Had A Brain - Extended Version",
+      "artists": [
+        "Ray Bolger",
+        "Judy Garland"
+      ],
+      "artistIds": [
+        "2AFiUmVJVOF5yUjt51Yx88",
+        "0hItVPjwJLVZrFqOyIsxPf"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Wizard of Oz (Original Motion Picture Soundtrack) [Deluxe Edition]",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026893ceb167a556d6a9e068fd",
+      "year": "1939",
+      "addedAt": "2025-08-19T20:03:09Z",
+      "externalUrl": "https://open.spotify.com/track/0feqkkD0tgAZddC0uB3uwU",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "1VtCyS1qDLbxLxR2tn7MIq",
+      "spotifyTrackId": "1VtCyS1qDLbxLxR2tn7MIq",
+      "spotifyTrackUri": "spotify:track:1VtCyS1qDLbxLxR2tn7MIq",
+      "title": "Juke Box Blues",
+      "artists": [
+        "June Carter Cash"
+      ],
+      "artistIds": [
+        "0ZnY6mQmgr2yZarjry68td"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Keep On the Sunny Side - June Carter Cash: Her Life In Music",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0243287a9815300d80b3ba7498",
+      "year": "2005",
+      "addedAt": "2025-08-25T19:47:36Z",
+      "externalUrl": "https://open.spotify.com/track/1VtCyS1qDLbxLxR2tn7MIq",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5ff9fGBykcLIctsvauVTod",
+      "spotifyTrackId": "5ff9fGBykcLIctsvauVTod",
+      "spotifyTrackUri": "spotify:track:5ff9fGBykcLIctsvauVTod",
+      "title": "We Are Great Again",
+      "artists": [
+        "Billy Simons Jr."
+      ],
+      "artistIds": [
+        "35OqRQtnfUL7faQhJ3QuB8"
+      ],
+      "previewUrl": "",
+      "albumTitle": "We Are Great Again",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e029ea449965e34ec37ab2b9c21",
+      "year": "2025",
+      "addedAt": "2025-08-25T20:18:32Z",
+      "externalUrl": "https://open.spotify.com/track/5ff9fGBykcLIctsvauVTod",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2DKOdsWtctCsEMX1exIxfh",
+      "spotifyTrackId": "2DKOdsWtctCsEMX1exIxfh",
+      "spotifyTrackUri": "spotify:track:2DKOdsWtctCsEMX1exIxfh",
+      "title": "Torn Screen Door",
+      "artists": [
+        "David Francey"
+      ],
+      "artistIds": [
+        "11NyMIq0N1ozgqhwdAdWIK"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Torn Screen Door",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b49b009c01642ba144105a35",
+      "year": "1999",
+      "addedAt": "2025-08-26T18:30:27Z",
+      "externalUrl": "https://open.spotify.com/track/2DKOdsWtctCsEMX1exIxfh",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0uszlGPAzY1pwIm0Gv0mck",
+      "spotifyTrackId": "0uszlGPAzY1pwIm0Gv0mck",
+      "spotifyTrackUri": "spotify:track:0uszlGPAzY1pwIm0Gv0mck",
+      "title": "Quiet Please, There's A Lady On Stage",
+      "artists": [
+        "Peter Allen"
+      ],
+      "artistIds": [
+        "6748v9yNrbb4PPJuvfoMRa"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Taught By Experts",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e024fa497ca158ff04c1fc0bad6",
+      "year": "1976",
+      "addedAt": "2025-08-28T22:08:47Z",
+      "externalUrl": "https://open.spotify.com/track/0uszlGPAzY1pwIm0Gv0mck",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "523J1JMLbtWDICSVkExN6f",
+      "spotifyTrackId": "523J1JMLbtWDICSVkExN6f",
+      "spotifyTrackUri": "spotify:track:523J1JMLbtWDICSVkExN6f",
+      "title": "Who Will Save Your Soul - Storytellers",
+      "artists": [
+        "Jewel"
+      ],
+      "artistIds": [
+        "6FbDoZnMBTdhhhLuJBOOqP"
+      ],
+      "previewUrl": "",
+      "albumTitle": "VH1 Storytellers",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020a4acd6b111aa9e5f64b8cd2",
+      "year": "2000",
+      "addedAt": "2025-09-16T13:52:54Z",
+      "externalUrl": "https://open.spotify.com/track/523J1JMLbtWDICSVkExN6f",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5Hcl1reJnHIfJBbCcglaKR",
+      "spotifyTrackId": "5Hcl1reJnHIfJBbCcglaKR",
+      "spotifyTrackUri": "spotify:track:5Hcl1reJnHIfJBbCcglaKR",
+      "title": "The Lady In Red",
+      "artists": [
+        "Chris de Burgh"
+      ],
+      "artistIds": [
+        "2RpHsROrX075xfIwHn6B2U"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Into The Light (Reissue)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02dbcf079d622c02f298dca4e7",
+      "year": "1986",
+      "addedAt": "2025-09-17T23:18:26Z",
+      "externalUrl": "https://open.spotify.com/track/5Hcl1reJnHIfJBbCcglaKR",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2zaXKQ2IErjfIGGES2ai6C",
+      "spotifyTrackId": "2zaXKQ2IErjfIGGES2ai6C",
+      "spotifyTrackUri": "spotify:track:2zaXKQ2IErjfIGGES2ai6C",
+      "title": "Goodbye Cruel World",
+      "artists": [
+        "James Darren"
+      ],
+      "artistIds": [
+        "1aRdnBeUqTNY9zdBzOrkvJ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Sings For All Sizes",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f655f412f77199951c29d48d",
+      "year": "1962",
+      "addedAt": "2025-09-18T16:42:48Z",
+      "externalUrl": "https://open.spotify.com/track/2zaXKQ2IErjfIGGES2ai6C",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3d9DChrdc6BOeFsbrZ3Is0",
+      "spotifyTrackId": "3d9DChrdc6BOeFsbrZ3Is0",
+      "spotifyTrackUri": "spotify:track:3d9DChrdc6BOeFsbrZ3Is0",
+      "title": "Under the Bridge",
+      "artists": [
+        "Red Hot Chili Peppers"
+      ],
+      "artistIds": [
+        "0L8ExT028jH3ddEcZwqJJ5"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Blood Sugar Sex Magik (Deluxe Edition)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02153d79816d853f2694b2cc70",
+      "year": "1991",
+      "addedAt": "2025-09-29T22:41:50Z",
+      "externalUrl": "https://open.spotify.com/track/3d9DChrdc6BOeFsbrZ3Is0",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3ox9IGB6RNq5SVwhOkQAiU",
+      "spotifyTrackId": "3ox9IGB6RNq5SVwhOkQAiU",
+      "spotifyTrackUri": "spotify:track:3ox9IGB6RNq5SVwhOkQAiU",
+      "title": "Everybody Plays The Fool",
+      "artists": [
+        "Aaron Neville"
+      ],
+      "artistIds": [
+        "57ALvbCBaCkNlgTOSiUPdT"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Gold",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ac64ed3a0153b6248cca9826",
+      "year": "2008",
+      "addedAt": "2025-11-02T16:57:34Z",
+      "externalUrl": "https://open.spotify.com/track/3ox9IGB6RNq5SVwhOkQAiU",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "06YcuDoEZvMcxgzvtzJTz4",
+      "spotifyTrackId": "06YcuDoEZvMcxgzvtzJTz4",
+      "spotifyTrackUri": "spotify:track:06YcuDoEZvMcxgzvtzJTz4",
+      "title": "Did You Ever Have to Make up Your Mind?",
+      "artists": [
+        "The Lovin' Spoonful"
+      ],
+      "artistIds": [
+        "7CCn4PFRRRZF127jtCBAUe"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Do you Believe In Magic",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e020b6b12fd915f73fce8082de3",
+      "year": "1965",
+      "addedAt": "2025-12-01T17:15:07Z",
+      "externalUrl": "https://open.spotify.com/track/06YcuDoEZvMcxgzvtzJTz4",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6v8mOtpRlXbG3BOauqPRHC",
+      "spotifyTrackId": "6v8mOtpRlXbG3BOauqPRHC",
+      "spotifyTrackUri": "spotify:track:6v8mOtpRlXbG3BOauqPRHC",
+      "title": "Soulful Strut",
+      "artists": [
+        "Young-Holt Unlimited"
+      ],
+      "artistIds": [
+        "5r2DrmyTTiDTQaFz3tyX8W"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Definitive Young-Holt Unlimited",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02d64dfdbeee72c68f207e2576",
+      "year": "2005",
+      "addedAt": "2025-12-05T15:13:35Z",
+      "externalUrl": "https://open.spotify.com/track/6v8mOtpRlXbG3BOauqPRHC",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2OaXVgs8teXTurKZlyB2rC",
+      "spotifyTrackId": "2OaXVgs8teXTurKZlyB2rC",
+      "spotifyTrackUri": "spotify:track:2OaXVgs8teXTurKZlyB2rC",
+      "title": "King Of The Road",
+      "artists": [
+        "Teddy Thompson",
+        "Rufus Wainwright"
+      ],
+      "artistIds": [
+        "1z98aCtgTzyUkAHR50ryFN",
+        "2PfBzriIMRsCXPDtSy9vg8"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Brokeback Mountain Soundtrack",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0248f9b44d24143b8ed9c5427c",
+      "year": "2006",
+      "addedAt": "2025-12-23T21:07:10Z",
+      "externalUrl": "https://open.spotify.com/track/2OaXVgs8teXTurKZlyB2rC",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "0qRSrdDK4xj1doRViNPYwM",
+      "spotifyTrackId": "0qRSrdDK4xj1doRViNPYwM",
+      "spotifyTrackUri": "spotify:track:0qRSrdDK4xj1doRViNPYwM",
+      "title": "Roadrunner (Alternative Version)",
+      "artists": [
+        "The Modern Lovers"
+      ],
+      "artistIds": [
+        "2eRdPaLHWAL4d1WcNUO9Vz"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Modern Lovers (Expanded Version)",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b44ebe6e50148bca8bce584d",
+      "year": "1976",
+      "addedAt": "2026-01-09T19:24:22Z",
+      "externalUrl": "https://open.spotify.com/track/0qRSrdDK4xj1doRViNPYwM",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "6pbUTPNk144OwRGpGD7qti",
+      "spotifyTrackId": "6pbUTPNk144OwRGpGD7qti",
+      "spotifyTrackUri": "spotify:track:6pbUTPNk144OwRGpGD7qti",
+      "title": "Oh Me Oh My (I'm A Fool For You Baby) - 2007 Remastered Version",
+      "artists": [
+        "Lulu"
+      ],
+      "artistIds": [
+        "0jYKX08u1XxmHrl5TdM2QZ"
+      ],
+      "previewUrl": "",
+      "albumTitle": "New Routes",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e027497c7ef04a8160a5895e9b2",
+      "year": "1970",
+      "addedAt": "2026-01-12T17:15:55Z",
+      "externalUrl": "https://open.spotify.com/track/6pbUTPNk144OwRGpGD7qti",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "2SusUbsUQnw8OJDq56ZMbE",
+      "spotifyTrackId": "2SusUbsUQnw8OJDq56ZMbE",
+      "spotifyTrackUri": "spotify:track:2SusUbsUQnw8OJDq56ZMbE",
+      "title": "The Happening",
+      "artists": [
+        "The Supremes"
+      ],
+      "artistIds": [
+        "57bUPid8xztkieZfS7OlEV"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Gold",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0218b4a5305db988a2e9f1dbb9",
+      "year": "2005",
+      "addedAt": "2026-01-20T15:38:00Z",
+      "externalUrl": "https://open.spotify.com/track/2SusUbsUQnw8OJDq56ZMbE",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "3iU9nRZHD5tLx2As8aiUQN",
+      "spotifyTrackId": "3iU9nRZHD5tLx2As8aiUQN",
+      "spotifyTrackUri": "spotify:track:3iU9nRZHD5tLx2As8aiUQN",
+      "title": "Can't Get Used to Losing You",
+      "artists": [
+        "Andy Williams"
+      ],
+      "artistIds": [
+        "4sj6D0zlMOl25nprDJBiU9"
+      ],
+      "previewUrl": "",
+      "albumTitle": "The Essential Andy Williams",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02ff31aec892b192b2032ebaf2",
+      "year": "2013",
+      "addedAt": "2026-01-23T21:09:49Z",
+      "externalUrl": "https://open.spotify.com/track/3iU9nRZHD5tLx2As8aiUQN",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "08M6uUM2Oo1z04GD672eIL",
+      "spotifyTrackId": "08M6uUM2Oo1z04GD672eIL",
+      "spotifyTrackUri": "spotify:track:08M6uUM2Oo1z04GD672eIL",
+      "title": "The Walkin' Blues",
+      "artists": [
+        "Fluffy Hunter"
+      ],
+      "artistIds": [
+        "6cUC1pKCBHriz0LOH57QHW"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Risque Blues - It Ain't The Meat",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0250d931b254e8ea86070bf035",
+      "year": "2001",
+      "addedAt": "2026-01-23T21:10:15Z",
+      "externalUrl": "https://open.spotify.com/track/08M6uUM2Oo1z04GD672eIL",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5XMJBKj01EU7asjQCAlYhu",
+      "spotifyTrackId": "5XMJBKj01EU7asjQCAlYhu",
+      "spotifyTrackUri": "spotify:track:5XMJBKj01EU7asjQCAlYhu",
+      "title": "A Wink and a Smile",
+      "artists": [
+        "Harry Connick, Jr."
+      ],
+      "artistIds": [
+        "6u17YlWtW4oqFF5Hn9UU79"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Sleepless In Seattle: Original Motion Picture Soundtrack",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e0232458fbd27546d25fb27bc44",
+      "year": "1993",
+      "addedAt": "2026-02-03T18:20:27Z",
+      "externalUrl": "https://open.spotify.com/track/5XMJBKj01EU7asjQCAlYhu",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "5oQcOu1omDykbIPSdSQQNJ",
+      "spotifyTrackId": "5oQcOu1omDykbIPSdSQQNJ",
+      "spotifyTrackUri": "spotify:track:5oQcOu1omDykbIPSdSQQNJ",
+      "title": "1985",
+      "artists": [
+        "Bowling For Soup"
+      ],
+      "artistIds": [
+        "5ND0mGcL9SKSjWIjPd0xIb"
+      ],
+      "previewUrl": "",
+      "albumTitle": "A Hangover You Don't Deserve",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02f9b3ece3271d3a5fa73d3759",
+      "year": "2004",
+      "addedAt": "2026-02-13T20:02:33Z",
+      "externalUrl": "https://open.spotify.com/track/5oQcOu1omDykbIPSdSQQNJ",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "4AHU8QRdwCUWxPC53cw4Hh",
+      "spotifyTrackId": "4AHU8QRdwCUWxPC53cw4Hh",
+      "spotifyTrackUri": "spotify:track:4AHU8QRdwCUWxPC53cw4Hh",
+      "title": "Whole Wide World",
+      "artists": [
+        "Wreckless Eric"
+      ],
+      "artistIds": [
+        "46mRV6kvhsGvih0dMKktto"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Wreckless Eric",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e02b0c23e8f6b8f5a89531e1a60",
+      "year": "1978",
+      "addedAt": "2026-02-08T18:06:03Z",
+      "externalUrl": "https://open.spotify.com/track/4AHU8QRdwCUWxPC53cw4Hh",
+      "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
+    },
+    {
+      "id": "7oB0QBEnGRIJjvlDc8YnM6",
+      "spotifyTrackId": "7oB0QBEnGRIJjvlDc8YnM6",
+      "spotifyTrackUri": "spotify:track:7oB0QBEnGRIJjvlDc8YnM6",
+      "title": "Rhapsody in Blue",
+      "artists": [
+        "George Gershwin",
+        "Columbia Symphony Orchestra",
+        "Leonard Bernstein"
+      ],
+      "artistIds": [
+        "1YuknfkSYTTbolRpwZBOv4",
+        "1iNPygduJOu0JnzasoDVLE",
+        "2LmyJyCF5V1eQyvHgJNbTn"
+      ],
+      "previewUrl": "",
+      "albumTitle": "Gershwin: Rhapsody in Blue & An American in Paris",
+      "albumCoverUrl": "https://i.scdn.co/image/ab67616d00001e026b5fddcee4e4163eb9d34fea",
+      "year": "1959",
+      "addedAt": "2026-02-11T15:59:32Z",
+      "externalUrl": "https://open.spotify.com/track/7oB0QBEnGRIJjvlDc8YnM6",
       "sourcePlaylistId": "4X8HWeNNCCc1sdVQA4NQOo"
     }
   ]

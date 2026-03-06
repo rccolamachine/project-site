@@ -25,22 +25,20 @@ import styles from "./mixtape.module.css";
 import useSpotifyPlayer from "./useSpotifyPlayer";
 import {
   formatArtistList,
+  formatPlaylistAddedAt,
   formatSongDate,
   getSpotifyTrackIdFromEntry,
   initialFormState,
   promptForCredentials,
 } from "./mixtapeUtils";
 
-function createInfoTargetFromTrack(track, listNumber = 0) {
+function createInfoTargetFromTrack(track) {
   return {
     title: track?.title || "",
     artist: formatArtistList(track?.artists || track?.artist),
     date: track?.date || "",
+    contextLabel: formatPlaylistAddedAt(track?.addedAt) || "",
     spotifyTrackId: getSpotifyTrackIdFromEntry(track),
-    mixtapeListNumber:
-      Number.isFinite(Number(listNumber)) && Number(listNumber) > 0
-        ? Number(listNumber)
-        : 0,
   };
 }
 
@@ -85,7 +83,6 @@ export default function MixtapeClient() {
     clearPlaybackError,
     closePlayer,
     currentContextLabel,
-    currentListNumber,
     currentTrackId,
     isBootstrappingError,
     playbackError,
@@ -499,7 +496,7 @@ export default function MixtapeClient() {
           throw new Error("Could not resolve a playable Spotify track ID.");
         }
 
-        playTrackById(trackId, listNumber);
+        playTrackById(trackId, formatPlaylistAddedAt(track?.addedAt) || "");
       } catch (err) {
         showPlaybackError(
           err?.message || "Could not resolve a playable Spotify track ID.",
@@ -521,12 +518,12 @@ export default function MixtapeClient() {
       return;
     }
 
-    const listNumber = Number(infoTarget?.mixtapeListNumber || 0);
     const contextLabel =
-      listNumber > 0 ? "" : formatSongDate(infoTarget?.date || "");
+      String(infoTarget?.contextLabel || "").trim() ||
+      formatSongDate(infoTarget?.date || "");
 
     setInfoError("");
-    playTrackById(trackId, listNumber, contextLabel);
+    playTrackById(trackId, contextLabel);
   }, [infoDetails, infoTarget, playTrackById]);
 
   const handleWakeupPlayClick = useCallback(
@@ -540,7 +537,7 @@ export default function MixtapeClient() {
           throw new Error("Could not resolve a playable Spotify track ID.");
         }
 
-        playTrackById(trackId, 0, formatSongDate(song?.date || ""));
+        playTrackById(trackId, formatSongDate(song?.date || ""));
       } catch (err) {
         showPlaybackError(
           err?.message || "Could not resolve a playable Spotify track ID.",
@@ -581,7 +578,7 @@ export default function MixtapeClient() {
         throw new Error("Could not resolve a playable Spotify track ID.");
       }
 
-      return Boolean(playTrackById(trackId, parsedListNumber));
+      return Boolean(playTrackById(trackId, formatPlaylistAddedAt(track?.addedAt) || ""));
     },
     [playTrackById, playlistTotal, resolveTrackIdForPlayback, showPlaybackError],
   );
@@ -603,9 +600,9 @@ export default function MixtapeClient() {
   }, [clearPlaybackError, playTrackByListNumber, playlistTotal, showPlaybackError]);
 
   const handlePlaylistRowClick = useCallback(
-    (track, listNumber = 0) => {
+    (track) => {
       if (!track) return;
-      openSongInfo(createInfoTargetFromTrack(track, listNumber));
+      openSongInfo(createInfoTargetFromTrack(track));
       clearPlaybackError();
     },
     [clearPlaybackError, openSongInfo],
@@ -624,7 +621,6 @@ export default function MixtapeClient() {
 
       <MixtapePlayerCard
         currentContextLabel={currentContextLabel}
-        currentListNumber={currentListNumber}
         currentTrackId={currentTrackId}
         isBootstrappingError={isBootstrappingError}
         playbackError={playbackError}

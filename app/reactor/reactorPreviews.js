@@ -437,11 +437,29 @@ function buildAngleConstraints(atoms, bonds) {
   );
   const constraints = [];
   const guides = [];
+  const localGeometry = [];
 
   for (let center = 0; center < adjacency.length; center += 1) {
     const neighbors = adjacency[center];
     if (neighbors.length < 2) continue;
     const feature = features[center];
+
+    if (feature.geometry === "linear" && neighbors.length === 2) {
+      localGeometry.push({
+        type: "linear",
+        center,
+        neighbors: [neighbors[0].to, neighbors[1].to],
+        stiffness: 0.34,
+      });
+    }
+    if (feature.planar && neighbors.length >= 3) {
+      localGeometry.push({
+        type: "planar",
+        center,
+        neighbors: neighbors.map((row) => row.to),
+        stiffness: feature.aromaticLike ? 0.22 : 0.18,
+      });
+    }
 
     for (let i = 0; i < neighbors.length; i += 1) {
       for (let j = i + 1; j < neighbors.length; j += 1) {
@@ -484,7 +502,7 @@ function buildAngleConstraints(atoms, bonds) {
     }
   }
 
-  return { constraints, features, guides, ringSizes };
+  return { constraints, features, guides, ringSizes, localGeometry };
 }
 
 function defaultDirectionsForGeometry(feature) {
@@ -678,6 +696,91 @@ function countProjectedAnglePenalty(nodes, guides) {
     penalty += diff * (guide.weight || 1);
   }
   return penalty;
+}
+
+function applyLocalGeometryConstraints(nodes, localGeometry, fx, fy, fz, cool) {
+  for (const rule of localGeometry || []) {
+    if (rule.type === "linear" && rule.neighbors.length === 2) {
+      const center = nodes[rule.center];
+      const a = nodes[rule.neighbors[0]];
+      const b = nodes[rule.neighbors[1]];
+
+      const ua = normalizeVec({
+        x: a.x - center.x,
+        y: a.y - center.y,
+        z: a.z - center.z,
+      });
+      const ub = normalizeVec({
+        x: b.x - center.x,
+        y: b.y - center.y,
+        z: b.z - center.z,
+      });
+      const sum = {
+        x: ua.x + ub.x,
+        y: ua.y + ub.y,
+        z: ua.z + ub.z,
+      };
+      const strength = rule.stiffness * cool;
+
+      fx[rule.neighbors[0]] -= sum.x * strength;
+      fy[rule.neighbors[0]] -= sum.y * strength;
+      fz[rule.neighbors[0]] -= sum.z * strength;
+
+      fx[rule.neighbors[1]] -= sum.x * strength;
+      fy[rule.neighbors[1]] -= sum.y * strength;
+      fz[rule.neighbors[1]] -= sum.z * strength;
+
+      fx[rule.center] += sum.x * strength * 2;
+      fy[rule.center] += sum.y * strength * 2;
+      fz[rule.center] += sum.z * strength * 2;
+      continue;
+    }
+
+    if (rule.type === "planar" && rule.neighbors.length >= 3) {
+      const center = nodes[rule.center];
+      const vecs = rule.neighbors.map((idx) => ({
+        idx,
+        x: nodes[idx].x - center.x,
+        y: nodes[idx].y - center.y,
+        z: nodes[idx].z - center.z,
+      }));
+
+      let normal = { x: 0, y: 0, z: 0 };
+      for (let i = 0; i < vecs.length; i += 1) {
+        const a = vecs[i];
+        const b = vecs[(i + 1) % vecs.length];
+        normal = addNormal(normal, crossVec(a, b));
+      }
+
+      const normalLen = vecLength(normal.x, normal.y, normal.z);
+      if (normalLen < 1e-6) continue;
+      const unit = {
+        x: normal.x / normalLen,
+        y: normal.y / normalLen,
+        z: normal.z / normalLen,
+      };
+      const strength = rule.stiffness * cool;
+
+      for (const vec of vecs) {
+        const outOfPlane = vec.x * unit.x + vec.y * unit.y + vec.z * unit.z;
+        fx[vec.idx] -= outOfPlane * unit.x * strength;
+        fy[vec.idx] -= outOfPlane * unit.y * strength;
+        fz[vec.idx] -= outOfPlane * unit.z * strength;
+
+        fx[rule.center] += outOfPlane * unit.x * strength;
+        fy[rule.center] += outOfPlane * unit.y * strength;
+        fz[rule.center] += outOfPlane * unit.z * strength;
+      }
+    }
+  }
+}
+
+function addNormal(a, b) {
+  return {
+    x: a.x + b.x,
+    y: a.y + b.y,
+    z: a.z + b.z,
+  };
 }
 
 function countProjectionOverlap(nodes) {
@@ -976,6 +1079,7 @@ function buildBallStickLayout3D(structure) {
   const n = atoms.length;
   const angleData = buildAngleConstraints(atoms, bonds);
   const angleConstraints = angleData.constraints;
+  const localGeometry = angleData.localGeometry;
   const nodes = buildInitialLayout3D(atoms, bonds, angleData.features);
 
   const vx = Array.from({ length: n }, () => 0);
@@ -1060,11 +1164,13 @@ function buildBallStickLayout3D(structure) {
       fz[center] += (midZ - nodes[center].z) * 0.025 * cool;
     }
 
-  for (let i = 0; i < n; i += 1) {
-    fx[i] += -nodes[i].x * 0.06;
-    fy[i] += -nodes[i].y * 0.06;
-    fz[i] += -nodes[i].z * 0.06;
-  }
+    applyLocalGeometryConstraints(nodes, localGeometry, fx, fy, fz, cool);
+
+    for (let i = 0; i < n; i += 1) {
+      fx[i] += -nodes[i].x * 0.06;
+      fy[i] += -nodes[i].y * 0.06;
+      fz[i] += -nodes[i].z * 0.06;
+    }
 
     for (let i = 0; i < n; i += 1) {
       vx[i] = vx[i] * damp + fx[i] * 0.14 * cool;

@@ -9,7 +9,6 @@ import {
 
 export default function useSpotifyPlayer() {
   const [currentTrackId, setCurrentTrackId] = useState("");
-  const [currentListNumber, setCurrentListNumber] = useState(0);
   const [currentContextLabel, setCurrentContextLabel] = useState("");
   const [isReady, setIsReady] = useState(false);
   const [playbackError, setPlaybackError] = useState("");
@@ -41,7 +40,7 @@ export default function useSpotifyPlayer() {
   }, []);
 
   const playTrackById = useCallback(
-    (spotifyTrackId, listNumber = 0, contextLabel = "") => {
+    (spotifyTrackId, contextLabel = "") => {
       if (!spotifyTrackId) {
         setPlaybackError("This row is missing a valid Spotify track ID.");
         return false;
@@ -50,14 +49,7 @@ export default function useSpotifyPlayer() {
       setPlaybackError("");
       pendingTrackIdRef.current = spotifyTrackId;
       setCurrentTrackId(spotifyTrackId);
-
-      if (Number.isFinite(listNumber) && listNumber > 0) {
-        setCurrentListNumber(listNumber);
-        setCurrentContextLabel("");
-      } else {
-        setCurrentListNumber(0);
-        setCurrentContextLabel(String(contextLabel || "").trim());
-      }
+      setCurrentContextLabel(String(contextLabel || "").trim());
 
       const embedController = embedControllerRef.current;
       if (!embedController) {
@@ -118,7 +110,6 @@ export default function useSpotifyPlayer() {
     clearRetryTimer();
     pendingTrackIdRef.current = "";
     setCurrentTrackId("");
-    setCurrentListNumber(0);
     setCurrentContextLabel("");
     setPlaybackError("");
   }, [clearRetryTimer]);
@@ -268,7 +259,6 @@ export default function useSpotifyPlayer() {
     clearPlaybackError,
     closePlayer,
     currentContextLabel,
-    currentListNumber,
     currentTrackId,
     isBootstrappingError,
     isReady,

@@ -19,7 +19,11 @@ export default function WakeupLogPanel({
           <div className={styles.panelHeaderGrid}>
             <span className={styles.panelTitle}>WAKEUP MIXTAPE LOG</span>
             <div className={`${styles.panelHeaderAction} ui-toolbarActions`}>
-              <button type="button" onClick={onAddSong}>
+              <button
+                type="button"
+                className={styles.headerActionButton}
+                onClick={onAddSong}
+              >
                 Add Song
               </button>
             </div>
@@ -31,6 +35,15 @@ export default function WakeupLogPanel({
             </div>
           </div>
         </div>
+
+        {songs.length > 0 ? (
+          <div className={styles.columnHeaderRow} aria-hidden="true">
+            <span className={styles.columnHeaderDate}>Date Added</span>
+            <span className={styles.columnHeaderSpacer} />
+            <span>Song</span>
+            <span className={styles.columnHeaderArtist}>Artist</span>
+          </div>
+        ) : null}
 
         <div className={`ui-logBody ${styles.tracklistBody}`}>
           {songs.length === 0 ? (

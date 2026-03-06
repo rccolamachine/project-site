@@ -54,7 +54,7 @@ export const SITE_TODO_ITEMS = [
     title: "Reactor: track first and last time each molecule was made",
     area: "Reactor",
     priority: "P2",
-    status: "todo",
+    status: "done",
     notes:
       "Add API endpoints and database storage to record the first and most recent time each molecule was made. Include this shared history in everyone's catalogue.",
     links: [{ label: "Open Reactor", href: "/reactor" }],
@@ -94,7 +94,7 @@ export const SITE_TODO_ITEMS = [
     title: "Mixtape: restore Full Spotify playlist features",
     area: "Mixtape",
     priority: "P1",
-    status: "todo",
+    status: "done",
     notes:
       "After Spotify allows creating a new app/client key again, re-enable and verify Full Mixtape Spotify functionality (playlist loading, lookup/search, and player flow) with live API credentials.",
     links: [{ label: "Open Mixtape", href: "/mixtape" }],

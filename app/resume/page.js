@@ -40,6 +40,11 @@ export default function ResumePage() {
         href: "https://rccolamachine.com",
         printText: "rccolamachine.com",
       },
+      {
+        label: "Email",
+        href: "mailto:rob@mail.rccolamachine.com",
+        printText: "robert.chapleski@gmail.com",
+      },
     ],
     [],
   );
@@ -49,7 +54,7 @@ export default function ResumePage() {
       {
         company: "Accumulus Technologies",
         title: "Senior Test Automation Engineer",
-        right: "Jun 2025 – Sep 2025 · Remote",
+        right: "Jun 2025 - Sep 2025, Remote",
         bullets: [
           "Developed Playwright (TypeScript) automation for complex GraphQL and REST workflows",
           "Improved CI-driven release stability through deterministic API validation and end-to-end test design",
@@ -59,7 +64,7 @@ export default function ResumePage() {
       {
         company: "Unqork",
         title: "Backend Quality Lead",
-        right: "Jul 2021 – Jun 2025 · Remote",
+        right: "Jul 2021 - Jun 2025, Remote",
         bullets: [
           "Led backend quality strategy across five product teams and mentored eight engineers",
           "Designed RBAC validation framework for authentication, authorization, and role expansion",
@@ -71,9 +76,9 @@ export default function ResumePage() {
       },
       {
         company:
-          "Oak Ridge National Laboratory · The University of Tennessee, Knoxville · Virginia Tech",
+          "Oak Ridge National Laboratory / The University of Tennessee, Knoxville / Virginia Tech",
         title: "Computational Chemist & Postdoctoral Research Associate",
-        right: "2012 – 2021",
+        right: "2012 - 2021",
         bullets: [
           "Designed and executed multi-scale atomistic and molecular simulation models on national supercomputing infrastructure",
           "Automated high-throughput computational pipelines for reproducible data transformation and analysis",
@@ -83,7 +88,7 @@ export default function ResumePage() {
       {
         company: "Carroll County Public Schools",
         title: "High School Teacher: Physics & Chemistry",
-        right: "2007 – 2012 · Westminster, MD",
+        right: "2007 - 2012, Westminster, MD",
         bullets: [
           "Taught high school physics and chemistry, designing rigorous curriculum and communicating complex technical concepts clearly",
         ],
@@ -96,7 +101,7 @@ export default function ResumePage() {
     () => [
       {
         company: "Interactive Photobooth Platform",
-        title: "Next.js · React · API Routes · Object Storage",
+        title: "Next.js / React / API Routes / Object Storage",
         href: "https://rccolamachine.com/photobooth",
         printText: "rccolamachine.com/photobooth",
         bullets: [
@@ -107,7 +112,7 @@ export default function ResumePage() {
       },
       {
         company: "Reactive Simulation Sandbox",
-        title: "JavaScript · Systems Modeling",
+        title: "JavaScript / Systems Modeling",
         href: "https://rccolamachine.com/reactor",
         printText: "rccolamachine.com/reactor",
         bullets: [
@@ -134,6 +139,7 @@ export default function ResumePage() {
         .screenOnly {
           display: inline;
         }
+
         .printOnly {
           display: none;
         }
@@ -142,8 +148,13 @@ export default function ResumePage() {
           .screenOnly {
             display: none !important;
           }
+
           .printOnly {
             display: inline !important;
+          }
+
+          .printContactList {
+            display: grid !important;
           }
         }
 
@@ -181,6 +192,10 @@ export default function ResumePage() {
           font-size: 12px;
           line-height: 1.4;
           opacity: 0.9;
+        }
+
+        .printContactList {
+          gap: 2px;
         }
 
         .dot {
@@ -287,9 +302,11 @@ export default function ResumePage() {
           .noPrint {
             display: none !important;
           }
+
           .role {
             break-inside: avoid-page;
           }
+
           a[href]::after {
             content: "" !important;
           }
@@ -313,13 +330,13 @@ export default function ResumePage() {
           <div>
             <div className="resumeName">Rob Chapleski Jr., Ph.D.</div>
             <div className="resumeTitle">
-              Senior Software Engineer · JavaScript Full-Stack · Quality &
+              Senior Software Engineer - JavaScript Full-Stack - Quality &
               Automation
             </div>
           </div>
 
           <div className="resumeContact">
-            <div>United States · Remote</div>
+            <div>United States - Remote</div>
             <div>
               <span className="screenOnly">
                 {LINKS.map((l, idx) => (
@@ -327,17 +344,14 @@ export default function ResumePage() {
                     <a href={l.href} target="_blank" rel="noreferrer noopener">
                       {l.label}
                     </a>
-                    {idx < LINKS.length - 1 && <span className="dot">•</span>}
+                    {idx < LINKS.length - 1 && <span className="dot">&bull;</span>}
                   </React.Fragment>
                 ))}
               </span>
 
-              <span className="printOnly">
-                {LINKS.map((l, idx) => (
-                  <React.Fragment key={l.printText}>
-                    {l.printText}
-                    {idx < LINKS.length - 1 && <span className="dot">•</span>}
-                  </React.Fragment>
+              <span className="printOnly printContactList">
+                {LINKS.map((l) => (
+                  <span key={l.printText}>{l.printText}</span>
                 ))}
               </span>
             </div>
@@ -404,20 +418,21 @@ export default function ResumePage() {
 
         <Section title="Technical Skills">
           <p className="resumeP">
-            JavaScript · TypeScript · Node.js · React · GraphQL · REST · MongoDB
-            · Playwright · Selenium · CodeceptJS · Postman · K6 · GitLab CI ·
-            Datadog · Jira · AI-assisted development tools (ChatGPT, Codex)
+            JavaScript - TypeScript - Node.js - React - GraphQL - REST -
+            MongoDB - Playwright - Selenium - CodeceptJS - Postman - K6 - GitLab
+            CI - Datadog - Jira - AI-assisted development tools (ChatGPT,
+            Codex)
           </p>
         </Section>
 
         <Section title="Education">
           <p className="resumeP">
-            Software Developer Certificate – Fullstack Academy / Virginia Tech
+            Software Developer Certificate - Fullstack Academy / Virginia Tech
             (2024)
             <br />
-            Ph.D. Chemistry – Virginia Tech (2017)
+            Ph.D. Chemistry - Virginia Tech (2017)
             <br />
-            B.S. Chemistry – Towson University Honors College, Summa cum laude
+            B.S. Chemistry - Towson University Honors College, Summa cum laude
             (2007)
           </p>
         </Section>

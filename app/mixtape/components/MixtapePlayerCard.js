@@ -1,12 +1,8 @@
 import styles from "../mixtape.module.css";
 
-function getPlayerLabel(currentContextLabel, currentListNumber) {
+function getPlayerLabel(currentContextLabel) {
   if (currentContextLabel) {
     return `Now queued in player: ${currentContextLabel}`;
-  }
-
-  if (currentListNumber > 0) {
-    return `Now queued in player: ${String(currentListNumber).padStart(3, "0")}`;
   }
 
   return "Now queued in player.";
@@ -14,7 +10,6 @@ function getPlayerLabel(currentContextLabel, currentListNumber) {
 
 export default function MixtapePlayerCard({
   currentContextLabel,
-  currentListNumber,
   currentTrackId,
   isBootstrappingError,
   playbackError,
@@ -34,9 +29,8 @@ export default function MixtapePlayerCard({
       <div className={styles.playerShell}>
         <div className={styles.playerHeader}>
           <div className={styles.playerMeta}>
-            <div className={styles.playerEyebrow}>Spotify Mini Player</div>
             <div className={styles.playerLabel}>
-              {getPlayerLabel(currentContextLabel, currentListNumber)}
+              {getPlayerLabel(currentContextLabel)}
             </div>
           </div>
           <button
