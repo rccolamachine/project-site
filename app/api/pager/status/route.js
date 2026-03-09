@@ -35,7 +35,7 @@ export async function POST(req) {
       );
     }
 
-    const status = getPagerStatus({ text, timestamp });
+    const status = await getPagerStatus({ text, timestamp });
     if (!status) {
       return NextResponse.json(
         {

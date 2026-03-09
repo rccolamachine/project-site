@@ -65,7 +65,7 @@ export async function POST(req) {
       );
     }
 
-    const updated = applyPagerTelemetryEvent({
+    const updated = await applyPagerTelemetryEvent({
       trackingKey,
       text,
       timestamp,

@@ -232,7 +232,7 @@ export async function POST(req) {
       upstreamJson?.timestamp || upstreamJson?.data?.timestamp,
     );
     const trackingTimestamp = upstreamTimestamp || payload.timestamp;
-    upsertPagerAcceptedStatus({
+    await upsertPagerAcceptedStatus({
       text,
       timestamp: trackingTimestamp,
       acceptedAt: new Date().toISOString(),
