@@ -397,44 +397,17 @@ function CreatedTimestampStack({
   return (
     <div
       title={title}
+      className={`reactor-created-stack${isRight ? " is-right" : ""}`}
       style={{
-        minWidth: 0,
-        width: "100%",
-        display: "grid",
-        gap: 1,
-        justifyItems: isRight ? "end" : "start",
-        textAlign: isRight ? "right" : "left",
-        overflow: "hidden",
+        "--reactor-created-label-color": labelColor,
+        "--reactor-created-value-color": valueColor,
       }}
     >
-      <span
-        style={{
-          fontSize: 8,
-          fontWeight: 900,
-          color: labelColor,
-          lineHeight: 1.1,
-        }}
-      >
-        {label}
-      </span>
-      <span
-        style={{
-          fontSize: 8,
-          fontWeight: 800,
-          color: valueColor,
-          lineHeight: 1.1,
-        }}
-      >
+      <span className="reactor-created-stack-label">{label}</span>
+      <span className="reactor-created-stack-value">
         {hasTimestamp ? formatCatalogueDateOnly(timestamp) : "to-do"}
       </span>
-      <span
-        style={{
-          fontSize: 8,
-          fontWeight: 700,
-          color: valueColor,
-          lineHeight: 1.1,
-        }}
-      >
+      <span className="reactor-created-stack-time">
         {hasTimestamp ? formatCatalogueTimeOnly(timestamp) : "\u00A0"}
       </span>
     </div>
@@ -450,17 +423,7 @@ function CreatedTimestampCell({
 }) {
   return (
     <div
-      className="reactor-catalogue-status-wrap"
-      style={{
-        display: "grid",
-        gridTemplateColumns: showMedal
-          ? "minmax(0, 1fr) 32px minmax(0, 1fr)"
-          : "repeat(2, minmax(0, 1fr))",
-        gap: 4,
-        alignItems: "start",
-        justifyItems: "stretch",
-        overflow: "hidden",
-      }}
+      className={`reactor-catalogue-status-wrap reactor-created-cell${showMedal ? " has-medal" : ""}`}
     >
       <CreatedTimestampStack
         label="Me"
@@ -471,28 +434,13 @@ function CreatedTimestampCell({
         valueColor={meTimestamp ? "#166534" : "#64748b"}
       />
       {showMedal ? (
-        <div
-          title="World's First Discoverer"
-          style={{
-            alignSelf: "center",
-            justifySelf: "center",
-            width: 28,
-            height: 28,
-            display: "grid",
-            placeItems: "center",
-          }}
-        >
+        <div title="World's First Discoverer" className="reactor-created-medal-wrap">
           <Image
             src={discovererMedal}
             alt="First discoverer medal"
             width={28}
             height={28}
-            style={{
-              width: 28,
-              height: 28,
-              objectFit: "contain",
-              display: "block",
-            }}
+            className="reactor-created-medal"
           />
         </div>
       ) : null}
@@ -1787,292 +1735,36 @@ export default function ReactorPage() {
 
   const ui = useMemo(
     () => ({
-      canvasCard: {
-        border: "1px solid rgba(15,23,42,0.14)",
-        borderRadius: 14,
-        background: "rgba(255,255,255,0.12)",
-        boxShadow: "0 6px 18px rgba(15,23,42,0.06)",
-        position: "relative",
-        isolation: "isolate",
-        overflow: "hidden",
-      },
-      topBadgeRow: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        marginBottom: 12,
-      },
-      worldUpdateBadge: {
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "6px 10px",
-        borderRadius: 999,
-        border: "1px solid rgba(45,226,230,0.34)",
-        background:
-          "linear-gradient(180deg, rgba(8,12,18,0.94), rgba(4,8,14,0.96))",
-        color: "#99f6e4",
-        fontSize: 12,
-        fontWeight: 700,
-        letterSpacing: 0.2,
-        whiteSpace: "nowrap",
-        boxShadow:
-          "inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 0 10px 1px rgba(45,226,230,0.44), inset 0 0 18px 3px rgba(45,226,230,0.18), 0 18px 42px rgba(2,7,10,0.28)",
-        textShadow: "0 0 8px rgba(153,246,228,0.18)",
-      },
-      controls: {
-        position: "absolute",
-        left: 10,
-        top: 10,
-        width: 420,
-        maxWidth: "min(420px, 92vw)",
-        maxHeight: "calc(100% - 74px)",
-        overflowY: "auto",
-        overflowX: "hidden",
-        borderRadius: 14,
-        border: "1px solid rgba(15,23,42,0.16)",
-        background: "rgba(248,250,252,0.92)",
-        backdropFilter: "blur(6px)",
-        boxShadow: "0 10px 30px rgba(15,23,42,0.18)",
-        padding: 10,
-        pointerEvents: "auto",
-        zIndex: 440,
-      },
-      instructions: {
-        position: "absolute",
-        right: 10,
-        top: 10,
-        width: 360,
-        maxWidth: "min(360px, 92vw)",
-        borderRadius: 14,
-        border: "1px solid rgba(15,23,42,0.16)",
-        background: "rgba(248,250,252,0.92)",
-        backdropFilter: "blur(6px)",
-        boxShadow: "0 10px 24px rgba(15,23,42,0.14)",
-        padding: "10px 10px",
-        pointerEvents: "auto",
-        zIndex: 460,
-      },
-      headerRow: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
-        marginBottom: 8,
-      },
-      title: { fontSize: 12, fontWeight: 950, color: "#0f172a" },
-      titleBtn: {
-        border: "none",
-        background: "transparent",
-        padding: 0,
-        margin: 0,
-        fontSize: 12,
-        fontWeight: 950,
-        color: "#0f172a",
-        cursor: "pointer",
-        textAlign: "left",
-      },
-      sectionTitleBtn: {
-        border: "none",
-        background: "transparent",
-        padding: 0,
-        margin: 0,
-        fontSize: 11,
-        fontWeight: 950,
-        color: "#0f172a",
-        cursor: "pointer",
-        textAlign: "left",
-      },
-
-      btnDark: {
-        padding: "8px 10px",
-        borderRadius: 12,
-        border: "1px solid rgba(15,23,42,0.16)",
-        background:
-          "linear-gradient(180deg, rgba(15,23,42,0.92), rgba(15,23,42,0.82))",
-        color: "rgba(248,250,252,0.98)",
-        cursor: "pointer",
-        fontWeight: 800,
-      },
-      btnLight: {
-        padding: "8px 10px",
-        borderRadius: 12,
-        border: "1px solid rgba(15,23,42,0.16)",
-        background: "rgba(255,255,255,0.92)",
-        color: "#0f172a",
-        cursor: "pointer",
-        fontWeight: 800,
-      },
-      pillBtn: (active, tone = "neutral") => {
-        const isDanger = tone === "danger";
-        const bgActive = isDanger
-          ? "rgba(185,28,28,0.92)"
-          : "rgba(15,23,42,0.86)";
-        return {
-          padding: "7px 10px",
-          borderRadius: 12,
-          border: "1px solid rgba(15,23,42,0.16)",
-          background: active ? bgActive : "rgba(255,255,255,0.92)",
-          color: active ? "rgba(248,250,252,0.98)" : "#0f172a",
-          cursor: "pointer",
-          fontWeight: 900,
-          fontSize: 12,
-        };
-      },
-      select: {
-        padding: 9,
-        borderRadius: 12,
-        border: "1px solid rgba(15,23,42,0.18)",
-        background: "rgba(255,255,255,0.95)",
-        color: "#0f172a",
-        fontWeight: 800,
-        maxWidth: "100%",
-        minWidth: 0,
-      },
-      section: {
-        borderTop: "1px solid rgba(15,23,42,0.12)",
-        paddingTop: 10,
-        marginTop: 10,
-        display: "grid",
-        gap: 8,
-      },
-      row: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
-        minWidth: 0,
-      },
-      hintTitle: { fontSize: 11, fontWeight: 950, color: "#0f172a" },
-      hintText: { fontSize: 11, color: "#475569", lineHeight: 1.35 },
-      floatingShow: {
-        position: "absolute",
-        left: 10,
-        top: 10,
-        pointerEvents: "auto",
-        zIndex: 430,
-      },
-      trendTagShow: {
-        position: "absolute",
-        left: 10,
-        top: 56,
-        display: "grid",
-        justifyItems: "start",
-        gap: 2,
-        pointerEvents: "none",
-        zIndex: 425,
-        opacity: 0.2,
-      },
-      instructionsShow: {
-        position: "absolute",
-        right: 10,
-        top: 10,
-        pointerEvents: "auto",
-        zIndex: 450,
-      },
-      tutorial: {
-        position: "absolute",
-        left: "50%",
-        top: 10,
-        transform: "translateX(-50%)",
-        width: 380,
-        maxWidth: "min(380px, calc(100% - 20px))",
-        borderRadius: 14,
-        border: "1px solid rgba(15,23,42,0.16)",
-        background: "rgba(248,250,252,0.92)",
-        backdropFilter: "blur(6px)",
-        boxShadow: "0 10px 24px rgba(15,23,42,0.14)",
-        padding: "10px 10px",
-        pointerEvents: "auto",
-        zIndex: 470,
-      },
-      tutorialShow: {
-        position: "absolute",
-        left: "50%",
-        top: 10,
-        transform: "translateX(-50%)",
-        pointerEvents: "auto",
-        zIndex: 470,
-      },
-      catalogue: {
-        position: "absolute",
-        right: 10,
-        bottom: 58,
-        width: 820,
-        maxWidth: "min(820px, calc(100% - 20px))",
-        maxHeight: "min(50%, 360px)",
-        overflow: "auto",
-        borderRadius: 14,
-        border: "1px solid rgba(15,23,42,0.16)",
-        background: "rgba(248,250,252,0.92)",
-        backdropFilter: "blur(6px)",
-        boxShadow: "0 10px 24px rgba(15,23,42,0.14)",
-        padding: "10px 10px",
-        pointerEvents: "auto",
-        zIndex: 440,
-      },
-      catalogueShow: {
-        position: "absolute",
-        right: 10,
-        bottom: 58,
-        display: "grid",
-        justifyItems: "end",
-        pointerEvents: "auto",
-        zIndex: 420,
-      },
-      atomCountsShow: {
-        position: "absolute",
-        left: 10,
-        top: "50%",
-        transform: "translateY(-50%)",
-        display: "grid",
-        justifyItems: "start",
-        pointerEvents: "none",
-        zIndex: 8,
-        opacity: 0.2,
-      },
-      thermoShow: {
-        position: "absolute",
-        right: 10,
-        top: "50%",
-        transform: "translateY(-50%)",
-        display: "grid",
-        justifyItems: "end",
-        gap: 6,
-        pointerEvents: "none",
-        zIndex: 8,
-        opacity: 0.2,
-      },
-      liveHud: {
-        position: "absolute",
-        left: 10,
-        right: 10,
-        bottom: 10,
-        display: "flex",
-        alignItems: "flex-end",
-        gap: 8,
-        minHeight: 40,
-        pointerEvents: "none",
-        zIndex: 120,
-      },
-      liveHudControls: {
-        display: "grid",
-        gap: 8,
-        alignContent: "end",
-      },
-      liveHudBar: {
-        flex: 1,
-        alignSelf: "flex-end",
-        borderRadius: 12,
-        border: "1px solid rgba(15,23,42,0.2)",
-        background: "rgba(248,250,252,0.96)",
-        boxShadow: "0 8px 20px rgba(15,23,42,0.16)",
-        padding: "8px 10px",
-        overflow: "hidden",
-        whiteSpace: "nowrap",
-        pointerEvents: "auto",
-      },
+      canvasCard: "reactor-ui-canvas-card",
+      topBadgeRow: "reactor-ui-top-badge-row",
+      worldUpdateBadge: "reactor-ui-world-update-badge",
+      controls: "reactor-ui-controls",
+      instructions: "reactor-ui-instructions",
+      headerRow: "reactor-ui-header-row",
+      title: "reactor-ui-title",
+      titleBtn: "reactor-ui-title-btn",
+      sectionTitleBtn: "reactor-ui-section-title-btn",
+      btnDark: "reactor-ui-btn reactor-ui-btn-dark",
+      btnLight: "reactor-ui-btn reactor-ui-btn-light",
+      pillBtn: (active, tone = "neutral") =>
+        `reactor-ui-pill-btn${active ? " is-active" : ""}${tone === "danger" ? " is-danger" : ""}`,
+      select: "reactor-ui-select",
+      section: "reactor-ui-section",
+      row: "reactor-ui-row",
+      hintTitle: "reactor-ui-hint-title",
+      hintText: "reactor-ui-hint-text",
+      floatingShow: "reactor-ui-floating-show",
+      trendTagShow: "reactor-ui-trend-tag-show",
+      instructionsShow: "reactor-ui-instructions-show",
+      tutorial: "reactor-ui-tutorial",
+      tutorialShow: "reactor-ui-tutorial-show",
+      catalogue: "reactor-ui-catalogue",
+      catalogueShow: "reactor-ui-catalogue-show",
+      atomCountsShow: "reactor-ui-atom-counts-show",
+      thermoShow: "reactor-ui-thermo-show",
+      liveHud: "reactor-ui-live-hud",
+      liveHudControls: "reactor-ui-live-hud-controls",
+      liveHudBar: "reactor-ui-live-hud-bar",
     }),
     [],
   );
@@ -4058,29 +3750,18 @@ export default function ReactorPage() {
       const label = createdSortBadgeLabel(mode);
       return (
         <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            gap: 2,
-            minWidth: 18,
-            marginLeft: 4,
-            color: active ? "#334155" : "#64748b",
-            fontSize: 12,
-            fontWeight: 600,
-            lineHeight: 1,
-            flexShrink: 0,
-          }}
+          className="reactor-sort-arrows reactor-sort-arrows-created"
+          data-active={active ? "true" : "false"}
           aria-hidden="true"
         >
           {active ? (
-            <span style={{ fontSize: 9, fontWeight: 900 }}>{label}</span>
+            <span className="reactor-sort-arrows-badge">{label}</span>
           ) : null}
           {showDown ? (
-            <span style={{ transform: "translateY(1px)" }}>&darr;</span>
+            <span className="reactor-sort-arrow-down">&darr;</span>
           ) : null}
           {showUp ? (
-            <span style={{ transform: "translateY(-1px)" }}>&uarr;</span>
+            <span className="reactor-sort-arrow-up">&uarr;</span>
           ) : null}
         </span>
       );
@@ -4091,26 +3772,15 @@ export default function ReactorPage() {
     const showUp = !active || dir === "asc";
     return (
       <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          gap: 1,
-          minWidth: 14,
-          marginLeft: 4,
-          color: active ? "#334155" : "#64748b",
-          fontSize: 12,
-          fontWeight: 600,
-          lineHeight: 1,
-          flexShrink: 0,
-        }}
+        className="reactor-sort-arrows reactor-sort-arrows-default"
+        data-active={active ? "true" : "false"}
         aria-hidden="true"
       >
         {showDown ? (
-          <span style={{ transform: "translateY(1px)" }}>&darr;</span>
+          <span className="reactor-sort-arrow-down">&darr;</span>
         ) : null}
         {showUp ? (
-          <span style={{ transform: "translateY(-1px)" }}>&uarr;</span>
+          <span className="reactor-sort-arrow-up">&uarr;</span>
         ) : null}
       </span>
     );
@@ -4251,16 +3921,16 @@ export default function ReactorPage() {
           accurate, but close enough for fun and educational molecular play.
         </p>
       </header>
-      <div style={ui.topBadgeRow}>
+      <div className={ui.topBadgeRow}>
         <DesktopBadge />
         <div style={{ minWidth: 0 }}>
           {worldCatalogueBadgeVisible ? (
-            <div style={ui.worldUpdateBadge}>World catalogue updated</div>
+            <div className={ui.worldUpdateBadge}>World catalogue updated</div>
           ) : null}
         </div>
       </div>
 
-      <div ref={canvasCardRef} style={ui.canvasCard}>
+      <div ref={canvasCardRef} className={ui.canvasCard}>
         {/* Controls: top-left */}
         {controlsOpen ? (
           <div
@@ -4270,17 +3940,17 @@ export default function ReactorPage() {
               maxHeight: "calc(100% - 136px)",
             }}
           >
-            <div style={ui.headerRow}>
+            <div className={ui.headerRow}>
               <button
                 onClick={() => setControlsOpen(false)}
-                style={ui.titleBtn}
+                className={ui.titleBtn}
                 title="Close controls panel."
               >
                 Controls
               </button>
               <button
                 onClick={() => setControlsOpen(false)}
-                style={ui.btnLight}
+                className={ui.btnLight}
                 title="Close controls panel."
               >
                 Hide
@@ -4291,21 +3961,21 @@ export default function ReactorPage() {
               <div className="reactor-row-gap-8-wrap">
                 <button
                   onClick={() => setPaused((p) => !p)}
-                  style={ui.btnDark}
+                  className={ui.btnDark}
                   title="Pause or resume physics updates."
                 >
                   {paused ? "Resume" : "Pause"}
                 </button>
                 <button
                   onClick={shake}
-                  style={ui.btnLight}
+                  className={ui.btnLight}
                   title="Apply a random nudge to all atoms."
                 >
                   Shake
                 </button>
                 <button
                   onClick={resetAllControls}
-                  style={ui.btnLight}
+                  className={ui.btnLight}
                   title="Restore reactor/control defaults."
                 >
                   Reset all controls
@@ -4313,7 +3983,7 @@ export default function ReactorPage() {
               </div>
             </div>
 
-            <div style={ui.section}>
+            <div className={ui.section}>
               <div className="reactor-text-11-title">Reactor controls</div>
 
               <MiniSlider
@@ -4354,11 +4024,11 @@ export default function ReactorPage() {
               />
             </div>
 
-            <div style={ui.section}>
-              <div style={ui.row}>
+            <div className={ui.section}>
+              <div className={ui.row}>
                 <button
                   onClick={() => setAutomationOpen((open) => !open)}
-                  style={ui.sectionTitleBtn}
+                  className={ui.sectionTitleBtn}
                   title="Show or hide Reactor automation cycle controls."
                 >
                   Reactor automation cycles
@@ -4367,7 +4037,7 @@ export default function ReactorPage() {
                   {!automationOpen && protocolRunning ? (
                     <button
                       onClick={() => stopControlProtocol("stopped")}
-                      style={ui.btnDark}
+                      className={ui.btnDark}
                       title="Stop the currently running automation protocol."
                     >
                       Stop
@@ -4375,7 +4045,7 @@ export default function ReactorPage() {
                   ) : null}
                   <button
                     onClick={() => setAutomationOpen((open) => !open)}
-                    style={ui.btnLight}
+                    className={ui.btnLight}
                     title="Show or hide Reactor automation cycle controls."
                   >
                     {automationOpen ? "Hide" : "Show"}
@@ -4458,7 +4128,7 @@ export default function ReactorPage() {
                     onFocus={() => setProtocolSelectOpen(true)}
                     onMouseDown={() => setProtocolSelectOpen(true)}
                     onBlur={() => setProtocolSelectOpen(false)}
-                    style={{ ...ui.select, width: "100%" }}
+                    className={`${ui.select} reactor-ui-select-full`}
                     title="Select an automation cycle for reactor control values."
                   >
                     {CONTROL_PROTOCOLS.map((item) => (
@@ -4469,7 +4139,7 @@ export default function ReactorPage() {
                       </option>
                     ))}
                   </select>
-                  <label style={ui.row}>
+                  <label className={ui.row}>
                     <span
                       className="reactor-text-10-muted"
                       title="Automatically restart the protocol when a run completes."
@@ -4483,7 +4153,7 @@ export default function ReactorPage() {
                       title="Repeat completed protocol runs automatically."
                     />
                   </label>
-                  <label style={ui.row}>
+                  <label className={ui.row}>
                     <span
                       className="reactor-text-10-muted"
                       title="Inject preset atom doses while automation runs."
@@ -4499,17 +4169,14 @@ export default function ReactorPage() {
                       title="When enabled, automation injects recipe doses during applicable stages."
                     />
                   </label>
-                  <div
-                    className="reactor-row-gap-8-wrap"
-                    style={{ justifyContent: "center" }}
-                  >
+                  <div className="reactor-row-gap-8-wrap reactor-center-justify">
                     <button
                       onClick={() =>
                         protocolRunning
                           ? stopControlProtocol("stopped")
                           : setProtocolRunning(true)
                       }
-                      style={protocolRunning ? ui.btnDark : ui.btnLight}
+                      className={protocolRunning ? ui.btnDark : ui.btnLight}
                       title={
                         protocolRunning
                           ? "Stop the current protocol run."
@@ -4525,18 +4192,18 @@ export default function ReactorPage() {
               ) : null}
             </div>
 
-            <div style={ui.section}>
-              <div style={ui.row}>
+            <div className={ui.section}>
+              <div className={ui.row}>
                 <button
                   onClick={() => setWellsOpen((open) => !open)}
-                  style={ui.sectionTitleBtn}
+                  className={ui.sectionTitleBtn}
                   title="Show or hide electronics controls."
                 >
                   Electronics controls
                 </button>
                 <button
                   onClick={() => setWellsOpen((s) => !s)}
-                  style={ui.btnLight}
+                  className={ui.btnLight}
                   title="Show or hide electronics controls."
                 >
                   {wellsOpen ? "Hide" : "Show"}
@@ -4545,7 +4212,7 @@ export default function ReactorPage() {
 
               {wellsOpen ? (
                 <>
-                  <label style={ui.row}>
+                  <label className={ui.row}>
                     <span
                       className="reactor-text-12-strong"
                       title="Allow higher bond orders when chemistry rules permit."
@@ -4559,7 +4226,7 @@ export default function ReactorPage() {
                       title="Allow higher bond orders when chemistry rules permit."
                     />
                   </label>
-                  <label style={ui.row}>
+                  <label className={ui.row}>
                     <span
                       className="reactor-text-12-strong"
                       title="Auto-tune force field intensity as local chemistry changes."
@@ -4573,7 +4240,7 @@ export default function ReactorPage() {
                       title="Auto-tune force field intensity as local chemistry changes."
                     />
                   </label>
-                  <div style={ui.row}>
+                  <div className={ui.row}>
                     <div
                       style={{
                         display: "inline-flex",
@@ -4588,7 +4255,7 @@ export default function ReactorPage() {
                       <select
                         value={ljElement}
                         onChange={(e) => setLjElement(e.target.value)}
-                        style={ui.select}
+                        className={ui.select}
                         title="Choose which element's LJ profile to edit."
                       >
                         {ELEMENTS.map((k) => (
@@ -4626,14 +4293,14 @@ export default function ReactorPage() {
             </div>
           </div>
         ) : (
-          <div style={ui.floatingShow}>
-            <button onClick={() => setControlsOpen(true)} style={ui.btnLight}>
+          <div className={ui.floatingShow}>
+            <button onClick={() => setControlsOpen(true)} className={ui.btnLight}>
               Show controls
             </button>
           </div>
         )}
         {statusReadoutRows.length > 0 ? (
-          <div style={ui.trendTagShow}>
+          <div className={ui.trendTagShow}>
             {statusReadoutRows.map((tag, idx) => (
               <div
                 key={`trend-tag-stack-${idx}-${tag}`}
@@ -4664,21 +4331,21 @@ export default function ReactorPage() {
               overflowX: "hidden",
             }}
           >
-            <div style={ui.headerRow}>
+            <div className={ui.headerRow}>
               <button
                 onClick={() => setModeOpen(false)}
-                style={ui.titleBtn}
+                className={ui.titleBtn}
                 title="Close mode panel."
               >
                 Mode
               </button>
-              <button onClick={() => setModeOpen(false)} style={ui.btnLight}>
+              <button onClick={() => setModeOpen(false)} className={ui.btnLight}>
                 Hide
               </button>
             </div>
 
-            <div style={ui.hintTitle}>{instructionText.title}</div>
-            <div style={{ ...ui.hintText, marginTop: 4 }}>
+            <div className={ui.hintTitle}>{instructionText.title}</div>
+            <div className={`${ui.hintText} reactor-mt-4`}>
               {instructionText.lines.map((s, i) => (
                 <div key={i}>{s}</div>
               ))}
@@ -4701,25 +4368,25 @@ export default function ReactorPage() {
                 }}
               >
                 <button
-                  style={ui.pillBtn(tool === TOOL.PLACE)}
+                  className={ui.pillBtn(tool === TOOL.PLACE)}
                   onClick={() => setTool(TOOL.PLACE)}
                 >
                   Place
                 </button>
                 <button
-                  style={ui.pillBtn(tool === TOOL.DELETE, "danger")}
+                  className={ui.pillBtn(tool === TOOL.DELETE, "danger")}
                   onClick={() => setTool(TOOL.DELETE)}
                 >
                   Delete
                 </button>
                 <button
-                  style={ui.pillBtn(tool === TOOL.ROTATE)}
+                  className={ui.pillBtn(tool === TOOL.ROTATE)}
                   onClick={() => setTool(TOOL.ROTATE)}
                 >
                   View
                 </button>
                 <button
-                  style={ui.pillBtn(tool === TOOL.SAVE)}
+                  className={ui.pillBtn(tool === TOOL.SAVE)}
                   onClick={() => setTool(TOOL.SAVE)}
                 >
                   Save
@@ -4728,7 +4395,7 @@ export default function ReactorPage() {
 
               {tool === TOOL.PLACE ? (
                 <>
-                  <div style={ui.row}>
+                  <div className={ui.row}>
                     <span
                       style={{
                         fontSize: 12,
@@ -4742,7 +4409,7 @@ export default function ReactorPage() {
                     <select
                       value={placeElement}
                       onChange={(e) => setPlaceElement(e.target.value)}
-                      style={ui.select}
+                        className={ui.select}
                       title="Select the atom type to place."
                     >
                       {ELEMENTS.map((k) => (
@@ -4753,15 +4420,8 @@ export default function ReactorPage() {
                     </select>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "minmax(0, 1fr) auto",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <div className="reactor-row-gap-8" style={{ minWidth: 0 }}>
+                  <div className="reactor-grid-minmax-auto">
+                    <div className="reactor-row-gap-8 reactor-min-w-0">
                       <span
                         className="reactor-text-12-strong"
                         title="Spawn the selected element into the reactor."
@@ -4796,7 +4456,7 @@ export default function ReactorPage() {
                     </div>
                     <button
                       onClick={() => spawnAtoms(spawnElementCount, "selected")}
-                      style={ui.btnLight}
+                      className={ui.btnLight}
                       disabled={spawnElementCount <= 0}
                       title="Spawn selected-element atoms."
                     >
@@ -4822,7 +4482,7 @@ export default function ReactorPage() {
                         onFocus={() => setSpawnFeedSelectOpen(true)}
                         onMouseDown={() => setSpawnFeedSelectOpen(true)}
                         onBlur={() => setSpawnFeedSelectOpen(false)}
-                        style={{ ...ui.select, width: 220 }}
+                        className={`${ui.select} reactor-ui-select-220`}
                         title={
                           AUTOMATION_FEEDS[spawnFeedType]?.description ||
                           "Choose automation feed recipe."
@@ -4839,7 +4499,7 @@ export default function ReactorPage() {
                     </div>
                     <button
                       onClick={() => spawnAutomationFeed(spawnFeedType)}
-                      style={ui.btnLight}
+                      className={ui.btnLight}
                       title={
                         AUTOMATION_FEEDS[spawnFeedType]?.description ||
                         "Spawn selected automation feed."
@@ -4853,7 +4513,7 @@ export default function ReactorPage() {
 
               {tool === TOOL.DELETE ? (
                 <div className="reactor-grid-gap-8-center">
-                  <button onClick={clearAll} style={ui.btnLight}>
+                  <button onClick={clearAll} className={ui.btnLight}>
                     Clear all atoms
                   </button>
                 </div>
@@ -4861,7 +4521,7 @@ export default function ReactorPage() {
 
               {tool === TOOL.ROTATE ? (
                 <div className="reactor-grid-gap-8-center">
-                  <label style={ui.row}>
+                  <label className={ui.row}>
                     <span className="reactor-text-12-strong">
                       View Box Edges
                     </span>
@@ -4871,7 +4531,7 @@ export default function ReactorPage() {
                       onChange={(e) => setShowBoxEdges(e.target.checked)}
                     />
                   </label>
-                  <label style={ui.row}>
+                  <label className={ui.row}>
                     <span className="reactor-text-12-strong">
                       Visualize Bonds
                     </span>
@@ -4881,7 +4541,7 @@ export default function ReactorPage() {
                       onChange={(e) => setShowBonds(e.target.checked)}
                     />
                   </label>
-                  <label style={ui.row}>
+                  <label className={ui.row}>
                     <span className="reactor-text-12-strong">
                       View Periodic Repeats
                     </span>
@@ -4907,21 +4567,21 @@ export default function ReactorPage() {
                     <button
                       onClick={exportEncryptedCatalogue}
                       disabled={catalogueSaveBusy}
-                      style={ui.btnLight}
+                      className={ui.btnLight}
                     >
                       Export Save JSON
                     </button>
                     <button
                       onClick={triggerCatalogueImportPicker}
                       disabled={catalogueSaveBusy}
-                      style={ui.btnLight}
+                      className={ui.btnLight}
                     >
                       Import Save JSON
                     </button>
                     <button
                       onClick={resetCatalogueProgress}
                       disabled={catalogueSaveBusy}
-                      style={ui.btnLight}
+                      className={ui.btnLight}
                     >
                       Reset Catalogue (Delete Local Save)
                     </button>
@@ -4943,7 +4603,7 @@ export default function ReactorPage() {
               justifyItems: "end",
             }}
           >
-            <button onClick={() => setModeOpen(true)} style={ui.btnLight}>
+            <button onClick={() => setModeOpen(true)} className={ui.btnLight}>
               Show mode
             </button>
             <div
@@ -4980,19 +4640,19 @@ export default function ReactorPage() {
         {tutorialOpen ? (
           <div
             id="tutorial-overlay"
-            style={{ ...ui.tutorial, cursor: "pointer" }}
+            className={`${ui.tutorial} reactor-cursor-pointer`}
             onClick={() => setTutorialOpen(false)}
           >
-            <div style={ui.headerRow}>
-              <div style={ui.title}>Tutorial</div>
+            <div className={ui.headerRow}>
+              <div className={ui.title}>Tutorial</div>
               <button
                 onClick={() => setTutorialOpen(false)}
-                style={ui.btnLight}
+                className={ui.btnLight}
               >
                 Hide
               </button>
             </div>
-            <div style={ui.hintText} className="reactor-grid-gap-4">
+            <div className={`${ui.hintText} reactor-grid-gap-4`}>
               <div>Put atoms in reactor. Mix. See what you made.</div>
               <div>
                 1. Put atoms in reactor. Click inside reactor to place (Mode
@@ -5009,14 +4669,8 @@ export default function ReactorPage() {
               </div>
             </div>
             {!hasEverLocalSave && !starterSeedUsed ? (
-              <div
-                style={{
-                  marginTop: 10,
-                  display: "grid",
-                  justifyItems: "center",
-                }}
-              >
-                <button onClick={onTutorialGetStarted} style={ui.btnDark}>
+              <div className="reactor-mt-10 reactor-grid-center">
+                <button onClick={onTutorialGetStarted} className={ui.btnDark}>
                   Get Started:
                   <br />
                   Spawn 4 oxygens and 8 hydrogens
@@ -5025,8 +4679,8 @@ export default function ReactorPage() {
             ) : null}
           </div>
         ) : (
-          <div id="tutorial-show" style={ui.tutorialShow}>
-            <button onClick={() => setTutorialOpen(true)} style={ui.btnLight}>
+          <div id="tutorial-show" className={ui.tutorialShow}>
+            <button onClick={() => setTutorialOpen(true)} className={ui.btnLight}>
               Show Tutorial
             </button>
           </div>
@@ -5034,11 +4688,11 @@ export default function ReactorPage() {
 
         {/* Rectangle canvas: set explicit height */}
         {catalogueOpen ? (
-          <div id="catalogue-overlay" style={ui.catalogue}>
-            <div style={ui.headerRow}>
+          <div id="catalogue-overlay" className={ui.catalogue}>
+            <div className={ui.headerRow}>
               <button
                 onClick={() => setCatalogueOpen(false)}
-                style={ui.titleBtn}
+                className={ui.titleBtn}
                 title="Close Molecule Catalogue panel."
               >
                 Molecule Catalogue
@@ -5046,7 +4700,7 @@ export default function ReactorPage() {
               <div className="reactor-row-gap-8">
                 <button
                   onClick={() => setCatalogueOpen(false)}
-                  style={ui.btnLight}
+                  className={ui.btnLight}
                 >
                   Hide
                 </button>
@@ -5058,34 +4712,34 @@ export default function ReactorPage() {
               {collectionCompletionPct}%)
             </div>
 
-            <div className="reactor-row-gap-6-wrap" style={{ marginTop: 8 }}>
+            <div className="reactor-row-gap-6-wrap reactor-mt-8">
               <button
                 onClick={() => setCollectionFilter("all")}
-                style={ui.pillBtn(collectionFilter === "all")}
+                className={ui.pillBtn(collectionFilter === "all")}
               >
                 All
               </button>
               <button
                 onClick={() => setCollectionFilter("live")}
-                style={ui.pillBtn(collectionFilter === "live")}
+                className={ui.pillBtn(collectionFilter === "live")}
               >
                 Live
               </button>
               <button
                 onClick={() => setCollectionFilter("collected")}
-                style={ui.pillBtn(collectionFilter === "collected")}
+                className={ui.pillBtn(collectionFilter === "collected")}
               >
                 Catalogued
               </button>
               <button
                 onClick={() => setCollectionFilter("todo")}
-                style={ui.pillBtn(collectionFilter === "todo")}
+                className={ui.pillBtn(collectionFilter === "todo")}
               >
                 To-do
               </button>
             </div>
 
-            <div className="reactor-row-gap-8" style={{ marginTop: 8 }}>
+            <div className="reactor-row-gap-8 reactor-mt-8">
               <input
                 value={collectionQuery}
                 onChange={(e) => setCollectionQuery(e.target.value)}
@@ -5105,13 +4759,13 @@ export default function ReactorPage() {
               <button
                 onClick={() => setCollectionQuery("")}
                 disabled={collectionQuery.length <= 0}
-                style={ui.btnLight}
+                className={ui.btnLight}
               >
                 Clear
               </button>
             </div>
 
-            <div style={{ ...ui.row, marginTop: 8 }}>
+            <div className={`${ui.row} reactor-mt-8`}>
               <div className="reactor-text-11-slate">
                 {visibleCollection.length}/{sortedCollection.length} shown
               </div>
@@ -5120,16 +4774,16 @@ export default function ReactorPage() {
               </div>
             </div>
 
-            <div className="reactor-row-gap-8" style={{ marginTop: 8 }}>
+            <div className="reactor-row-gap-8 reactor-mt-8">
               <button
-                style={ui.btnLight}
+                className={ui.btnLight}
                 onClick={() => setCollectionPage((p) => Math.max(1, p - 1))}
                 disabled={activeCollectionPage <= 1}
               >
                 Prev
               </button>
               <button
-                style={ui.btnLight}
+                className={ui.btnLight}
                 onClick={() =>
                   setCollectionPage((p) => Math.min(collectionPageCount, p + 1))
                 }
@@ -5363,7 +5017,7 @@ export default function ReactorPage() {
             </div>
           </div>
         ) : (
-          <div style={ui.catalogueShow}>
+          <div className={ui.catalogueShow}>
             <div
               style={{
                 marginBottom: 6,
@@ -5409,13 +5063,13 @@ export default function ReactorPage() {
             >
               {`last catalogued: ${lastCataloguedLabel}`}
             </div>
-            <button onClick={() => setCatalogueOpen(true)} style={ui.btnLight}>
+            <button onClick={() => setCatalogueOpen(true)} className={ui.btnLight}>
               Show catalogue
             </button>
           </div>
         )}
 
-        <div style={ui.thermoShow}>
+        <div className={ui.thermoShow}>
           <div
             style={{
               marginBottom: 0,
@@ -5566,7 +5220,7 @@ export default function ReactorPage() {
             ) : null}
           </svg>
         </div>
-        <div style={ui.atomCountsShow}>
+        <div className={ui.atomCountsShow}>
           <div
             style={{
               marginBottom: 8,
@@ -5586,17 +5240,11 @@ export default function ReactorPage() {
           </div>
         </div>
 
-        <div id="live-molecules-overlay" style={ui.liveHud}>
-          <div style={ui.liveHudControls}>
+        <div id="live-molecules-overlay" className={ui.liveHud}>
+          <div className={ui.liveHudControls}>
             <button
               onClick={resetView}
-              style={{
-                ...ui.btnLight,
-                pointerEvents: "auto",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className={`${ui.btnLight} reactor-ui-btn-inline`}
             >
               Reset view
             </button>
@@ -5606,13 +5254,7 @@ export default function ReactorPage() {
                   ? stopControlProtocol("stopped")
                   : setProtocolRunning(true)
               }
-              style={{
-                ...ui.btnLight,
-                pointerEvents: "auto",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className={`${ui.btnLight} reactor-ui-btn-inline`}
               title={
                 protocolRunning
                   ? "Stop the currently running automation protocol."
@@ -5625,18 +5267,12 @@ export default function ReactorPage() {
             </button>
             <button
               onClick={() => setPaused((p) => !p)}
-              style={{
-                ...ui.btnDark,
-                pointerEvents: "auto",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className={`${ui.btnDark} reactor-ui-btn-inline`}
             >
               {paused ? "Resume" : "Pause"}
             </button>
           </div>
-          <div style={ui.liveHudBar}>
+          <div className={ui.liveHudBar}>
             <span className="reactor-text-11-slate" style={{ fontWeight: 900 }}>
               Current species:{" "}
             </span>
@@ -5684,7 +5320,7 @@ export default function ReactorPage() {
               onClick={(e) => e.stopPropagation()}
               className="reactor-expanded-panel"
             >
-              <div style={{ ...ui.row, marginBottom: 8 }}>
+              <div className={`${ui.row} reactor-mb-8`}>
                 <div className="reactor-text-12-strong">
                   {expandedSnapshot.name}
                   {" ("}
@@ -5693,7 +5329,7 @@ export default function ReactorPage() {
                 </div>
                 <button
                   onClick={() => setExpandedSnapshot(null)}
-                  style={ui.btnLight}
+                  className={ui.btnLight}
                 >
                   Close
                 </button>
@@ -5805,18 +5441,12 @@ function MiniSlider({ label, value, min, max, step, onChange, tooltip = "" }) {
   };
 
   return (
-    <label style={{ display: "grid", gap: 4 }} title={tooltip}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 900, color: "#0f172a" }}>
+    <label className="reactor-mini-slider" title={tooltip}>
+      <div className="reactor-mini-slider-row">
+        <span className="reactor-mini-slider-label">
           {label}
         </span>
-        <span
-          style={{
-            fontSize: 11,
-            color: "#334155",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
+        <span className="reactor-mini-slider-value">
           {format()}
         </span>
       </div>
@@ -6002,3 +5632,4 @@ function clamp01(v) {
 function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v));
 }
+

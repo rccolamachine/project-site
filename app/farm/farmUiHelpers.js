@@ -22,7 +22,7 @@ export function ToolButtonIcon({ toolId, size = 14 }) {
       viewBox="0 0 16 16"
       width={size}
       height={size}
-      style={{ imageRendering: "pixelated", shapeRendering: "crispEdges" }}
+      className="farm-pixel-icon"
       aria-hidden="true"
     >
       {rects.map((r, i) => (
@@ -141,16 +141,9 @@ function getToolIconRects(toolId) {
 
 export function Stat({ label, value }) {
   return (
-    <div
-      style={{
-        border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: 12,
-        padding: 10,
-        background: "rgba(0,0,0,0.24)",
-      }}
-    >
-      <div style={{ fontSize: 10, opacity: 0.75 }}>{label}</div>
-      <div style={{ marginTop: 3, fontSize: 12 }}>{value}</div>
+    <div className="farm-stat">
+      <div className="farm-stat-label">{label}</div>
+      <div className="farm-stat-value">{value}</div>
     </div>
   );
 }
@@ -254,14 +247,7 @@ export function TileSprite({ tile, seed, tileIndex = 0, animTick = 0 }) {
     <svg
       viewBox="0 0 16 16"
       preserveAspectRatio="none"
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        imageRendering: "pixelated",
-        shapeRendering: "crispEdges",
-      }}
+      className="farm-sprite-root"
       aria-hidden="true"
     >
       <rect x="0" y="0" width="16" height="16" fill={soil} />
@@ -275,12 +261,7 @@ export function TileSprite({ tile, seed, tileIndex = 0, animTick = 0 }) {
       ) : (
         <>
           <rect x="0" y="12" width="16" height="4" fill={soilBottom} />
-          <g
-            style={{
-              filter:
-                "saturate(1.22) contrast(1.1) drop-shadow(0 0 0.8px rgba(0,0,0,0.45))",
-            }}
-          >
+          <g className="farm-stage-filter">
             {shiftedStageRects.map((r, i) => (
               <rect
                 key={i}
@@ -347,7 +328,7 @@ export function AnimalSprite({ animalId, size = 16 }) {
       viewBox="0 0 16 16"
       width={size}
       height={size}
-      style={{ imageRendering: "pixelated", shapeRendering: "crispEdges" }}
+      className="farm-pixel-icon"
       aria-hidden="true"
     >
       <rect x="0" y="0" width="16" height="16" fill="rgba(0,0,0,0.14)" />

@@ -114,7 +114,8 @@ export default function ValueTimelineChart({ series, meta }) {
               x={padLeft - 6}
               y={tick.y + 3}
               textAnchor="end"
-              style={{ fill: "rgba(234,234,234,0.8)", fontSize: 9 }}
+              fill="rgba(234,234,234,0.8)"
+              fontSize="9"
             >
               {tick.label}
             </text>

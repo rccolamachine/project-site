@@ -40,6 +40,13 @@ const sections = [
         href: "/mixtape",
         cta: "Hear the voices",
       },
+      {
+        title: "Pager",
+        description:
+          "New: 07734! Page Rob, like it was the 90s. Only over the internet.",
+        href: "/pager",
+        cta: "Bleep Bleep",
+      },
     ],
   },
   {
@@ -74,21 +81,6 @@ const sections = [
   },
 ];
 
-const newBadgeStyle = {
-  display: "inline-block",
-  margin: "0 6px 0 2px",
-  padding: "1px 7px",
-  borderRadius: 999,
-  border: "1px solid rgba(255, 207, 92, 0.55)",
-  background: "rgba(52, 36, 16, 0.58)",
-  color: "#ffe4a8",
-  fontSize: 11,
-  fontWeight: 900,
-  letterSpacing: 0.3,
-  lineHeight: 1.25,
-  verticalAlign: "baseline",
-};
-
 function renderDescriptionWithNewBadge(description) {
   const marker = "New:";
   const idx = description.indexOf(marker);
@@ -103,22 +95,12 @@ function renderDescriptionWithNewBadge(description) {
           <br />
         </>
       ) : null}
-      <span style={newBadgeStyle}>NEW</span> {after}
+      <span className="ui-badgeNew">NEW</span> {after}
     </>
   );
 }
 
 export default function Home() {
-  const sectionPanelStyle = {
-    marginTop: 16,
-    padding: 16,
-    borderRadius: 18,
-    border: "1px solid var(--line)",
-    background:
-      "linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02))",
-    boxShadow: "var(--shadow)",
-  };
-
   return (
     <section className="page">
       <header className="homeHero">
@@ -142,16 +124,9 @@ export default function Home() {
       </header>
 
       {sections.map((section) => (
-        <div key={section.title} style={sectionPanelStyle}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              flexWrap: "wrap",
-            }}
-          >
-            <h2 style={{ margin: 0 }}>{section.title}</h2>
+        <div key={section.title} className="homeSectionPanel">
+          <div className="homeSectionHeader">
+            <h2 className="homeSectionTitle">{section.title}</h2>
             {section.title === "Play" ? <DesktopBadge small /> : null}
           </div>
           <div className="cardRow">

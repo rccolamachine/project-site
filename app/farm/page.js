@@ -1308,16 +1308,7 @@ export default function FarmPage() {
                     key={tool.id}
                     onClick={() => setTool(tool.id)}
                     className="farm-tool-button"
-                    style={{
-                      borderColor:
-                        game.selectedTool === tool.id
-                          ? "rgba(255, 243, 175, 0.9)"
-                          : "rgba(255,255,255,0.18)",
-                      background:
-                        game.selectedTool === tool.id
-                          ? "rgba(255, 230, 142, 0.18)"
-                          : "rgba(0,0,0,0.28)",
-                    }}
+                    data-selected={game.selectedTool === tool.id ? "true" : "false"}
                   >
                     <ToolButtonIcon
                       toolId={tool.id}
@@ -1444,11 +1435,7 @@ export default function FarmPage() {
                           }
                         }}
                         className="farm-choice-card"
-                        style={{
-                          background: selected
-                            ? "rgba(124, 255, 182, 0.16)"
-                            : "rgba(0,0,0,0.2)",
-                        }}
+                        data-selected={selected ? "true" : "false"}
                       >
                         <div className="farm-row-between">
                           <div>
@@ -1458,15 +1445,7 @@ export default function FarmPage() {
                             <div className="farm-text-9-80 farm-margin-top-2">
                               Cost:{" "}
                               <span
-                                style={
-                                  cannotAffordMinimum
-                                    ? {
-                                        textDecoration: "line-through",
-                                        textDecorationThickness: "1.4px",
-                                        opacity: 0.72,
-                                      }
-                                    : undefined
-                                }
+                                className={cannotAffordMinimum ? "farm-cost-muted" : ""}
                               >
                                 {costValueLabel}
                               </span>{" "}
@@ -1564,12 +1543,8 @@ export default function FarmPage() {
                         setTool("animals");
                         setAnimalTileAction("place");
                       }}
-                      style={{
-                        borderColor:
-                          animalTileAction === "place"
-                            ? "rgba(255, 243, 175, 0.9)"
-                            : undefined,
-                      }}
+                      className="farm-auto-toggle-btn"
+                      data-active={animalTileAction === "place" ? "true" : "false"}
                     >
                       Place Mode
                     </button>
@@ -1578,12 +1553,8 @@ export default function FarmPage() {
                         setTool("animals");
                         setAnimalTileAction("clearAll");
                       }}
-                      style={{
-                        borderColor:
-                          animalTileAction === "clearAll"
-                            ? "rgba(255, 243, 175, 0.9)"
-                            : undefined,
-                      }}
+                      className="farm-auto-toggle-btn"
+                      data-active={animalTileAction === "clearAll" ? "true" : "false"}
                     >
                       Clear Tile Mode
                     </button>
@@ -1648,11 +1619,7 @@ export default function FarmPage() {
                           }
                         }}
                         className="farm-choice-card"
-                        style={{
-                          background: selected
-                            ? "rgba(124, 255, 182, 0.16)"
-                            : "rgba(0,0,0,0.2)",
-                        }}
+                        data-selected={selected ? "true" : "false"}
                       >
                         <div className="farm-row-between">
                           <div>
@@ -1930,11 +1897,8 @@ export default function FarmPage() {
                                   )
                                 }
                                 disabled={!canAffordSelectedAutomationUnit}
-                                style={{
-                                  borderColor: buySelected
-                                    ? "rgba(255,243,175,0.9)"
-                                    : undefined,
-                                }}
+                                className="farm-auto-toggle-btn"
+                                data-active={buySelected ? "true" : "false"}
                               >
                                 Buy Auto-
                                 {selectedAutoLabel}
@@ -1948,11 +1912,8 @@ export default function FarmPage() {
                                   )
                                 }
                                 disabled={!canCancelSelectedAutomation}
-                                style={{
-                                  borderColor: cancelSelected
-                                    ? "rgba(255,243,175,0.9)"
-                                    : undefined,
-                                }}
+                                className="farm-auto-toggle-btn"
+                                data-active={cancelSelected ? "true" : "false"}
                               >
                                 Cancel Auto-
                                 {selectedAutoLabel} (non-refundable)
@@ -2222,14 +2183,10 @@ export default function FarmPage() {
                       canHarvest,
                       game,
                     )}
+                    className="farm-grid-button"
                     style={{
-                      aspectRatio: "1 / 1",
-                      minHeight: 44,
-                      padding: 0,
-                      borderRadius: 4,
-                      overflow: "hidden",
-                      position: "relative",
-                      border: tile.autoEverything
+                      "--farm-tile-bg": tileColor(tile),
+                      "--farm-tile-border": tile.autoEverything
                         ? "1px solid rgba(126, 255, 180, 0.95)"
                         : tile.autoPlow ||
                             tile.autoWater ||
@@ -2237,17 +2194,12 @@ export default function FarmPage() {
                             tile.autoHarvest
                           ? "1px solid rgba(138, 196, 255, 0.95)"
                           : "1px solid rgba(0,0,0,0.45)",
-                      outline: isPreview
+                      "--farm-tile-outline": isPreview
                         ? "2px solid rgba(255, 240, 142, 0.95)"
                         : "none",
-                      outlineOffset: -2,
-                      fontSize: 7,
-                      lineHeight: 1,
-                      display: "grid",
-                      placeItems: "center",
-                      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
-                      imageRendering: "pixelated",
-                      background: tileColor(tile),
+                      "--farm-top-label-font-size": `${topLabelFontSize}px`,
+                      "--farm-progress-label-font-size": `${progressLabelFontSize}px`,
+                      "--farm-blocker-label-font-size": `${blockerLabelFontSize}px`,
                     }}
                   >
                     <TileSprite
@@ -2257,30 +2209,17 @@ export default function FarmPage() {
                       animTick={animTick}
                     />
                     <span className="farm-tile-overlay">
-                      <span
-                        className="farm-tile-label-top"
-                        style={{
-                          fontSize: topLabelFontSize,
-                        }}
-                      >
+                      <span className="farm-tile-label-top">
                         {seedTagLines.map((line, i) => (
                           <span key={`${idx}-seed-${i}`}>{line}</span>
                         ))}
                       </span>
                       {showTileValueTags || canHarvest ? (
-                        <span
-                          className="farm-tile-label-progress"
-                          style={{ fontSize: progressLabelFontSize }}
-                        >
+                        <span className="farm-tile-label-progress">
                           {progressTag}
                         </span>
                       ) : null}
-                      <span
-                        className="farm-tile-label-blocker"
-                        style={{
-                          fontSize: blockerLabelFontSize,
-                        }}
-                      >
+                      <span className="farm-tile-label-blocker">
                         {blockerLines.map((line, i) => (
                           <span key={`${idx}-blk-${i}`}>{line}</span>
                         ))}
@@ -2333,14 +2272,7 @@ export default function FarmPage() {
                       key={filter.id}
                       onClick={() => setLogFilter(filter.id)}
                       className="farm-filter-btn"
-                      style={{
-                        borderColor: selected
-                          ? "rgba(255, 243, 175, 0.92)"
-                          : "rgba(255,255,255,0.2)",
-                        background: selected
-                          ? "rgba(255, 230, 142, 0.16)"
-                          : "rgba(0,0,0,0.2)",
-                      }}
+                      data-selected={selected ? "true" : "false"}
                     >
                       {filter.label}
                     </button>
@@ -2369,8 +2301,8 @@ export default function FarmPage() {
                     return (
                       <div key={entry.id} className="farm-log-item">
                         <span
-                          className="farm-log-time"
-                          style={{ color: toneColor }}
+                          className="farm-log-time farm-log-time-tone"
+                          style={{ "--farm-tone-color": toneColor }}
                         >
                           {formatLogClock(entry.at)}
                         </span>

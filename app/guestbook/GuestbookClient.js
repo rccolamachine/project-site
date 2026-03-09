@@ -98,7 +98,7 @@ export default function GuestbookClient({ refreshToken = 0 }) {
         <div className="card ui-errorCard">
           <div>Failed to load</div>
           <div className="ui-errorDetail">{loadError}</div>
-          <div style={{ marginTop: 10 }}>
+          <div className="ui-mt10">
             <button onClick={fetchItems} disabled={loading}>
               Retry
             </button>
@@ -140,7 +140,7 @@ export default function GuestbookClient({ refreshToken = 0 }) {
                 className={`ui-galleryCaption${hasImage ? "" : " ui-galleryCaptionBorder"}`}
               >
                 <div className="ui-galleryHeader">
-                  <div style={{ fontWeight: 700 }}>{item.name || "Guest"}</div>
+                  <div className="ui-galleryName">{item.name || "Guest"}</div>
                   <div className="ui-spacer ui-metaText">
                     {formatDate(item.created_at || item.uploadedAt)}
                   </div>
@@ -197,7 +197,7 @@ export default function GuestbookClient({ refreshToken = 0 }) {
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="ui-modalHeader">
-              <div style={{ fontWeight: 700 }}>{expandedItem.name || "Guest"}</div>
+              <div className="ui-galleryName">{expandedItem.name || "Guest"}</div>
               <div className="ui-metaText">
                 {formatDate(expandedItem.created_at || expandedItem.uploadedAt)}
               </div>

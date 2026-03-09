@@ -270,7 +270,7 @@ export default function AboutPage() {
         {/* Explore */}
         <div className="card aboutCard aboutWide">
           <h2>Explore</h2>
-          <p className="aboutSubtle" style={{ marginTop: 0 }}>
+          <p className="aboutSubtle aboutSubtleTop">
             The site is one cohesive toybox. Here are the main rooms:
           </p>
 
@@ -284,7 +284,7 @@ export default function AboutPage() {
             ))}
           </div>
 
-          <p className="lede" style={{ marginTop: 12 }}>
+          <p className="lede aboutLedeFollowup">
             Part portfolio, part lab, part snackable little universe.
           </p>
         </div>

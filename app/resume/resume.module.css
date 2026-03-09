@@ -1,0 +1,170 @@
+.resumeTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.screenOnly {
+  display: inline;
+}
+
+.printOnly {
+  display: none;
+}
+
+.noPrint {
+  display: block;
+}
+
+.resumePaper {
+  background: #fff;
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.resumeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding-bottom: 12px;
+}
+
+.resumeName {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.resumeTitle {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.resumeContact {
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.printContactList {
+  gap: 2px;
+}
+
+.dot {
+  margin: 0 8px;
+  opacity: 0.65;
+}
+
+.section {
+  margin-top: 16px;
+}
+
+.resumeH2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.resumeP {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.competencies {
+  margin: 0;
+  padding-left: 18px;
+  columns: 2;
+  column-gap: 26px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.role {
+  margin-top: 14px;
+}
+
+.roleTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.roleCompany {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.roleTitle {
+  font-weight: 600;
+  font-size: 12.5px;
+  opacity: 0.92;
+}
+
+.roleRight {
+  text-align: right;
+  font-size: 12px;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.roleBullets {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.resumePaper a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+
+.resumePaper a:hover,
+.resumePaper a:focus-visible {
+  color: #8fe8ff;
+  text-decoration: underline;
+}
+
+@media print {
+  .screenOnly {
+    display: none !important;
+  }
+
+  .printOnly {
+    display: inline !important;
+  }
+
+  .printContactList {
+    display: grid !important;
+  }
+
+  .noPrint {
+    display: none !important;
+  }
+
+  .role {
+    break-inside: avoid-page;
+  }
+
+  .resumePaper a[href]::after {
+    content: "" !important;
+  }
+}
+
+@page {
+  size: letter;
+  margin: 0;
+}

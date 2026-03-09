@@ -12,6 +12,10 @@
   --cyan: #2de2e6;
   --purple: #8a5cff;
   --yellow: #ffe66d;
+  --gold: #ffe4a8;
+  --danger: #ffb4b4;
+  --success: #c7ffd1;
+  --warning: #ffd27d;
 
   --accent: var(--cyan);
   --accent2: var(--pink);
@@ -551,11 +555,48 @@ textarea::placeholder {
 }
 
 .ui-feedback[data-tone="warning"] {
-  color: #ffd27d;
+  color: var(--warning);
 }
 
 .ui-feedback[data-tone="success"] {
-  color: #c7ffd1;
+  color: var(--success);
+}
+
+.ui-badgeNew {
+  display: inline-block;
+  margin: 0 6px 0 2px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 207, 92, 0.55);
+  background: rgba(52, 36, 16, 0.58);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  line-height: 1.25;
+  vertical-align: baseline;
+}
+
+.ui-desktopBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 207, 92, 0.55);
+  background: rgba(52, 36, 16, 0.58);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.ui-desktopBadgeSmall {
+  margin-bottom: 0;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
 }
 
 .ui-pillRow {
@@ -643,6 +684,86 @@ textarea::placeholder {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.ui-btnFixed40 {
+  height: 40px;
+  line-height: 1;
+}
+
+.ui-inputTall {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.ui-textStrong {
+  font-weight: 700;
+}
+
+.ui-mt0 {
+  margin-top: 0;
+}
+
+.ui-mt10 {
+  margin-top: 10px;
+}
+
+.ui-mt16 {
+  margin-top: 16px;
+}
+
+.ui-mb12 {
+  margin-bottom: 12px;
+}
+
+.ui-mlAuto {
+  margin-left: auto;
+}
+
+.ui-textRight {
+  text-align: right;
+}
+
+.ui-noTransform,
+.ui-noTransform:hover,
+.ui-noTransform:active {
+  transform: none;
+}
+
+.ui-cardDone {
+  opacity: 0.65;
+}
+
+.ui-minWidth260 {
+  min-width: 260px;
+}
+
+.ui-galleryName {
+  font-weight: 700;
+}
+
+.homeSectionPanel {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.02)
+  );
+  box-shadow: var(--shadow);
+}
+
+.homeSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.homeSectionTitle {
+  margin: 0;
 }
 
 .guestbookCtaRow {
@@ -1095,5 +1216,30 @@ textarea::placeholder {
   }
   .printOnly {
     display: inline !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.print-resume * {
+    visibility: hidden !important;
+  }
+
+  body.print-resume .resumePrintTarget,
+  body.print-resume .resumePrintTarget * {
+    visibility: visible !important;
+  }
+
+  body.print-resume .resumePrintTarget {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0.6in !important;
   }
 }

@@ -1,0 +1,213 @@
+.stage {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: #000;
+  user-select: none;
+}
+
+.bgCanvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter: grayscale(1);
+  -webkit-filter: grayscale(1);
+}
+
+.contentShell {
+  position: relative;
+  z-index: 1;
+  padding: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.actionsRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  width: auto;
+  height: 40px;
+  padding: 0 10px;
+  line-height: 1;
+  text-align: center;
+  justify-content: center;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.actionBtn:hover {
+  color: var(--text);
+}
+
+.modeMeta {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.saveFeedback {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.sliderSection {
+  margin-bottom: 12px;
+}
+
+.sliderSectionFrozen {
+  opacity: 0.6;
+}
+
+.sliderLabel {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.frozenHint {
+  margin-left: 8px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.pixelSliderWrap {
+  padding: 0;
+}
+
+.pixelSlider {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.pixelSlider:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.pixelSlider:focus-visible {
+  box-shadow: none;
+  outline: none;
+}
+
+.pixelSlider::-webkit-slider-runnable-track {
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.14) 0 6px,
+      rgba(255, 255, 255, 0.02) 6px 12px
+    ),
+    linear-gradient(90deg, rgba(45, 226, 230, 0.32), rgba(24, 118, 128, 0.32)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.26));
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
+}
+
+.pixelSlider::-moz-range-track {
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.14) 0 6px,
+      rgba(255, 255, 255, 0.02) 6px 12px
+    ),
+    linear-gradient(90deg, rgba(45, 226, 230, 0.32), rgba(24, 118, 128, 0.32)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.26));
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
+}
+
+.pixelSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -3px;
+  border: 2px solid rgba(0, 0, 0, 0.85);
+  border-radius: 0;
+  background: linear-gradient(180deg, var(--accent2), var(--accent)), #fff;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.16),
+    4px 4px 0 rgba(0, 0, 0, 0.4);
+}
+
+.pixelSlider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(0, 0, 0, 0.85);
+  border-radius: 0;
+  background: linear-gradient(180deg, var(--accent2), var(--accent)), #fff;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.16),
+    4px 4px 0 rgba(0, 0, 0, 0.4);
+}
+
+.pixelSlider::-moz-range-progress {
+  height: 18px;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.16) 0 6px,
+      rgba(255, 255, 255, 0.03) 6px 12px
+    ),
+    linear-gradient(90deg, rgba(255, 79, 216, 0.84), rgba(45, 226, 230, 0.84));
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.28);
+}
+
+.hiddenVideo {
+  display: none;
+}
+
+.canvasFrame {
+  border-radius: 0;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+  cursor: default;
+  line-height: 0;
+  font-size: 0;
+  transform: translateZ(0);
+}
+
+.canvasFrameSnapped {
+  cursor: grab;
+}
+
+.renderCanvas {
+  width: 100%;
+  height: var(--pixelbooth-canvas-height, auto);
+  display: block;
+  background: #000;
+  image-rendering: pixelated;
+  filter: grayscale(1);
+  -webkit-filter: grayscale(1);
+}
+
+@media (max-width: 700px) {
+  .modeMeta {
+    margin-left: 0;
+    width: 100%;
+  }
+}

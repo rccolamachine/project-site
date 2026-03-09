@@ -284,7 +284,7 @@ export default function ButtonGamePage() {
 
       <div className={styles.statsInner}>
         <div className={styles.statsGrid}>
-          <div className="card" style={{ textAlign: "right" }}>
+          <div className={`card ${styles.metricCardRight}`}>
             <div className={styles.metricLabel}>Current</div>
             <div className={`${styles.metricValue} ${styles.metricValueCurrent}`}>
               {displayValue}
@@ -301,7 +301,7 @@ export default function ButtonGamePage() {
           <div className="card">
             <div className={styles.chartHeader}>
               <span className={styles.chartTitle}>
-                <span className={styles.newBadge}>NEW</span>
+                <span className="ui-badgeNew">NEW</span>
                 <span className={styles.metricLabel}>Count over time</span>
               </span>
 

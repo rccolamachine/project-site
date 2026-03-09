@@ -256,14 +256,7 @@ export default function ResetModal({ isOpen, currentValue, onClose, onSubmitted 
             <video ref={videoRef} playsInline muted className={styles.hiddenVideo} />
 
             <div className={styles.cameraFrame}>
-              <canvas
-                ref={liveCanvasRef}
-                className={styles.liveCanvas}
-                style={{
-                  filter: "grayscale(1)",
-                  WebkitFilter: "grayscale(1)",
-                }}
-              />
+              <canvas ref={liveCanvasRef} className={styles.liveCanvasFiltered} />
             </div>
 
             <canvas ref={snapCanvasRef} className={styles.hiddenCanvas} />

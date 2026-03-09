@@ -142,9 +142,9 @@ export const SITE_TODO_ITEMS = [
     title: "Add Pager page",
     area: "General",
     priority: "P3",
-    status: "todo",
+    status: "done",
     notes:
-      "I have some POCSAG, FLEX, and Zebra pagers that I'd like to get working with Javascript SDKs. Hope to chronicle my efforts.",
+      "POCSAG pager flow is now implemented with a dedicated page and API wiring. FLEX and Zebra are deferred for now.",
   },
   {
     id: "add-print-postcard-functionality",
@@ -155,6 +155,15 @@ export const SITE_TODO_ITEMS = [
     notes:
       "Add CUPS printing support to the Pixelbooth app. Users will be able to print their photos as postcards directly from the browser to a thermal printer in Rob's apartment.",
     links: [{ label: "Open Pixelbooth", href: "/pixelbooth" }],
+  },
+  {
+    id: "auth-users-and-permissions",
+    title: "Add users/auth system with permissions",
+    area: "General",
+    priority: "P1",
+    status: "todo",
+    notes:
+      "Create user accounts + authentication so user saves can be stored server-side by user. Add role/permission checks for protected endpoints/features (for example: sending pager messages and future printing actions).",
   },
   {
     id: "pixelbooth-style-upgrade",

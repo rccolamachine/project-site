@@ -40,6 +40,14 @@
   margin: 0 0 12px;
 }
 
+.aboutSubtleTop {
+  margin-top: 0;
+}
+
+.aboutLedeFollowup {
+  margin-top: 12px;
+}
+
 /* Tag chips */
 .aboutTags {
   display: flex;

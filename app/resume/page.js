@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef } from "react";
-
-const SECTION_GAP = 16;
+import styles from "./resume.module.css";
 
 export default function ResumePage() {
   const paperRef = useRef(null);
@@ -126,230 +125,40 @@ export default function ResumePage() {
 
   return (
     <section className="page resumePage">
-      <style jsx global>{`
-        .resumeTopBar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 16px;
-          flex-wrap: wrap;
-        }
-
-        .screenOnly {
-          display: inline;
-        }
-
-        .printOnly {
-          display: none;
-        }
-
-        @media print {
-          .screenOnly {
-            display: none !important;
-          }
-
-          .printOnly {
-            display: inline !important;
-          }
-
-          .printContactList {
-            display: grid !important;
-          }
-        }
-
-        .resumePaper {
-          background: #fff;
-          color: #000;
-          border: 1px solid rgba(0, 0, 0, 0.12);
-          border-radius: 12px;
-          padding: 22px;
-        }
-
-        .resumeHeader {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 18px;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-          padding-bottom: 12px;
-        }
-
-        .resumeName {
-          font-size: 22px;
-          font-weight: 800;
-          margin-bottom: 2px;
-        }
-
-        .resumeTitle {
-          font-size: 13px;
-          font-weight: 600;
-          opacity: 0.9;
-        }
-
-        .resumeContact {
-          text-align: right;
-          font-size: 12px;
-          line-height: 1.4;
-          opacity: 0.9;
-        }
-
-        .printContactList {
-          gap: 2px;
-        }
-
-        .dot {
-          margin: 0 8px;
-          opacity: 0.65;
-        }
-
-        .resumeH2 {
-          margin: 0 0 8px;
-          font-size: 13px;
-          text-transform: uppercase;
-          font-weight: 800;
-        }
-
-        .resumeP {
-          margin: 0;
-          font-size: 12.5px;
-          line-height: 1.55;
-        }
-
-        .competencies {
-          margin: 0;
-          padding-left: 18px;
-          columns: 2;
-          column-gap: 26px;
-          font-size: 12.5px;
-          line-height: 1.5;
-        }
-
-        .role {
-          margin-top: 14px;
-        }
-
-        .roleTop {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
-          align-items: baseline;
-        }
-
-        .roleCompany {
-          font-weight: 800;
-          font-size: 13px;
-        }
-
-        .roleTitle {
-          font-weight: 600;
-          font-size: 12.5px;
-          opacity: 0.92;
-        }
-
-        .roleRight {
-          text-align: right;
-          font-size: 12px;
-          opacity: 0.9;
-          white-space: nowrap;
-        }
-
-        .roleBullets {
-          margin: 6px 0 0;
-          padding-left: 18px;
-          font-size: 12.5px;
-          line-height: 1.5;
-        }
-
-        .resumePaper a {
-          color: inherit;
-          text-decoration: none;
-          transition: color 120ms ease;
-        }
-
-        .resumePaper a:hover,
-        .resumePaper a:focus-visible {
-          color: #8fe8ff;
-          text-decoration: underline;
-        }
-
-        @media print {
-          html,
-          body {
-            background: #fff !important;
-            color: #000 !important;
-          }
-
-          body.print-resume * {
-            visibility: hidden !important;
-          }
-
-          body.print-resume .resumePaper,
-          body.print-resume .resumePaper * {
-            visibility: visible !important;
-          }
-
-          body.print-resume .resumePaper {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            border: none !important;
-            border-radius: 0 !important;
-            padding: 0.6in !important;
-          }
-
-          .noPrint {
-            display: none !important;
-          }
-
-          .role {
-            break-inside: avoid-page;
-          }
-
-          a[href]::after {
-            content: "" !important;
-          }
-        }
-
-        @page {
-          size: letter;
-          margin: 0;
-        }
-      `}</style>
-
-      <header className="noPrint resumeTopBar">
+      <header className={`${styles.noPrint} ${styles.resumeTopBar}`}>
         <h1>Resume</h1>
         <button className="btn" onClick={downloadPDF}>
           Download PDF
         </button>
       </header>
 
-      <article className="resumePaper" ref={paperRef}>
-        <header className="resumeHeader">
+      <article className={`${styles.resumePaper} resumePrintTarget`} ref={paperRef}>
+        <header className={styles.resumeHeader}>
           <div>
-            <div className="resumeName">Rob Chapleski Jr., Ph.D.</div>
-            <div className="resumeTitle">
+            <div className={styles.resumeName}>Rob Chapleski Jr., Ph.D.</div>
+            <div className={styles.resumeTitle}>
               Senior Software Engineer - JavaScript Full-Stack - Quality &
               Automation
             </div>
           </div>
 
-          <div className="resumeContact">
+          <div className={styles.resumeContact}>
             <div>United States - Remote</div>
             <div>
-              <span className="screenOnly">
+              <span className={styles.screenOnly}>
                 {LINKS.map((l, idx) => (
                   <React.Fragment key={l.href}>
                     <a href={l.href} target="_blank" rel="noreferrer noopener">
                       {l.label}
                     </a>
-                    {idx < LINKS.length - 1 && <span className="dot">&bull;</span>}
+                    {idx < LINKS.length - 1 && (
+                      <span className={styles.dot}>&bull;</span>
+                    )}
                   </React.Fragment>
                 ))}
               </span>
 
-              <span className="printOnly printContactList">
+              <span className={`${styles.printOnly} ${styles.printContactList}`}>
                 {LINKS.map((l) => (
                   <span key={l.printText}>{l.printText}</span>
                 ))}
@@ -359,7 +168,7 @@ export default function ResumePage() {
         </header>
 
         <Section title="Professional Summary">
-          <p className="resumeP">
+          <p className={styles.resumeP}>
             Software Developer with expertise in automation architecture, API
             design and validation, CI/CD systems, and distributed platform
             quality. Experienced collaborating across engineering teams to
@@ -371,7 +180,7 @@ export default function ResumePage() {
         </Section>
 
         <Section title="Core Competencies">
-          <ul className="competencies">
+          <ul className={styles.competencies}>
             <li>Full-stack JavaScript (React, Node.js)</li>
             <li>Automation framework architecture</li>
             <li>API validation (REST, GraphQL, OpenAPI)</li>
@@ -403,12 +212,12 @@ export default function ResumePage() {
               title={p.title}
               right={
                 <>
-                  <span className="screenOnly">
+                  <span className={styles.screenOnly}>
                     <a href={p.href} target="_blank" rel="noreferrer noopener">
                       {p.printText}
                     </a>
                   </span>
-                  <span className="printOnly">{p.printText}</span>
+                  <span className={styles.printOnly}>{p.printText}</span>
                 </>
               }
               bullets={p.bullets}
@@ -417,7 +226,7 @@ export default function ResumePage() {
         </Section>
 
         <Section title="Technical Skills">
-          <p className="resumeP">
+          <p className={styles.resumeP}>
             JavaScript - TypeScript - Node.js - React - GraphQL - REST -
             MongoDB - Playwright - Selenium - CodeceptJS - Postman - K6 - GitLab
             CI - Datadog - Jira - AI-assisted development tools (ChatGPT,
@@ -426,7 +235,7 @@ export default function ResumePage() {
         </Section>
 
         <Section title="Education">
-          <p className="resumeP">
+          <p className={styles.resumeP}>
             Software Developer Certificate - Fullstack Academy / Virginia Tech
             (2024)
             <br />
@@ -443,8 +252,8 @@ export default function ResumePage() {
 
 function Section({ title, children }) {
   return (
-    <section style={{ marginTop: SECTION_GAP }}>
-      <h2 className="resumeH2">{title}</h2>
+    <section className={styles.section}>
+      <h2 className={styles.resumeH2}>{title}</h2>
       {children}
     </section>
   );
@@ -452,15 +261,15 @@ function Section({ title, children }) {
 
 function Role({ company, title, right, bullets }) {
   return (
-    <div className="role">
-      <div className="roleTop">
+    <div className={styles.role}>
+      <div className={styles.roleTop}>
         <div>
-          <div className="roleCompany">{company}</div>
-          <div className="roleTitle">{title}</div>
+          <div className={styles.roleCompany}>{company}</div>
+          <div className={styles.roleTitle}>{title}</div>
         </div>
-        <div className="roleRight">{right}</div>
+        <div className={styles.roleRight}>{right}</div>
       </div>
-      <ul className="roleBullets">
+      <ul className={styles.roleBullets}>
         {bullets.map((b, i) => (
           <li key={`${company}-${i}`}>{b}</li>
         ))}

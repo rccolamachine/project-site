@@ -114,7 +114,7 @@ export default function TodoPage() {
         <span className="ui-pill">done: {doneCount}</span>
       </div>
 
-      <div className="card" style={{ marginTop: 16 }}>
+      <div className="card ui-mt16">
         <div className="ui-controlGrid">
           <input
             className="ui-input"
@@ -139,7 +139,7 @@ export default function TodoPage() {
             <option value="done">Done</option>
           </select>
 
-          <div className="ui-metaText" style={{ textAlign: "right" }}>
+          <div className="ui-metaText ui-textRight">
             {rangeText}
           </div>
         </div>
@@ -151,18 +151,16 @@ export default function TodoPage() {
 
           <div className="ui-buttonRow">
             <button
-              className="btn"
+              className="btn ui-noTransform"
               onClick={gotoPrev}
               disabled={prevDisabled}
-              style={{ transform: "none" }}
             >
               Prev
             </button>
             <button
-              className="btn"
+              className="btn ui-noTransform"
               onClick={gotoNext}
               disabled={nextDisabled}
-              style={{ transform: "none" }}
             >
               Next
             </button>
@@ -177,10 +175,9 @@ export default function TodoPage() {
           return (
             <div
               key={item.id}
-              className="card"
-              style={{ opacity: isDone ? 0.65 : 1 }}
+              className={`card${isDone ? " ui-cardDone" : ""}`}
             >
-              <div style={{ minWidth: 260 }}>
+              <div className="ui-minWidth260">
                 <div className="ui-pillRow">
                   <span
                     className="ui-pill"
@@ -203,7 +200,7 @@ export default function TodoPage() {
                 {item.notes ? <div className="todoCardNotes">{item.notes}</div> : null}
 
                 {Array.isArray(item.links) && item.links.length ? (
-                  <div className="ui-buttonRow" style={{ marginTop: 10 }}>
+                  <div className="ui-buttonRow ui-mt10">
                     {item.links.map((link) => (
                       <a key={`${item.id}-${link.href}`} className="btn" href={link.href}>
                         {link.label}
@@ -227,10 +224,9 @@ export default function TodoPage() {
         <div className="ui-centeredCard">
           <div className="card">
             <button
-              className="btn"
+              className="btn ui-noTransform"
               onClick={gotoPrev}
               disabled={prevDisabled}
-              style={{ transform: "none" }}
             >
               Prev
             </button>
@@ -240,10 +236,9 @@ export default function TodoPage() {
             </div>
 
             <button
-              className="btn"
+              className="btn ui-noTransform"
               onClick={gotoNext}
               disabled={nextDisabled}
-              style={{ transform: "none" }}
             >
               Next
             </button>

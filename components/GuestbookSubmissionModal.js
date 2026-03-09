@@ -114,13 +114,12 @@ export default function GuestbookSubmissionModal({
           <label className="ui-field">
             <span className="ui-fieldLabel">Message (optional)</span>
             <textarea
-              className="ui-input"
+              className="ui-input ui-inputTall"
               value={lead.message}
               onChange={(event) =>
                 setLead((prev) => ({ ...prev, message: event.target.value }))
               }
               placeholder="Say hi..."
-              style={{ minHeight: 90, resize: "vertical" }}
               disabled={saving}
             />
           </label>

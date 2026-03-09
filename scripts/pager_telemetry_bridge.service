@@ -1,0 +1,16 @@
+[Unit]
+Description=Pager telemetry bridge (Pi-Star MMDVM -> website)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi-star
+Group=pi-star
+EnvironmentFile=/etc/pager-telemetry.env
+ExecStart=/usr/local/bin/pager-telemetry-bridge.sh
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

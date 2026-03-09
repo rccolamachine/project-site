@@ -100,6 +100,12 @@ export default function SiteHeader() {
             Mixtape
           </Link>
           <Link
+            className={pathname.startsWith("/pager") ? "active" : ""}
+            href="/pager"
+          >
+            Pager
+          </Link>
+          <Link
             className={pathname.startsWith("/about") ? "active" : ""}
             href="/about"
           >

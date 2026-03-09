@@ -9,6 +9,7 @@ import {
   appendGuestbookLead,
   isValidGuestbookEmail,
 } from "@/lib/guestbook";
+import styles from "./pixelbooth.module.css";
 
 /**
  * app/pixelbooth/page.js
@@ -77,16 +78,6 @@ function exportTinyGridToBlob(
     }
   });
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 12,
-  border: "1px solid rgba(255,255,255,0.12)",
-  background: "rgba(0,0,0,0.25)",
-  color: "#eaeaea",
-  outline: "none",
-};
 
 export default function Page() {
   const stageRef = useRef(null);
@@ -846,218 +837,43 @@ export default function Page() {
   const canPublish = !error && snapped;
   const canSubmitSaveModal =
     lead.name.trim().length > 0 && isValidGuestbookEmail(lead.email);
-  const useLegacySaveModal = false;
 
   return (
-    <div
-      ref={stageRef}
-      style={{
-        position: "relative",
-        minHeight: "100vh",
-        width: "100%",
-        background: "#000",
-        userSelect: "none",
-      }}
-    >
-      <canvas
-        ref={bgCanvasRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
-          filter: "grayscale(1)", // ✅ iOS-proof preview grayscale
-          WebkitFilter: "grayscale(1)", // ✅ extra for Safari
-        }}
-      />
+    <div ref={stageRef} className={styles.stage}>
+      <canvas ref={bgCanvasRef} className={styles.bgCanvas} />
 
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          padding: 16,
-          maxWidth: 900,
-          margin: "0 auto",
-          color: "#eaeaea",
-        }}
-      >
+      <div className={styles.contentShell}>
         <PageIntro
           title="Pixelbooth"
           lede="Resize pixels, snap a photo, drag and drop to swap pixels, then save it to the guestbook so everyone can see it."
         />
         <DesktopBadge />
 
-        {error ? (
-          <div className="card ui-errorCard" style={{ marginBottom: 12 }}>
-            {error}
-          </div>
-        ) : null}
+        {error ? <div className="card ui-errorCard ui-mb12">{error}</div> : null}
 
-        <style jsx>{`
-          .pixelboothActions .pixelboothActionBtn {
-            width: auto;
-            height: 40px;
-            padding: 0 10px;
-            line-height: 1;
-            text-align: center;
-            justify-content: center;
-            color: var(--text);
-            text-decoration: none;
-            white-space: nowrap;
-          }
-          .pixelboothActions .pixelboothActionBtn:hover {
-            color: var(--text);
-          }
-          .pixelSliderWrap {
-            padding: 0;
-          }
-          .pixelSlider {
-            width: 100%;
-            position: relative;
-            z-index: 1;
-            display: block;
-            height: 28px;
-            margin: 0;
-            padding: 0;
-            appearance: none;
-            -webkit-appearance: none;
-            background: transparent;
-            cursor: ew-resize;
-          }
-          .pixelSlider:disabled {
-            cursor: not-allowed;
-            opacity: 0.65;
-          }
-          .pixelSlider:focus-visible {
-            box-shadow: none;
-            outline: none;
-          }
-          .pixelSlider::-webkit-slider-runnable-track {
-            height: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.18);
-            border-radius: 999px;
-            background:
-              repeating-linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.14) 0 6px,
-                rgba(255, 255, 255, 0.02) 6px 12px
-              ),
-              linear-gradient(
-                90deg,
-                rgba(45, 226, 230, 0.32),
-                rgba(24, 118, 128, 0.32)
-              ),
-              linear-gradient(
-                180deg,
-                rgba(255, 255, 255, 0.08),
-                rgba(0, 0, 0, 0.26)
-              );
-            box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
-          }
-          .pixelSlider::-moz-range-track {
-            height: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.18);
-            border-radius: 999px;
-            background:
-              repeating-linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.14) 0 6px,
-                rgba(255, 255, 255, 0.02) 6px 12px
-              ),
-              linear-gradient(
-                90deg,
-                rgba(45, 226, 230, 0.32),
-                rgba(24, 118, 128, 0.32)
-              ),
-              linear-gradient(
-                180deg,
-                rgba(255, 255, 255, 0.08),
-                rgba(0, 0, 0, 0.26)
-              );
-            box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
-          }
-          .pixelSlider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 22px;
-            height: 22px;
-            margin-top: -3px;
-            border: 2px solid rgba(0, 0, 0, 0.85);
-            border-radius: 0;
-            background:
-              linear-gradient(180deg, var(--accent2), var(--accent)),
-              #fff;
-            box-shadow:
-              0 0 0 2px rgba(255, 255, 255, 0.16),
-              4px 4px 0 rgba(0, 0, 0, 0.4);
-          }
-          .pixelSlider::-moz-range-thumb {
-            width: 22px;
-            height: 22px;
-            border: 2px solid rgba(0, 0, 0, 0.85);
-            border-radius: 0;
-            background:
-              linear-gradient(180deg, var(--accent2), var(--accent)),
-              #fff;
-            box-shadow:
-              0 0 0 2px rgba(255, 255, 255, 0.16),
-              4px 4px 0 rgba(0, 0, 0, 0.4);
-          }
-          .pixelSlider::-moz-range-progress {
-            height: 18px;
-            border-radius: 999px;
-            background:
-              repeating-linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.16) 0 6px,
-                rgba(255, 255, 255, 0.03) 6px 12px
-              ),
-              linear-gradient(
-                90deg,
-                rgba(255, 79, 216, 0.84),
-                rgba(45, 226, 230, 0.84)
-              );
-            box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.28);
-          }
-        `}</style>
-
-        <div
-          className="pixelboothActions"
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-            marginBottom: 12,
-            flexWrap: "wrap",
-          }}
-        >
+        <div className={styles.actionsRow}>
           {canSnap ? (
-            <button className="btn pixelboothActionBtn" onClick={handleSnap}>
+            <button className={`btn ${styles.actionBtn}`} onClick={handleSnap}>
               Snap
             </button>
           ) : null}
 
           {canBackToLive ? (
-            <button
-              className="btn pixelboothActionBtn"
-              onClick={handleBackToLive}
-            >
+            <button className={`btn ${styles.actionBtn}`} onClick={handleBackToLive}>
               Back to Live
             </button>
           ) : null}
 
           {canPublish ? (
-            <button className="btn pixelboothActionBtn" onClick={openSaveModal}>
+            <button className={`btn ${styles.actionBtn}`} onClick={openSaveModal}>
               Publish to Guestbook
             </button>
           ) : null}
-          <a className="btn pixelboothActionBtn" href="/guestbook">
+          <a className={`btn ${styles.actionBtn}`} href="/guestbook">
             Go to Guestbook
           </a>
 
-          <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>
+          <div className={styles.modeMeta}>
             Mode:{" "}
             <strong>
               {snapped ? "Snapped (click and drag pixels to edit)" : "Live"}
@@ -1066,11 +882,7 @@ export default function Page() {
         </div>
 
         {saveResult ? (
-          <div
-            className="ui-feedback"
-            data-tone={saveResult.tone}
-            style={{ marginBottom: 12, marginTop: 0 }}
-          >
+          <div className={`ui-feedback ${styles.saveFeedback}`} data-tone={saveResult.tone}>
             {saveResult.message}{" "}
             <a href={saveResult.url} target="_blank" rel="noreferrer">
               {saveResult.url}
@@ -1078,17 +890,15 @@ export default function Page() {
           </div>
         ) : null}
 
-        <div style={{ marginBottom: 12, opacity: snapped ? 0.6 : 1 }}>
-          <label style={{ display: "block", marginBottom: 6 }}>
+        <div
+          className={`${styles.sliderSection}${snapped ? ` ${styles.sliderSectionFrozen}` : ""}`}
+        >
+          <label className={styles.sliderLabel}>
             Pixelation (log scale): <strong>{pixelSize}px</strong>
-            {snapped ? (
-              <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.8 }}>
-                (frozen after snap)
-              </span>
-            ) : null}
+            {snapped ? <span className={styles.frozenHint}>(frozen after snap)</span> : null}
           </label>
 
-          <div className="pixelSliderWrap">
+          <div className={styles.pixelSliderWrap}>
             <input
               type="range"
               min={0}
@@ -1096,35 +906,23 @@ export default function Page() {
               value={slider}
               disabled={snapped}
               onChange={(e) => setSlider(Number(e.target.value))}
-              className="pixelSlider"
+              className={styles.pixelSlider}
             />
           </div>
         </div>
 
-        <video ref={videoRef} playsInline muted style={{ display: "none" }} />
+        <video ref={videoRef} playsInline muted className={styles.hiddenVideo} />
 
         <div
-          style={{
-            borderRadius: 0,
-            overflow: "hidden",
-            border: "none",
-            background: "transparent",
-            cursor: snapped ? "grab" : "default",
-            lineHeight: 0,
-            fontSize: 0,
-            transform: "translateZ(0)",
-          }}
+          className={`${styles.canvasFrame}${snapped ? ` ${styles.canvasFrameSnapped}` : ""}`}
         >
           <canvas
             ref={canvasRef}
+            className={styles.renderCanvas}
             style={{
-              width: "100%",
-              height: canvasCssHeight ? `${canvasCssHeight}px` : "auto",
-              display: "block",
-              background: "#000",
-              imageRendering: "pixelated",
-              filter: "grayscale(1)", // ✅ iOS-proof preview grayscale
-              WebkitFilter: "grayscale(1)", // ✅ extra for Safari
+              "--pixelbooth-canvas-height": canvasCssHeight
+                ? `${canvasCssHeight}px`
+                : "auto",
             }}
           />
         </div>
@@ -1141,163 +939,6 @@ export default function Page() {
         onClose={() => setShowSaveModal(false)}
         onSubmit={submitSave}
       />
-
-      {useLegacySaveModal ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget && !saving)
-              setShowSaveModal(false);
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            display: "grid",
-            placeItems: "center",
-            zIndex: 9999,
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              width: "min(560px, 100%)",
-              background: "#12141b",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 16,
-              padding: 16,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <h2 style={{ margin: 0, fontSize: 18 }}>Publish your photo</h2>
-              <button
-                style={{ marginLeft: "auto" }}
-                onClick={() => setShowSaveModal(false)}
-                disabled={saving}
-              >
-                Close
-              </button>
-            </div>
-
-            <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, opacity: 0.85 }}>Name</span>
-                <input
-                  value={lead.name}
-                  onChange={(e) =>
-                    setLead((p) => ({ ...p, name: e.target.value }))
-                  }
-                  placeholder="Rob"
-                  style={inputStyle}
-                  disabled={saving}
-                />
-              </label>
-
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, opacity: 0.85 }}>
-                  Email (just for Rob&apos;s records-- will not appear in
-                  Guestbook)
-                </span>
-                <input
-                  type="email"
-                  value={lead.email}
-                  onChange={(e) =>
-                    setLead((p) => ({ ...p, email: e.target.value }))
-                  }
-                  placeholder="you@example.com"
-                  style={inputStyle}
-                  disabled={saving}
-                />
-              </label>
-
-              {/* ✅ NEW: checkbox to also email the user */}
-              <label
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  alignItems: "center",
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(0,0,0,0.18)",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={!!lead.emailSelf}
-                  onChange={(e) =>
-                    setLead((p) => ({ ...p, emailSelf: e.target.checked }))
-                  }
-                  disabled={saving}
-                />
-                <div style={{ display: "grid" }}>
-                  <span style={{ fontSize: 14 }}>Email me a copy too</span>
-                  <span style={{ fontSize: 12, opacity: 0.8 }}>
-                    If checked, we will also email this submission to you at the
-                    address above
-                  </span>
-                </div>
-              </label>
-
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, opacity: 0.85 }}>
-                  LinkedIn URL (optional)
-                </span>
-                <input
-                  value={lead.linkedinUrl}
-                  onChange={(e) =>
-                    setLead((p) => ({ ...p, linkedinUrl: e.target.value }))
-                  }
-                  placeholder="https://www.linkedin.com/in/..."
-                  style={inputStyle}
-                  disabled={saving}
-                />
-              </label>
-
-              <label style={{ display: "grid", gap: 6 }}>
-                <span style={{ fontSize: 12, opacity: 0.85 }}>
-                  Message (optional)
-                </span>
-                <textarea
-                  value={lead.message}
-                  onChange={(e) =>
-                    setLead((p) => ({ ...p, message: e.target.value }))
-                  }
-                  placeholder="Say hi…"
-                  style={{ ...inputStyle, minHeight: 90, resize: "vertical" }}
-                  disabled={saving}
-                />
-              </label>
-
-              {saveError ? (
-                <div style={{ fontSize: 12, color: "#ffb4b4" }}>
-                  {saveError}
-                </div>
-              ) : null}
-
-              <div
-                style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
-              >
-                <button
-                  onClick={() => setShowSaveModal(false)}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={submitSave}
-                  disabled={saving || !canSubmitSaveModal}
-                >
-                  {saving ? "Saving..." : "Submit & Save"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

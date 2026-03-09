@@ -9,11 +9,6 @@ import {
   isValidGuestbookEmail,
 } from "@/lib/guestbook";
 
-const guestbookCtaBtnStyle = {
-  height: 40,
-  lineHeight: 1,
-};
-
 export default function GuestbookPageClient() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -65,14 +60,10 @@ export default function GuestbookPageClient() {
   return (
     <>
       <div className="guestbookCtaRow">
-        <a className="btn" href="/pixelbooth" style={guestbookCtaBtnStyle}>
+        <a className="btn ui-btnFixed40" href="/pixelbooth">
           Go to Pixelbooth
         </a>
-        <button
-          className="btn"
-          onClick={openSaveModal}
-          style={guestbookCtaBtnStyle}
-        >
+        <button className="btn ui-btnFixed40" onClick={openSaveModal}>
           Leave a Message
         </button>
       </div>

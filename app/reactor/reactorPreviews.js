@@ -44,7 +44,7 @@ export function formulaWithSubscripts(formula) {
   return tokens.map((token, idx) => {
     if (/^\d+$/.test(token)) {
       return (
-        <sub key={`n-${idx}`} style={{ fontSize: "0.8em", lineHeight: 1 }}>
+        <sub key={`n-${idx}`} className="reactor-formula-subscript">
           {token}
         </sub>
       );
@@ -55,13 +55,9 @@ export function formulaWithSubscripts(formula) {
 
 export function CatalogueNameCell({ name, formula }) {
   return (
-    <div style={{ display: "grid", gap: 2 }}>
-      <span style={{ fontSize: 11, fontWeight: 800, color: "#0f172a" }}>
-        {name}
-      </span>
-      <span style={{ fontSize: 10, fontWeight: 700, color: "#475569" }}>
-        {formulaWithSubscripts(formula)}
-      </span>
+    <div className="reactor-catalogue-name-cell">
+      <span className="reactor-catalogue-name">{name}</span>
+      <span className="reactor-catalogue-formula">{formulaWithSubscripts(formula)}</span>
     </div>
   );
 }
@@ -926,11 +922,7 @@ export function MoleculeBallStickPreview({
     [structure, orientation],
   );
   if (!layout) {
-    return (
-      <div style={{ fontSize: 10, color: "#475569", fontWeight: 700 }}>
-        {formula}
-      </div>
-    );
+    return <div className="reactor-preview-fallback">{formula}</div>;
   }
 
   const svg = (
@@ -939,11 +931,7 @@ export function MoleculeBallStickPreview({
       preserveAspectRatio="xMidYMid meet"
       width={width}
       height={height}
-      style={{
-        border: "1px solid rgba(15,23,42,0.14)",
-        borderRadius: 8,
-        background: "rgba(255,255,255,0.92)",
-      }}
+      className="reactor-preview-svg reactor-preview-svg-small"
     >
       {layout.bonds.map((bond, idx) => {
         const a = layout.nodes[bond.a];
@@ -999,11 +987,10 @@ export function MoleculeBallStickPreview({
               x={node.x}
               y={node.y + 2.35}
               textAnchor="middle"
+              className="reactor-preview-atom-label"
               style={{
-                fontFamily: "'Press Start 2P', ui-monospace, monospace",
                 fontSize: node.el === "H" ? 3.35 : 3.95,
                 fill: node.el === "C" ? "#f8fafc" : "#000000",
-                userSelect: "none",
               }}
             >
               {node.el}
@@ -1016,12 +1003,7 @@ export function MoleculeBallStickPreview({
         x={4}
         y={61}
         textAnchor="start"
-        style={{
-          fontSize: 7.2,
-          fontWeight: 800,
-          fill: "#334155",
-          userSelect: "none",
-        }}
+        className="reactor-preview-formula-label"
       >
         {formula}
       </text>
@@ -1034,13 +1016,7 @@ export function MoleculeBallStickPreview({
     <button
       type="button"
       onClick={onExpand}
-      style={{
-        padding: 0,
-        border: 0,
-        background: "transparent",
-        lineHeight: 0,
-        cursor: "zoom-in",
-      }}
+      className="reactor-preview-expand-btn"
       title="Expand snapshot"
     >
       {svg}
@@ -1262,11 +1238,7 @@ export function MoleculeRotatingPreview({
   );
 
   if (!projected) {
-    return (
-      <div style={{ fontSize: 11, color: "#475569", fontWeight: 700 }}>
-        {formula}
-      </div>
-    );
+    return <div className="reactor-preview-fallback-lg">{formula}</div>;
   }
 
   return (
@@ -1275,11 +1247,7 @@ export function MoleculeRotatingPreview({
       preserveAspectRatio="xMidYMid meet"
       width={width}
       height={height}
-      style={{
-        border: "1px solid rgba(15,23,42,0.14)",
-        borderRadius: 10,
-        background: "rgba(255,255,255,0.95)",
-      }}
+      className="reactor-preview-svg reactor-preview-svg-large"
     >
       {projected.bonds.map((bond, idx) => {
         const a = projected.nodes2d[bond.a];
@@ -1333,11 +1301,10 @@ export function MoleculeRotatingPreview({
               x={node.x}
               y={node.y + 2.35}
               textAnchor="middle"
+              className="reactor-preview-atom-label"
               style={{
-                fontFamily: "'Press Start 2P', ui-monospace, monospace",
                 fontSize: node.el === "H" ? 3.35 : 3.95,
                 fill: node.el === "C" ? "#f8fafc" : "#000000",
-                userSelect: "none",
               }}
             >
               {node.el}
@@ -1350,12 +1317,7 @@ export function MoleculeRotatingPreview({
         x={4}
         y={61}
         textAnchor="start"
-        style={{
-          fontSize: 7.2,
-          fontWeight: 800,
-          fill: "#334155",
-          userSelect: "none",
-        }}
+        className="reactor-preview-formula-label"
       >
         {formula}
       </text>
