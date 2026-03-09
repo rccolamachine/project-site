@@ -34,7 +34,25 @@ function getFlowState(flow, progress, sending) {
   return "pending";
 }
 
-function getSummary(progress, sending, telemetryStatus, telemetry) {
+function normalizeForMatch(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^"+|"+$/g, "")
+    .replace(/^'+|'+$/g, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function extractTextFromDetail(detail) {
+  const raw = String(detail || "");
+  const quoted = raw.match(/text:"([^"]+)"/i);
+  if (quoted?.[1]) return quoted[1].trim();
+  const loose = raw.match(/text:([^|]+?)(?:\s+source:|$)/i);
+  if (loose?.[1]) return loose[1].trim();
+  return "";
+}
+
+function getSummary(progress, sending, telemetryStatus) {
   if (progress.cancelled) return "Cancelled before sending.";
   if (progress.errorMessage) return progress.errorMessage;
 
@@ -46,18 +64,14 @@ function getSummary(progress, sending, telemetryStatus, telemetry) {
   }
 
   if (progress.completedStep >= 4 && progress.successTimestamp) {
-    const completedAt = String(telemetry?.stages?.mmdvm_tx_completed?.at || "").trim();
-    const startedAt = String(telemetry?.stages?.mmdvm_tx_started?.at || "").trim();
-    const gatewayAt = String(telemetry?.stages?.gateway_received?.at || "").trim();
-
-    if (completedAt) {
-      return `Pager message sent at ${progress.successTimestamp}. Radio TX completed at ${formatTime(completedAt)}.`;
+    if (telemetryStatus.confirmation === "full") {
+      return `Pager message sent at ${progress.successTimestamp}. Pi-Star MMDVM send and DAPNET gateway text match confirmed.`;
     }
-    if (startedAt) {
-      return `Pager message sent at ${progress.successTimestamp}. Radio TX started at ${formatTime(startedAt)}.`;
+    if (telemetryStatus.confirmation === "mmdvm_only") {
+      return `Pager message sent at ${progress.successTimestamp}. Pi-Star MMDVM send confirmed; waiting for DAPNET text match.`;
     }
-    if (gatewayAt) {
-      return `Pager message sent at ${progress.successTimestamp}. Gateway received at ${formatTime(gatewayAt)}.`;
+    if (telemetryStatus.confirmation === "dapnet_only") {
+      return `Pager message sent at ${progress.successTimestamp}. DAPNET gateway saw matching text; waiting for Pi-Star MMDVM TX event.`;
     }
     if (telemetryStatus.tone === "active") {
       return `Pager message sent at ${progress.successTimestamp}. Waiting for radio telemetry...`;
@@ -69,10 +83,15 @@ function getSummary(progress, sending, telemetryStatus, telemetry) {
   return "Ready to send.";
 }
 
-function getSummaryTone(progress, sending) {
+function getSummaryTone(progress, sending, telemetryStatus) {
   if (progress.errorMessage) return "error";
   if (progress.cancelled) return "muted";
-  if (progress.completedStep >= 4) return "success";
+  if (progress.completedStep >= 4) {
+    if (telemetryStatus?.tone === "done") return "success";
+    if (telemetryStatus?.tone === "active") return "active";
+    if (telemetryStatus?.tone === "error") return "error";
+    return "success";
+  }
   if (sending) return "active";
   return "muted";
 }
@@ -82,6 +101,7 @@ function getTelemetryStatus(telemetry) {
     return {
       tone: "pending",
       detail: "Starts after upstream acceptance.",
+      confirmation: "none",
     };
   }
 
@@ -89,6 +109,7 @@ function getTelemetryStatus(telemetry) {
     return {
       tone: "pending",
       detail: "Telemetry hook is not configured.",
+      confirmation: "none",
     };
   }
 
@@ -96,6 +117,7 @@ function getTelemetryStatus(telemetry) {
     return {
       tone: "error",
       detail: telemetry.error,
+      confirmation: "none",
     };
   }
 
@@ -103,22 +125,66 @@ function getTelemetryStatus(telemetry) {
   const gatewayAt = String(stages?.gateway_received?.at || "").trim();
   const txStartedAt = String(stages?.mmdvm_tx_started?.at || "").trim();
   const txCompletedAt = String(stages?.mmdvm_tx_completed?.at || "").trim();
+  const expectedText = normalizeForMatch(telemetry?.expectedText);
+  const gatewayDetailText = extractTextFromDetail(stages?.gateway_received?.detail);
+  const gatewayDetailTextNormalized = normalizeForMatch(gatewayDetailText);
+  const gatewayTextMatched =
+    Boolean(gatewayAt) &&
+    Boolean(expectedText) &&
+    Boolean(gatewayDetailTextNormalized) &&
+    gatewayDetailTextNormalized === expectedText;
 
-  if (txCompletedAt) {
+  const mmdvmConfirmed = Boolean(txStartedAt || txCompletedAt);
+
+  if (mmdvmConfirmed && gatewayTextMatched) {
     return {
       tone: "done",
-      detail: `Gateway received, TX started, TX completed at ${formatTime(txCompletedAt)}.`,
+      detail:
+        txCompletedAt
+          ? `Pi-Star MMDVM send confirmed at ${formatTime(
+              txStartedAt || txCompletedAt,
+            )}. DAPNET gateway confirmed matching text at ${formatTime(gatewayAt)}.`
+          : `Pi-Star MMDVM send confirmed at ${formatTime(
+              txStartedAt,
+            )}. DAPNET gateway confirmed matching text at ${formatTime(gatewayAt)}.`,
+      confirmation: "full",
     };
   }
 
-  const confirmed = [];
-  if (gatewayAt) confirmed.push("gateway received");
-  if (txStartedAt) confirmed.push("TX started");
-
-  if (confirmed.length > 0) {
+  if (mmdvmConfirmed && gatewayAt && !gatewayTextMatched) {
     return {
       tone: "active",
-      detail: `Confirmed: ${confirmed.join(", ")}. Waiting for TX completion.`,
+      detail:
+        "Pi-Star MMDVM send confirmed, but DAPNET gateway text did not match this message yet.",
+      confirmation: "mmdvm_only",
+    };
+  }
+
+  if (mmdvmConfirmed) {
+    return {
+      tone: "active",
+      detail: `Pi-Star MMDVM send confirmed at ${formatTime(
+        txStartedAt || txCompletedAt,
+      )}. Waiting for DAPNET gateway text match.`,
+      confirmation: "mmdvm_only",
+    };
+  }
+
+  if (gatewayTextMatched) {
+    return {
+      tone: "active",
+      detail: `DAPNET gateway confirmed matching text at ${formatTime(
+        gatewayAt,
+      )}. Waiting for Pi-Star MMDVM TX event.`,
+      confirmation: "dapnet_only",
+    };
+  }
+
+  if (gatewayAt) {
+    return {
+      tone: "active",
+      detail: "DAPNET gateway event observed; waiting for text match and Pi-Star TX event.",
+      confirmation: "none",
     };
   }
 
@@ -126,19 +192,21 @@ function getTelemetryStatus(telemetry) {
     return {
       tone: "active",
       detail: "Polling Pi-Star/MMDVM events...",
+      confirmation: "none",
     };
   }
 
   return {
     tone: "pending",
     detail: "No Pi-Star/MMDVM events received yet.",
+    confirmation: "none",
   };
 }
 
 export default function PagerStatusTimeline({ progress, sending, telemetry }) {
   const telemetryStatus = getTelemetryStatus(telemetry);
-  const summary = getSummary(progress, sending, telemetryStatus, telemetry);
-  const summaryTone = getSummaryTone(progress, sending);
+  const summary = getSummary(progress, sending, telemetryStatus);
+  const summaryTone = getSummaryTone(progress, sending, telemetryStatus);
 
   const groupedRows = [
     {

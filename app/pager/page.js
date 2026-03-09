@@ -88,6 +88,7 @@ export default function PagerPage() {
     stopTelemetryPolling();
     telemetryPollRef.current = { attempts: 0, text: safeText, timestamp: safeTimestamp };
     setTelemetry({
+      expectedText: safeText,
       polling: true,
       telemetryConfigured: false,
       stages: {},

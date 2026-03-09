@@ -69,7 +69,9 @@ PAGER_TELEMETRY_URL="https://rccolamachine.com/api/pager/telemetry"
 # PAGER_TELEMETRY_URLS="https://rccolamachine.com/api/pager/telemetry,http://192.168.1.66:3000/api/pager/telemetry"
 PAGER_TELEMETRY_SECRET="<your-secret>"
 MMDVM_LOG_GLOB="/var/log/pi-star/MMDVM-*.log"
+DAPNET_LOG_GLOB="/var/log/pi-star/DAPNETGateway-*.log"
 MMDVM_LOG_SWITCH_INTERVAL_SEC="30"
+PAGER_TELEMETRY_LOG_FULL_PAYLOAD="0"
 ```
 
 ### Manual run (no systemd)
@@ -80,6 +82,7 @@ chmod +x scripts/pager_telemetry_bridge.sh
 PAGER_TELEMETRY_URL="https://<your-site>/api/pager/telemetry" \
 PAGER_TELEMETRY_SECRET="<your-secret>" \
 MMDVM_LOG_GLOB="/var/log/pi-star/MMDVM-*.log" \
+DAPNET_LOG_GLOB="/var/log/pi-star/DAPNETGateway-*.log" \
 ./scripts/pager_telemetry_bridge.sh
 ```
 
@@ -87,6 +90,7 @@ MMDVM_LOG_GLOB="/var/log/pi-star/MMDVM-*.log" \
 PAGER_TELEMETRY_URLS="https://rccolamachine.com/api/pager/telemetry,http://192.168.1.66:3000/api/pager/telemetry" \
 PAGER_TELEMETRY_SECRET="<your-secret>" \
 MMDVM_LOG_GLOB="/var/log/pi-star/MMDVM-*.log" \
+DAPNET_LOG_GLOB="/var/log/pi-star/DAPNETGateway-*.log" \
 ./scripts/pager_telemetry_bridge.sh
 ```
 
@@ -96,15 +100,28 @@ Notes:
   - `GATEWAY_RECEIVED_REGEX`
   - `MMDVM_TX_STARTED_REGEX`
   - `MMDVM_TX_COMPLETED_REGEX`
+  - `DAPNET_GATEWAY_REGEX` (for DAPNETGateway log lines -> `gateway_received`)
 - Telemetry destination can be set as:
   - `PAGER_TELEMETRY_URL` for one endpoint
   - `PAGER_TELEMETRY_URLS` for many endpoints (comma-separated fan-out)
 - Log source can be set as:
   - `MMDVM_LOG_FILE` for one exact file
+  - `DAPNET_LOG_FILE` for one exact DAPNET file
   - `MMDVM_LOG_GLOB` for rotating files (recommended)
+  - `DAPNET_LOG_GLOB` for rotating DAPNET Gateway Activity files
+  - `PAGER_EXTRA_LOG_GLOBS` for extra comma-separated glob sources
   - `MMDVM_LOG_SWITCH_INTERVAL_SEC` to control how often newest-file checks run
+  - `GATEWAY_DUPLICATE_WINDOW_SEC` to suppress duplicate DAPNET gateway text events
+  - `MMDVM_TX_STARTED_COOLDOWN_SEC` to suppress rapid duplicate MMDVM TX-start events
+- Logging verbosity:
+  - `PAGER_TELEMETRY_LOG_FULL_PAYLOAD=0` logs concise send/fail lines (recommended)
+  - `PAGER_TELEMETRY_LOG_FULL_PAYLOAD=1` logs payload + raw matched line (debug)
 - The telemetry endpoint accepts stage-only updates and can correlate to the most
   recent pending pager request.
+- Status semantics:
+  - `mmdvm_tx_started` means Pi-Star MMDVM send observed.
+  - `gateway_received` counts as DAPNET confirmation only when extracted text matches
+    the original pager message text.
 
 ### Quick ingest test
 
