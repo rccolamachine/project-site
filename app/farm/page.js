@@ -8,7 +8,11 @@ import React, {
   useState,
 } from "react";
 import DesktopBadge from "../../components/DesktopBadge";
-import { decryptSaveJsonPayload, encryptSaveJson } from "./farmSaveCrypto";
+import {
+  decryptSaveJsonPayload,
+  encryptSaveJson,
+  SAVE_EXPORT_FORMAT,
+} from "./farmSaveCrypto";
 import {
   countLabel,
   formatLogClock,
@@ -525,10 +529,16 @@ export default function FarmPage() {
       setSaveStatus("");
       const raw =
         localStorage.getItem(STORAGE_KEY) ?? JSON.stringify(cloneState(game));
-      const encrypted = await encryptSaveJson(raw);
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `farm-save-${stamp}.json`;
-      const blob = new Blob([encrypted], { type: "application/json" });
+      let exportText = raw;
+      let filename = `farm-save-plain-${stamp}.json`;
+      let exportedEncrypted = false;
+      try {
+        exportText = await encryptSaveJson(raw);
+        filename = `farm-save-${stamp}.json`;
+        exportedEncrypted = true;
+      } catch {}
+      const blob = new Blob([exportText], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -537,14 +547,30 @@ export default function FarmPage() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setSaveStatus(`Exported encrypted save: ${filename}`);
+      if (exportedEncrypted) {
+        setSaveStatus(`Exported encrypted save: ${filename}`);
+      } else {
+        setSaveStatus(
+          `Exported plain JSON save (crypto unavailable): ${filename}`,
+        );
+      }
       appendLog({
         tone: "neutral",
         category: "system",
-        text: `Exported encrypted save (${filename}).`,
+        text: exportedEncrypted
+          ? `Exported encrypted save (${filename}).`
+          : `Exported plain JSON save (${filename}) because encrypted export was unavailable.`,
       });
-    } catch {
-      setSaveStatus("Export failed. Please try again.");
+    } catch (error) {
+      const detail =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message || "")
+          : "";
+      setSaveStatus(
+        detail
+          ? `Export failed. ${detail}`
+          : "Export failed. Please try again.",
+      );
     } finally {
       setSaveBusy(false);
     }

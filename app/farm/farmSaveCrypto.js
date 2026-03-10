@@ -1,4 +1,4 @@
-const SAVE_EXPORT_FORMAT = "farm-save-encrypted-v1";
+export const SAVE_EXPORT_FORMAT = "farm-save-encrypted-v1";
 const SAVE_EXPORT_ITERATIONS = 120000;
 const SAVE_EXPORT_SECRET = "farm-idle-local-save-secret-v1";
 
