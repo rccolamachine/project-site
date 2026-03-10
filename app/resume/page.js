@@ -126,13 +126,25 @@ export default function ResumePage() {
   return (
     <section className="page resumePage">
       <header className={`${styles.noPrint} ${styles.resumeTopBar}`}>
-        <h1>Resume</h1>
-        <button className="btn" onClick={downloadPDF}>
-          Download PDF
-        </button>
+        <h1 className={styles.resumeTopTitle}>Resume</h1>
+        <div className={styles.resumeTopRow}>
+          <p className={styles.resumeTopDescription}>
+            Download a printer-friendly PDF version of my current experience,
+            projects, and technical skills.
+          </p>
+          <button
+            className={`btn ${styles.resumeDownloadBtn}`}
+            onClick={downloadPDF}
+          >
+            Download PDF
+          </button>
+        </div>
       </header>
 
-      <article className={`${styles.resumePaper} resumePrintTarget`} ref={paperRef}>
+      <article
+        className={`${styles.resumePaper} resumePaper resumePrintTarget`}
+        ref={paperRef}
+      >
         <header className={styles.resumeHeader}>
           <div>
             <div className={styles.resumeName}>Rob Chapleski Jr., Ph.D.</div>

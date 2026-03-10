@@ -70,6 +70,14 @@ else
   echo "Keeping existing env file: $DEST_ENV_FILE"
 fi
 
+if sudo grep -Eq 'PAGER_TELEMETRY_URLS?=.*(localhost|127\.0\.0\.1)' "$DEST_ENV_FILE"; then
+  echo
+  echo "WARNING: $DEST_ENV_FILE references localhost/127.0.0.1 for telemetry URL."
+  echo "On Pi-Star, that targets Pi-Star itself, not your dev machine."
+  echo "Use your dev machine LAN IP (for example http://192.168.1.66:3000/api/pager/telemetry)."
+  echo
+fi
+
 echo "Reloading systemd..."
 sudo systemctl daemon-reload
 

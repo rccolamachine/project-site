@@ -4,9 +4,8 @@ export default function PagerArchitectureDiagram() {
   return (
     <div className={styles.diagramWrap}>
       <svg
-        viewBox="0 0 980 760"
-        width="100%"
-        height="auto"
+        viewBox="0 0 980 920"
+        style={{ width: "100%", height: "auto" }}
         role="img"
         aria-label="Two-lane architecture diagram for Pager feature"
         shapeRendering="crispEdges"
@@ -202,6 +201,50 @@ export default function PagerArchitectureDiagram() {
           error
         </text>
 
+        <rect
+          x="524"
+          y="780"
+          width="420"
+          height="108"
+          rx="14"
+          fill="rgba(255, 79, 216, 0.10)"
+          stroke="rgba(255, 79, 216, 0.58)"
+        />
+        <text x="544" y="810" fill="#f3f4ff" fontSize="11">
+          9) Pi-Star telemetry bridge
+        </text>
+        <text x="544" y="830" fill="rgba(243,244,255,0.78)" fontSize="7">
+          Service tails DAPNET / MMDVM logs on Pi-Star
+        </text>
+        <text x="544" y="844" fill="rgba(243,244,255,0.78)" fontSize="7">
+          Detects gateway + TX events for each page
+        </text>
+        <text x="544" y="858" fill="rgba(243,244,255,0.78)" fontSize="7">
+          Pushes events to POST /api/pager/telemetry
+        </text>
+
+        <rect
+          x="36"
+          y="780"
+          width="420"
+          height="116"
+          rx="14"
+          fill="rgba(45, 226, 230, 0.09)"
+          stroke="rgba(45, 226, 230, 0.56)"
+        />
+        <text x="56" y="810" fill="#f3f4ff" fontSize="11">
+          10) Status polling + UI updates
+        </text>
+        <text x="56" y="830" fill="rgba(243,244,255,0.78)" fontSize="7">
+          Browser polls POST /api/pager/status every few seconds
+        </text>
+        <text x="56" y="844" fill="rgba(243,244,255,0.78)" fontSize="7">
+          Reads Pi-Star telemetry stages captured by the API
+        </text>
+        <text x="56" y="858" fill="rgba(243,244,255,0.78)" fontSize="7">
+          Updates Transmission status timeline in Pager UI
+        </text>
+
         <image
           href="/pager/cyan-arrow-transparent.png"
           x="235"
@@ -258,6 +301,23 @@ export default function PagerArchitectureDiagram() {
           width="18"
           height="24"
           preserveAspectRatio="none"
+        />
+        <image
+          href="/pager/pink-arrow-transparent.png"
+          x="725"
+          y="758"
+          width="18"
+          height="22"
+          preserveAspectRatio="none"
+        />
+        <image
+          href="/pager/cyan-arrow-transparent.png"
+          x="479"
+          y="772"
+          width="22"
+          height="68"
+          preserveAspectRatio="none"
+          transform="rotate(90 490 806)"
         />
       </svg>
     </div>

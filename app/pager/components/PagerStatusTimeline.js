@@ -1,4 +1,8 @@
 import styles from "../pager.module.css";
+import {
+  isPagerGatewayTextMatch,
+  safeTrim,
+} from "@/lib/pagerTelemetryUtils";
 
 function formatTime(value) {
   const raw = String(value || "").trim();
@@ -6,6 +10,18 @@ function formatTime(value) {
   const parsed = new Date(raw);
   if (Number.isNaN(parsed.getTime())) return raw;
   return parsed.toLocaleTimeString();
+}
+
+function getStateTimeLabel(state, timestamp) {
+  const safeTimestamp = String(timestamp || "").trim();
+  if (!safeTimestamp) return "";
+  const formattedTime = formatTime(safeTimestamp);
+  if (!formattedTime) return "";
+
+  if (state === "done") return `completed ${formattedTime}`;
+  if (state === "error") return `failed ${formattedTime}`;
+  if (state === "active") return `in progress ${formattedTime}`;
+  return `updated ${formattedTime}`;
 }
 
 function getFlowState(flow, progress, sending) {
@@ -34,22 +50,10 @@ function getFlowState(flow, progress, sending) {
   return "pending";
 }
 
-function normalizeForMatch(value) {
-  return String(value || "")
-    .trim()
-    .replace(/^"+|"+$/g, "")
-    .replace(/^'+|'+$/g, "")
-    .replace(/\s+/g, " ")
-    .toLowerCase();
-}
-
-function extractTextFromDetail(detail) {
-  const raw = String(detail || "");
-  const quoted = raw.match(/text:"([^"]+)"/i);
-  if (quoted?.[1]) return quoted[1].trim();
-  const loose = raw.match(/text:([^|]+?)(?:\s+source:|$)/i);
-  if (loose?.[1]) return loose[1].trim();
-  return "";
+function getMessageState(progress) {
+  const sentAt = String(progress?.stageTimestamps?.send_message || "").trim();
+  if (!sentAt) return "pending";
+  return "done";
 }
 
 function getSummary(progress, sending, telemetryStatus) {
@@ -65,7 +69,7 @@ function getSummary(progress, sending, telemetryStatus) {
 
   if (progress.completedStep >= 4 && progress.successTimestamp) {
     if (telemetryStatus.confirmation === "full") {
-      return `Pager message sent at ${progress.successTimestamp}. Pi-Star MMDVM send and DAPNET gateway text match confirmed.`;
+      return "Message send complete.";
     }
     if (telemetryStatus.confirmation === "mmdvm_only") {
       return `Pager message sent at ${progress.successTimestamp}. Pi-Star MMDVM send confirmed; waiting for DAPNET text match.`;
@@ -100,7 +104,7 @@ function getTelemetryStatus(telemetry) {
   if (!telemetry) {
     return {
       tone: "pending",
-      detail: "Starts after upstream acceptance.",
+      detail: "Broadcast message to pager.",
       confirmation: "none",
     };
   }
@@ -122,31 +126,20 @@ function getTelemetryStatus(telemetry) {
   }
 
   const stages = telemetry.stages || {};
-  const gatewayAt = String(stages?.gateway_received?.at || "").trim();
-  const txStartedAt = String(stages?.mmdvm_tx_started?.at || "").trim();
-  const txCompletedAt = String(stages?.mmdvm_tx_completed?.at || "").trim();
-  const expectedText = normalizeForMatch(telemetry?.expectedText);
-  const gatewayDetailText = extractTextFromDetail(stages?.gateway_received?.detail);
-  const gatewayDetailTextNormalized = normalizeForMatch(gatewayDetailText);
-  const gatewayTextMatched =
-    Boolean(gatewayAt) &&
-    Boolean(expectedText) &&
-    Boolean(gatewayDetailTextNormalized) &&
-    gatewayDetailTextNormalized === expectedText;
+  const gatewayAt = safeTrim(stages?.gateway_received?.at);
+  const txStartedAt = safeTrim(stages?.mmdvm_tx_started?.at);
+  const txCompletedAt = safeTrim(stages?.mmdvm_tx_completed?.at);
+  const gatewayTextMatched = isPagerGatewayTextMatch({
+    stages,
+    expectedText: telemetry?.expectedText,
+  });
 
   const mmdvmConfirmed = Boolean(txStartedAt || txCompletedAt);
 
   if (mmdvmConfirmed && gatewayTextMatched) {
     return {
       tone: "done",
-      detail:
-        txCompletedAt
-          ? `Pi-Star MMDVM send confirmed at ${formatTime(
-              txStartedAt || txCompletedAt,
-            )}. DAPNET gateway confirmed matching text at ${formatTime(gatewayAt)}.`
-          : `Pi-Star MMDVM send confirmed at ${formatTime(
-              txStartedAt,
-            )}. DAPNET gateway confirmed matching text at ${formatTime(gatewayAt)}.`,
+      detail: "Pi-Star MMDVM send and DAPNET gateway text match confirmed.",
       confirmation: "full",
     };
   }
@@ -163,9 +156,7 @@ function getTelemetryStatus(telemetry) {
   if (mmdvmConfirmed) {
     return {
       tone: "active",
-      detail: `Pi-Star MMDVM send confirmed at ${formatTime(
-        txStartedAt || txCompletedAt,
-      )}. Waiting for DAPNET gateway text match.`,
+      detail: "Pi-Star MMDVM send confirmed. Waiting for DAPNET gateway text match.",
       confirmation: "mmdvm_only",
     };
   }
@@ -173,9 +164,7 @@ function getTelemetryStatus(telemetry) {
   if (gatewayTextMatched) {
     return {
       tone: "active",
-      detail: `DAPNET gateway confirmed matching text at ${formatTime(
-        gatewayAt,
-      )}. Waiting for Pi-Star MMDVM TX event.`,
+      detail: "DAPNET gateway confirmed matching text. Waiting for Pi-Star MMDVM TX event.",
       confirmation: "dapnet_only",
     };
   }
@@ -183,7 +172,8 @@ function getTelemetryStatus(telemetry) {
   if (gatewayAt) {
     return {
       tone: "active",
-      detail: "DAPNET gateway event observed; waiting for text match and Pi-Star TX event.",
+      detail:
+        "DAPNET gateway event observed; waiting for text match and Pi-Star TX event.",
       confirmation: "none",
     };
   }
@@ -207,27 +197,53 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
   const telemetryStatus = getTelemetryStatus(telemetry);
   const summary = getSummary(progress, sending, telemetryStatus);
   const summaryTone = getSummaryTone(progress, sending, telemetryStatus);
+  const stageTimestamps =
+    progress?.stageTimestamps &&
+    typeof progress.stageTimestamps === "object" &&
+    !Array.isArray(progress.stageTimestamps)
+      ? progress.stageTimestamps
+      : {};
+  const telemetryStages =
+    telemetry?.stages && typeof telemetry.stages === "object" && !Array.isArray(telemetry.stages)
+      ? telemetry.stages
+      : {};
+  const radioTimestamp =
+    String(telemetryStages?.mmdvm_tx_completed?.at || "").trim() ||
+    String(telemetryStages?.mmdvm_tx_started?.at || "").trim() ||
+    String(telemetryStages?.gateway_received?.at || "").trim();
 
   const groupedRows = [
+    {
+      title: "Send message",
+      detail: `Send message: ${progress?.sentText ? `"${progress.sentText}"` : "(no text)"}`,
+      state: getMessageState(progress),
+      timestamp: stageTimestamps.send_message || "",
+    },
     {
       title: "Preflight checks",
       detail: "Validate text and endpoint credentials.",
       state: getFlowState("preflight", progress, sending),
+      timestamp: stageTimestamps.preflight || "",
     },
     {
       title: "API send",
       detail: "Send POST /api/pager and await upstream acceptance.",
       state: getFlowState("api_send", progress, sending),
+      timestamp: stageTimestamps.api_send || "",
     },
     {
       title: "Upstream queue",
-      detail: "HamPager/DAPNET accepted and queued for RF.",
+      detail: "Send DAPNET-accepted message to Pi-star radio.",
       state: getFlowState("upstream_accept", progress, sending),
+      timestamp:
+        String(telemetry?.acceptedAt || "").trim() ||
+        String(stageTimestamps.upstream_accept || "").trim(),
     },
     {
       title: "Radio telemetry",
       detail: telemetryStatus.detail,
       state: telemetryStatus.tone,
+      timestamp: radioTimestamp,
     },
   ];
 
@@ -237,11 +253,19 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
 
       <ol className={styles.statusList}>
         {groupedRows.map((row) => {
+          const rowTimeLabel = getStateTimeLabel(row.state, row.timestamp);
           return (
             <li key={row.title} className={styles.statusItem}>
               <span className={styles.statusDot} data-state={row.state} />
               <div>
-                <div className={styles.statusTitle}>{row.title}</div>
+                <div className={styles.statusTitle}>
+                  {row.title}
+                  {rowTimeLabel ? (
+                    <span className={styles.statusTitleMeta}>
+                      {` - ${rowTimeLabel}`}
+                    </span>
+                  ) : null}
+                </div>
                 <div className={styles.statusDetail}>{row.detail}</div>
               </div>
             </li>

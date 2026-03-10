@@ -3935,10 +3935,8 @@ export default function ReactorPage() {
         {controlsOpen ? (
           <div
             id="controls-overlay"
-            style={{
-              ...ui.controls,
-              maxHeight: "calc(100% - 136px)",
-            }}
+            className={ui.controls}
+            style={{ maxHeight: "calc(100% - 136px)" }}
           >
             <div className={ui.headerRow}>
               <button
@@ -4322,8 +4320,8 @@ export default function ReactorPage() {
         {modeOpen ? (
           <div
             id="instructions-overlay"
+            className={ui.instructions}
             style={{
-              ...ui.instructions,
               maxHeight: catalogueOpen
                 ? "calc(100% - 390px)"
                 : "calc(100% - 74px)",
@@ -4444,8 +4442,8 @@ export default function ReactorPage() {
                             ),
                           )
                         }
+                        className={ui.select}
                         style={{
-                          ...ui.select,
                           width: 62,
                           padding: "7px 8px",
                           textAlign: "right",
@@ -4597,11 +4595,8 @@ export default function ReactorPage() {
         ) : (
           <div
             id="instructions-show"
-            style={{
-              ...ui.instructionsShow,
-              display: "grid",
-              justifyItems: "end",
-            }}
+            className={ui.instructionsShow}
+            style={{ display: "grid", justifyItems: "end" }}
           >
             <button onClick={() => setModeOpen(true)} className={ui.btnLight}>
               Show mode

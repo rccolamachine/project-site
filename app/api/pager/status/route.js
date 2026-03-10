@@ -1,22 +1,32 @@
 import { NextResponse } from "next/server";
 import { getPagerStatus } from "@/lib/pagerDeliveryStatusStore";
+import {
+  normalizeIsoTimestamp,
+  parsePagerTelemetryDetail,
+  safeTrim,
+} from "@/lib/pagerTelemetryUtils";
 
 export const runtime = "nodejs";
 
-function safeTrim(value) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function normalizeTimestamp(value) {
-  const raw = safeTrim(value);
-  if (!raw) return "";
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return parsed.toISOString();
-}
-
 function hasTelemetrySecret() {
   return Boolean(safeTrim(process.env.PAGER_TELEMETRY_SECRET));
+}
+
+function buildPublicStage(sourceStage) {
+  return {
+    at: normalizeIsoTimestamp(sourceStage?.at),
+    detail: parsePagerTelemetryDetail(sourceStage?.detail),
+  };
+}
+
+function buildPublicStages(stages) {
+  const source =
+    stages && typeof stages === "object" && !Array.isArray(stages) ? stages : {};
+  return {
+    gateway_received: buildPublicStage(source.gateway_received),
+    mmdvm_tx_started: buildPublicStage(source.mmdvm_tx_started),
+    mmdvm_tx_completed: buildPublicStage(source.mmdvm_tx_completed),
+  };
 }
 
 export async function POST(req) {
@@ -27,7 +37,7 @@ export async function POST(req) {
     }
 
     const text = safeTrim(body.text);
-    const timestamp = normalizeTimestamp(body.timestamp);
+    const timestamp = normalizeIsoTimestamp(body.timestamp);
     if (!text || !timestamp) {
       return NextResponse.json(
         { error: "Text and timestamp are required." },
@@ -52,7 +62,7 @@ export async function POST(req) {
         telemetryConfigured: hasTelemetrySecret(),
         acceptedAt: status.acceptedAt || null,
         updatedAt: status.updatedAt || null,
-        stages: status.stages || {},
+        stages: buildPublicStages(status.stages),
       },
       { status: 200, headers: { "Cache-Control": "no-store" } },
     );

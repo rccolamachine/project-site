@@ -7,6 +7,40 @@ import {
   toSpotifyTrackUri,
 } from "./mixtapeUtils";
 
+function installAllowFullscreenShim() {
+  if (typeof window === "undefined") return () => {};
+
+  const iframeProto = window.HTMLIFrameElement?.prototype;
+  if (!iframeProto || typeof iframeProto.setAttribute !== "function") {
+    return () => {};
+  }
+
+  const originalSetAttribute = iframeProto.setAttribute;
+  const patchedSetAttribute = function patchedSetAttribute(name, value) {
+    if (String(name).toLowerCase() === "allowfullscreen") {
+      const existingAllow = String(this.getAttribute("allow") || "").trim();
+      const hasFullscreen = /(^|[;\s])fullscreen([;\s]|$)/i.test(existingAllow);
+      if (!hasFullscreen) {
+        const nextAllow = existingAllow
+          ? `${existingAllow}; fullscreen`
+          : "fullscreen";
+        originalSetAttribute.call(this, "allow", nextAllow);
+      }
+      return;
+    }
+
+    return originalSetAttribute.call(this, name, value);
+  };
+
+  iframeProto.setAttribute = patchedSetAttribute;
+
+  return () => {
+    if (iframeProto.setAttribute === patchedSetAttribute) {
+      iframeProto.setAttribute = originalSetAttribute;
+    }
+  };
+}
+
 export default function useSpotifyPlayer() {
   const [currentTrackId, setCurrentTrackId] = useState("");
   const [currentContextLabel, setCurrentContextLabel] = useState("");
@@ -117,6 +151,7 @@ export default function useSpotifyPlayer() {
   useEffect(() => {
     let cancelled = false;
     let apiScript = null;
+    const restoreAllowFullscreenShim = installAllowFullscreenShim();
 
     const initEmbedController = (iframeApi) => {
       if (
@@ -237,6 +272,7 @@ export default function useSpotifyPlayer() {
         }
         embedControllerRef.current = null;
         setIsReady(false);
+        restoreAllowFullscreenShim();
       };
     }
 
@@ -250,6 +286,7 @@ export default function useSpotifyPlayer() {
       }
       embedControllerRef.current = null;
       setIsReady(false);
+      restoreAllowFullscreenShim();
     };
   }, [clearRetryTimer]);
 

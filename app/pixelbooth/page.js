@@ -42,6 +42,30 @@ function hash2(ix, iy, seed) {
   return (h >>> 0) / 4294967296;
 }
 
+function getCameraStream(constraints) {
+  const mediaDevices =
+    typeof navigator !== "undefined" ? navigator.mediaDevices : null;
+  const getUserMedia = mediaDevices?.getUserMedia?.bind(mediaDevices);
+
+  if (!getUserMedia) {
+    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+    const isLocalhost =
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+    const insecureContext =
+      typeof window !== "undefined" ? !window.isSecureContext : false;
+    if (insecureContext && !isLocalhost) {
+      throw new Error(
+        "Camera API unavailable in insecure context. Use HTTPS (or localhost).",
+      );
+    }
+    throw new Error(
+      "Camera API unavailable in this browser/device. Check camera permissions and secure context (HTTPS/localhost).",
+    );
+  }
+
+  return getUserMedia(constraints);
+}
+
 function exportTinyGridToBlob(
   tinyCanvas,
   { outW = 1024, mime = "image/png", quality } = {},
@@ -169,7 +193,7 @@ export default function Page() {
       try {
         setError("");
 
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await getCameraStream({
           video: { facingMode: "user" },
           audio: false,
         });

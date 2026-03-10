@@ -1,10 +1,45 @@
 .resumeTopBar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  display: grid;
+  gap: 6px;
   margin-bottom: 16px;
-  flex-wrap: wrap;
+}
+
+.resumeTopTitle {
+  margin: 0;
+}
+
+.resumeTopRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.resumeTopDescription {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  opacity: 0.82;
+  max-width: 72ch;
+}
+
+.resumeDownloadBtn {
+  position: static;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .resumeTopBar {
+    gap: 8px;
+  }
+
+  .resumeTopRow {
+    grid-template-columns: 1fr;
+  }
+
+  .resumeDownloadBtn {
+    justify-self: end;
+  }
 }
 
 .screenOnly {

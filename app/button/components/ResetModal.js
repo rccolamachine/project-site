@@ -15,6 +15,30 @@ function buildFallbackEntry({ name, photoDataUrl, beforeValue }) {
   };
 }
 
+function getCameraStream(constraints) {
+  const mediaDevices =
+    typeof navigator !== "undefined" ? navigator.mediaDevices : null;
+  const getUserMedia = mediaDevices?.getUserMedia?.bind(mediaDevices);
+
+  if (!getUserMedia) {
+    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+    const isLocalhost =
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+    const insecureContext =
+      typeof window !== "undefined" ? !window.isSecureContext : false;
+    if (insecureContext && !isLocalhost) {
+      throw new Error(
+        "Camera API unavailable in insecure context. Use HTTPS (or localhost).",
+      );
+    }
+    throw new Error(
+      "Camera API unavailable in this browser/device. Check camera permissions and secure context (HTTPS/localhost).",
+    );
+  }
+
+  return getUserMedia(constraints);
+}
+
 export default function ResetModal({ isOpen, currentValue, onClose, onSubmitted }) {
   const [resetName, setResetName] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
@@ -69,7 +93,7 @@ export default function ResetModal({ isOpen, currentValue, onClose, onSubmitted 
       try {
         setCameraError("");
 
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await getCameraStream({
           video: { facingMode: "user" },
           audio: false,
         });

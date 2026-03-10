@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import PageIntro from "@/components/PageIntro";
 import PagerArchitectureDiagram from "./components/PagerArchitectureDiagram";
 import PagerStatusTimeline from "./components/PagerStatusTimeline";
+import { isPagerTelemetryFullConfirmation } from "@/lib/pagerTelemetryUtils";
 import { fetchPagerDeliveryStatus, sendPagerMessage } from "./pagerApi";
 import {
   clampPagerText,
@@ -20,6 +21,13 @@ const INITIAL_PROGRESS = {
   errorMessage: "",
   cancelled: false,
   successTimestamp: "",
+  sentText: "",
+  stageTimestamps: {
+    send_message: "",
+    preflight: "",
+    api_send: "",
+    upstream_accept: "",
+  },
 };
 
 function formatPagerTimestamp(value) {
@@ -116,8 +124,12 @@ export default function PagerPage() {
         } else if (snapshot?.ok) {
           applyTelemetrySnapshot(snapshot);
 
-          const completedAt = snapshot?.stages?.mmdvm_tx_completed?.at;
-          if (completedAt) {
+          if (
+            isPagerTelemetryFullConfirmation({
+              stages: snapshot?.stages,
+              expectedText: current.text,
+            })
+          ) {
             stopTelemetryPolling();
             setTelemetry((prev) => ({ ...prev, polling: false }));
             return;
@@ -146,13 +158,18 @@ export default function PagerPage() {
 
   const setErrorState = (step, message, completedStep = -1) => {
     setError(message);
-    setProgress({
+    setProgress((prev) => ({
       ...INITIAL_PROGRESS,
       activeStep: step,
       completedStep,
       errorStep: step,
       errorMessage: message,
-    });
+      sentText: String(prev?.sentText || "").trim(),
+      stageTimestamps: {
+        ...INITIAL_PROGRESS.stageTimestamps,
+        ...(prev?.stageTimestamps || {}),
+      },
+    }));
   };
 
   const getErrorStep = (message) => {
@@ -184,11 +201,17 @@ export default function PagerPage() {
     stopTelemetryPolling();
     setTelemetry(null);
     setError("");
-    setProgress(INITIAL_PROGRESS);
-
+    const preflightAt = new Date().toISOString();
+    const safeSendText = String(trimmedText || "").trim();
     setProgress({
       ...INITIAL_PROGRESS,
       activeStep: 0,
+      sentText: safeSendText,
+      stageTimestamps: {
+        ...INITIAL_PROGRESS.stageTimestamps,
+        send_message: preflightAt,
+        preflight: preflightAt,
+      },
     });
 
     const validationError = validatePagerText(text);
@@ -196,7 +219,19 @@ export default function PagerPage() {
       setErrorState(0, validationError, -1);
       return;
     }
-    setProgress((prev) => ({ ...prev, activeStep: 1, completedStep: 0 }));
+    const apiSendAt = new Date().toISOString();
+    setProgress((prev) => ({
+      ...prev,
+      activeStep: 1,
+      completedStep: 0,
+      stageTimestamps: {
+        ...INITIAL_PROGRESS.stageTimestamps,
+        ...(prev?.stageTimestamps || {}),
+        send_message: prev?.stageTimestamps?.send_message || preflightAt,
+        preflight: prev?.stageTimestamps?.preflight || preflightAt,
+        api_send: apiSendAt,
+      },
+    }));
 
     const credentials = promptForPagerCredentials();
     if (credentials.cancelled) {
@@ -225,6 +260,13 @@ export default function PagerPage() {
       errorMessage: "",
       cancelled: false,
       successTimestamp: "",
+      stageTimestamps: {
+        ...INITIAL_PROGRESS.stageTimestamps,
+        ...(prev?.stageTimestamps || {}),
+        send_message: prev?.stageTimestamps?.send_message || preflightAt,
+        preflight: prev?.stageTimestamps?.preflight || preflightAt,
+        api_send: prev?.stageTimestamps?.api_send || apiSendAt,
+      },
     }));
 
     try {
@@ -234,14 +276,25 @@ export default function PagerPage() {
         password: credentials.password,
       });
 
-      setProgress({
+      const upstreamAt = String(payload.timestamp || "").trim() || new Date().toISOString();
+      setProgress((prev) => ({
+        ...prev,
         activeStep: -1,
         completedStep: 4,
         errorStep: -1,
         errorMessage: "",
         cancelled: false,
-        successTimestamp: formatPagerTimestamp(payload.timestamp),
-      });
+        successTimestamp: formatPagerTimestamp(upstreamAt),
+        sentText: String(payload.text || prev?.sentText || safeSendText).trim(),
+        stageTimestamps: {
+          ...INITIAL_PROGRESS.stageTimestamps,
+          ...(prev?.stageTimestamps || {}),
+          send_message: prev?.stageTimestamps?.send_message || preflightAt,
+          preflight: prev?.stageTimestamps?.preflight || preflightAt,
+          api_send: prev?.stageTimestamps?.api_send || apiSendAt,
+          upstream_accept: upstreamAt,
+        },
+      }));
       beginTelemetryPolling({
         text: payload.text || trimmedText,
         timestamp: payload.timestamp,
@@ -284,7 +337,9 @@ export default function PagerPage() {
             {remaining} characters remaining
           </div>
 
-          <PagerStatusTimeline progress={progress} sending={sending} telemetry={telemetry} />
+          {progress?.stageTimestamps?.send_message ? (
+            <PagerStatusTimeline progress={progress} sending={sending} telemetry={telemetry} />
+          ) : null}
 
           {error ? <div className="ui-errorInline">{error}</div> : null}
 
