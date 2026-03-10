@@ -28,7 +28,6 @@ function buildPublicStages(stages) {
   return {
     gateway_received: buildPublicStage(source.gateway_received),
     mmdvm_tx_started: buildPublicStage(source.mmdvm_tx_started),
-    mmdvm_tx_completed: buildPublicStage(source.mmdvm_tx_completed),
   };
 }
 

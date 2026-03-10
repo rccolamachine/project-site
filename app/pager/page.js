@@ -46,7 +46,6 @@ function formatPagerTimestamp(value) {
 export default function PagerPage() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
   const [progress, setProgress] = useState(INITIAL_PROGRESS);
   const [telemetry, setTelemetry] = useState(null);
   const telemetryTimerRef = useRef(null);
@@ -162,7 +161,6 @@ export default function PagerPage() {
   };
 
   const setErrorState = (step, message, completedStep = -1) => {
-    setError(message);
     stopRetryTimer();
     clearRetrySession();
     setProgress((prev) => ({
@@ -330,7 +328,6 @@ export default function PagerPage() {
     stopRetryTimer();
     clearRetrySession();
     setTelemetry(null);
-    setError("");
     const preflightAt = new Date().toISOString();
     const safeSendText = String(trimmedText || "").trim();
     setProgress({
@@ -479,8 +476,6 @@ export default function PagerPage() {
           {progress?.stageTimestamps?.send_message ? (
             <PagerStatusTimeline progress={progress} sending={sending} telemetry={telemetry} />
           ) : null}
-
-          {error ? <div className="ui-errorInline">{error}</div> : null}
 
           <div className="ui-actionRow">
             <button type="submit" disabled={!canSend}>

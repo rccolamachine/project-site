@@ -1,8 +1,5 @@
 import styles from "../pager.module.css";
-import {
-  isPagerGatewayTextMatch,
-  safeTrim,
-} from "@/lib/pagerTelemetryUtils";
+import { isPagerGatewayTextMatch, safeTrim } from "@/lib/pagerTelemetryUtils";
 
 function formatTime(value) {
   const raw = String(value || "").trim();
@@ -57,46 +54,28 @@ function getMessageState(progress) {
 }
 
 function getSummary(progress, sending, telemetryStatus) {
-  if (progress.cancelled) return "Cancelled before sending.";
-  if (progress.errorMessage) return progress.errorMessage;
-
-  if (sending && (progress.activeStep === 0 || progress.activeStep === 1)) {
-    return "Preparing pager message...";
+  const specificError = String(progress?.errorMessage || "").trim();
+  if (specificError) return specificError;
+  if (telemetryStatus?.tone === "error") {
+    return (
+      String(telemetryStatus?.detail || "").trim() || "Message send failed."
+    );
   }
-  if (sending && progress.activeStep === 2) {
-    return "Sending pager message...";
-  }
-
-  if (progress.completedStep >= 4 && progress.successTimestamp) {
-    if (telemetryStatus.confirmation === "full") {
-      return "Message send complete.";
-    }
-    if (telemetryStatus.confirmation === "mmdvm_only") {
-      return `Pager message sent at ${progress.successTimestamp}. Pi-Star MMDVM send confirmed; waiting for DAPNET text match.`;
-    }
-    if (telemetryStatus.confirmation === "dapnet_only") {
-      return `Pager message sent at ${progress.successTimestamp}. DAPNET gateway saw matching text; waiting for Pi-Star MMDVM TX event.`;
-    }
-    if (telemetryStatus.tone === "active") {
-      return `Pager message sent at ${progress.successTimestamp}. Waiting for radio telemetry...`;
-    }
-    return `Pager message sent at ${progress.successTimestamp}.`;
-  }
-
-  if (sending) return "Sending pager message...";
-  return "Ready to send.";
+  if (progress?.errorStep >= 0) return "Message send failed.";
+  if (progress?.cancelled) return "Message send failed.";
+  if (telemetryStatus?.confirmation === "full") return "Message send complete.";
+  if (sending || progress?.completedStep >= 0)
+    return "Message send in progress.";
+  return "Message send in progress.";
 }
 
 function getSummaryTone(progress, sending, telemetryStatus) {
-  if (progress.errorMessage) return "error";
-  if (progress.cancelled) return "muted";
-  if (progress.completedStep >= 4) {
-    if (telemetryStatus?.tone === "done") return "success";
-    if (telemetryStatus?.tone === "active") return "active";
-    if (telemetryStatus?.tone === "error") return "error";
-    return "success";
-  }
-  if (sending) return "active";
+  if (progress?.errorMessage) return "error";
+  if (telemetryStatus?.tone === "error") return "error";
+  if (progress?.errorStep >= 0) return "error";
+  if (progress?.cancelled) return "error";
+  if (telemetryStatus?.confirmation === "full") return "success";
+  if (sending || progress?.completedStep >= 0) return "active";
   return "muted";
 }
 
@@ -162,7 +141,8 @@ function getTelemetryStatus(telemetry) {
   if (mmdvmConfirmed) {
     return {
       tone: "active",
-      detail: "Pi-Star MMDVM send confirmed. Waiting for DAPNET gateway text match.",
+      detail:
+        "Pi-Star MMDVM send confirmed. Waiting for DAPNET gateway text match.",
       confirmation: "mmdvm_only",
     };
   }
@@ -170,7 +150,8 @@ function getTelemetryStatus(telemetry) {
   if (gatewayTextMatched) {
     return {
       tone: "active",
-      detail: "DAPNET gateway confirmed matching text. Waiting for Pi-Star MMDVM TX event.",
+      detail:
+        "DAPNET gateway confirmed matching text. Waiting for Pi-Star MMDVM TX event.",
       confirmation: "dapnet_only",
     };
   }
@@ -210,7 +191,9 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
       ? progress.stageTimestamps
       : {};
   const telemetryStages =
-    telemetry?.stages && typeof telemetry.stages === "object" && !Array.isArray(telemetry.stages)
+    telemetry?.stages &&
+    typeof telemetry.stages === "object" &&
+    !Array.isArray(telemetry.stages)
       ? telemetry.stages
       : {};
   const radioTimestamp =
@@ -226,8 +209,8 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
 
   const groupedRows = [
     {
-      title: "Send message",
-      detail: `Send message: ${progress?.sentText ? `"${progress.sentText}"` : "(no text)"}`,
+      title: "Submit message",
+      detail: `Submit message: ${progress?.sentText ? `"${progress.sentText}"` : "(no text)"}`,
       state: getMessageState(progress),
       timestamp: stageTimestamps.send_message || "",
     },
@@ -269,7 +252,11 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
           const rowIcon = getStatusIcon(row.state);
           return (
             <li key={row.title} className={styles.statusItem}>
-              <span className={styles.statusDot} data-state={row.state} aria-hidden="true">
+              <span
+                className={styles.statusDot}
+                data-state={row.state}
+                aria-hidden="true"
+              >
                 {rowIcon}
               </span>
               <div>

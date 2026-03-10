@@ -44,6 +44,7 @@ export default function SiteHeader() {
         <Link
           className="brand"
           href="/"
+          prefetch={false}
           style={{ "--brand-font-size": `${brandFontSize}px` }}
         >
           <span className="brandArt" aria-hidden="true">
@@ -64,7 +65,7 @@ export default function SiteHeader() {
         </Link>
 
         <nav className="links" aria-label="Primary">
-          <Link className={pathname === "/" ? "active" : ""} href="/">
+          <Link className={pathname === "/" ? "active" : ""} href="/" prefetch={false}>
             Home
           </Link>
           <Link
@@ -77,6 +78,7 @@ export default function SiteHeader() {
           <Link
             className={pathname.startsWith("/pixelbooth") ? "active" : ""}
             href="/pixelbooth"
+            prefetch={false}
           >
             Pixelbooth
           </Link>
@@ -90,42 +92,49 @@ export default function SiteHeader() {
           <Link
             className={pathname.startsWith("/button") ? "active" : ""}
             href="/button"
+            prefetch={false}
           >
             Button
           </Link>
           <Link
             className={pathname.startsWith("/mixtape") ? "active" : ""}
             href="/mixtape"
+            prefetch={false}
           >
             Mixtape
           </Link>
           <Link
             className={pathname.startsWith("/pager") ? "active" : ""}
             href="/pager"
+            prefetch={false}
           >
             Pager
           </Link>
           <Link
             className={pathname.startsWith("/about") ? "active" : ""}
             href="/about"
+            prefetch={false}
           >
             About
           </Link>
           <Link
             className={pathname.startsWith("/guestbook") ? "active" : ""}
             href="/guestbook"
+            prefetch={false}
           >
             Guestbook
           </Link>
           <Link
             className={pathname.startsWith("/resume") ? "active" : ""}
             href="/resume"
+            prefetch={false}
           >
             Resume
           </Link>
           <Link
             className={pathname.startsWith("/todo") ? "active" : ""}
             href="/todo"
+            prefetch={false}
           >
             To-Do
           </Link>
