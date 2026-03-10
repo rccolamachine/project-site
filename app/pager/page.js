@@ -46,7 +46,7 @@ function formatPagerTimestamp(value) {
 export default function PagerPage() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const [showArchitecture, setShowArchitecture] = useState(false);
+  const [showArchitecture, setShowArchitecture] = useState(true);
   const [progress, setProgress] = useState(INITIAL_PROGRESS);
   const [telemetry, setTelemetry] = useState(null);
   const telemetryTimerRef = useRef(null);
