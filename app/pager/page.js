@@ -35,6 +35,7 @@ const INITIAL_PROGRESS = {
 };
 
 const TELEMETRY_CONFIRMATION_RETRY_DELAY_MS = 30_000;
+const DAPNET_ONLY_RETRY_DELAY_MS = 30_000;
 const MAX_PAGER_AUTO_RETRIES = 2;
 
 function formatPagerTimestamp(value) {
@@ -182,7 +183,7 @@ export default function PagerPage() {
     }));
   };
 
-  const scheduleAutoRetryCheck = () => {
+  const scheduleAutoRetryCheck = ({ delayMs = TELEMETRY_CONFIRMATION_RETRY_DELAY_MS } = {}) => {
     stopRetryTimer();
     retryTimerRef.current = setTimeout(() => {
       const session = retrySessionRef.current;
@@ -199,10 +200,36 @@ export default function PagerPage() {
         stages: snapshotStages,
         expectedText: session.text,
       });
+      const gatewayAtRaw = String(snapshotStages?.gateway_received?.at || "").trim();
+      const gatewayAtMs = gatewayAtRaw ? Date.parse(gatewayAtRaw) : Number.NaN;
+      const mmdvmAtRaw =
+        String(snapshotStages?.mmdvm_tx_started?.at || "").trim() ||
+        String(snapshotStages?.mmdvm_tx_completed?.at || "").trim();
+      const mmdvmAtMs = mmdvmAtRaw ? Date.parse(mmdvmAtRaw) : Number.NaN;
       const hasMmdvmActivity =
         Boolean(String(snapshotStages?.mmdvm_tx_started?.at || "").trim()) ||
         Boolean(String(snapshotStages?.mmdvm_tx_completed?.at || "").trim());
-      if (hasGatewayTextMatch || hasMmdvmActivity) return;
+
+      if (
+        (hasGatewayTextMatch && !hasMmdvmActivity) ||
+        (hasMmdvmActivity && !hasGatewayTextMatch)
+      ) {
+        const anchorAtMs = hasGatewayTextMatch ? gatewayAtMs : mmdvmAtMs;
+        if (Number.isFinite(anchorAtMs)) {
+          const elapsedMs = Date.now() - anchorAtMs;
+          if (elapsedMs < DAPNET_ONLY_RETRY_DELAY_MS) {
+            scheduleAutoRetryCheck({
+              delayMs: Math.max(1000, DAPNET_ONLY_RETRY_DELAY_MS - elapsedMs),
+            });
+            return;
+          }
+        } else {
+          scheduleAutoRetryCheck({ delayMs: DAPNET_ONLY_RETRY_DELAY_MS });
+          return;
+        }
+      } else if (hasMmdvmActivity && hasGatewayTextMatch) {
+        return;
+      }
 
       const runRetry = async () => {
         const retryAttempt = session.retriesUsed + 1;
@@ -281,7 +308,7 @@ export default function PagerPage() {
       };
 
       runRetry().catch(() => {});
-    }, TELEMETRY_CONFIRMATION_RETRY_DELAY_MS);
+    }, delayMs);
   };
 
   const beginTelemetryPolling = ({ text: nextText, timestamp }) => {
