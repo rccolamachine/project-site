@@ -52,8 +52,10 @@ function getHamPagerPassword() {
 
 function getCallSignNames() {
   const configured = splitCsv(process.env.HAMPAGER_CALLSIGN_NAMES);
-  if (configured.length > 0) return configured;
-  return [DEFAULT_CALL_SIGN_NAME];
+  const source = configured.length > 0 ? configured : [DEFAULT_CALL_SIGN_NAME];
+  return source
+    .map((value) => safeTrim(value).toUpperCase())
+    .filter(Boolean);
 }
 
 function getTransmitterGroupNames() {
@@ -63,11 +65,11 @@ function getTransmitterGroupNames() {
 }
 
 function getOwnerName(callSignNames) {
-  return (
+  return safeTrim(
     safeTrim(process.env.HAMPAGER_OWNER_NAME) ||
     safeTrim(callSignNames?.[0]) ||
-    DEFAULT_CALL_SIGN_NAME
-  );
+    DEFAULT_CALL_SIGN_NAME,
+  ).toUpperCase();
 }
 
 function parseEnvPositiveInt(value, fallbackValue) {
