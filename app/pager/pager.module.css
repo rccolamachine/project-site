@@ -141,12 +141,38 @@
   margin-top: 16px;
 }
 
+.diagramHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .diagramTitle {
   margin-top: 0;
+  margin-bottom: 0;
 }
 
 .diagramSubtitle {
-  margin-top: 0;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.diagramToggle {
+  flex: 0 0 auto;
+  min-width: 60px;
+  padding: 4px 10px;
+  line-height: 1.2;
+}
+
+@media (max-width: 560px) {
+  .diagramHeader {
+    flex-direction: column;
+  }
+
+  .diagramToggle {
+    align-self: flex-end;
+  }
 }
 
 .diagramWrap {

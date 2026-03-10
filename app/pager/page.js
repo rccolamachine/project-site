@@ -46,6 +46,7 @@ function formatPagerTimestamp(value) {
 export default function PagerPage() {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [showArchitecture, setShowArchitecture] = useState(false);
   const [progress, setProgress] = useState(INITIAL_PROGRESS);
   const [telemetry, setTelemetry] = useState(null);
   const telemetryTimerRef = useRef(null);
@@ -486,11 +487,28 @@ export default function PagerPage() {
       </div>
 
       <div className={`card ${styles.diagramCard}`}>
-        <h2 className={styles.diagramTitle}>Architecture Diagram</h2>
-        <p className={`ui-helperText ${styles.diagramSubtitle}`}>
-          What&apos;s going on under the hood?
-        </p>
-        <PagerArchitectureDiagram />
+        <div className={styles.diagramHeader}>
+          <div>
+            <h2 className={styles.diagramTitle}>Architecture Diagram</h2>
+            <p className={`ui-helperText ${styles.diagramSubtitle}`}>
+              What&apos;s going on under the hood?
+            </p>
+          </div>
+          <button
+            type="button"
+            className={styles.diagramToggle}
+            onClick={() => setShowArchitecture((prev) => !prev)}
+            aria-expanded={showArchitecture}
+            aria-controls="pager-architecture-diagram"
+          >
+            {showArchitecture ? "Hide" : "Show"}
+          </button>
+        </div>
+        {showArchitecture ? (
+          <div id="pager-architecture-diagram">
+            <PagerArchitectureDiagram />
+          </div>
+        ) : null}
       </div>
     </section>
   );
