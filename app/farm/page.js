@@ -530,15 +530,9 @@ export default function FarmPage() {
       const raw =
         localStorage.getItem(STORAGE_KEY) ?? JSON.stringify(cloneState(game));
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      let exportText = raw;
-      let filename = `farm-save-plain-${stamp}.json`;
-      let exportedEncrypted = false;
-      try {
-        exportText = await encryptSaveJson(raw);
-        filename = `farm-save-${stamp}.json`;
-        exportedEncrypted = true;
-      } catch {}
-      const blob = new Blob([exportText], { type: "application/json" });
+      const encrypted = await encryptSaveJson(raw);
+      const filename = `farm-save-${stamp}.json`;
+      const blob = new Blob([encrypted], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -547,19 +541,11 @@ export default function FarmPage() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      if (exportedEncrypted) {
-        setSaveStatus(`Exported encrypted save: ${filename}`);
-      } else {
-        setSaveStatus(
-          `Exported plain JSON save (crypto unavailable): ${filename}`,
-        );
-      }
+      setSaveStatus(`Exported encrypted save: ${filename}`);
       appendLog({
         tone: "neutral",
         category: "system",
-        text: exportedEncrypted
-          ? `Exported encrypted save (${filename}).`
-          : `Exported plain JSON save (${filename}) because encrypted export was unavailable.`,
+        text: `Exported encrypted save (${filename}).`,
       });
     } catch (error) {
       const detail =
@@ -569,7 +555,7 @@ export default function FarmPage() {
       setSaveStatus(
         detail
           ? `Export failed. ${detail}`
-          : "Export failed. Please try again.",
+          : "Export failed. Encrypted export requires browser crypto support.",
       );
     } finally {
       setSaveBusy(false);
@@ -588,12 +574,10 @@ export default function FarmPage() {
       setSaveStatus("");
       const text = await file.text();
       const payload = JSON.parse(text);
-      let rawJsonText = text;
-      if (payload?.format === SAVE_EXPORT_FORMAT) {
-        rawJsonText = await decryptSaveJsonPayload(payload);
-      } else if (payload && typeof payload === "object") {
-        rawJsonText = JSON.stringify(payload);
+      if (payload?.format !== SAVE_EXPORT_FORMAT) {
+        throw new Error("Only encrypted farm save exports can be imported.");
       }
+      const rawJsonText = await decryptSaveJsonPayload(payload);
       const parsed = JSON.parse(rawJsonText);
       const loaded = hydrateSaveState(parsed);
       setPendingAutoMode(null);
