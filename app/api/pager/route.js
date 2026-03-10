@@ -7,6 +7,9 @@ export const runtime = "nodejs";
 const HAMPAGER_CALLS_URL = "https://hampager.de/api/calls";
 const DEFAULT_CALL_SIGN_NAME = "KQ4CWZ";
 const DEFAULT_TRANSMITTER_GROUP_NAME = "all";
+const DEFAULT_UPSTREAM_TIMEOUT_MS = 10_000;
+const DEFAULT_UPSTREAM_MAX_RETRIES = 2;
+const DEFAULT_UPSTREAM_RETRY_DELAY_MS = 900;
 
 function safeTrim(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -67,6 +70,39 @@ function getOwnerName(callSignNames) {
   );
 }
 
+function parseEnvPositiveInt(value, fallbackValue) {
+  const parsed = Number.parseInt(String(value || ""), 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallbackValue;
+  return parsed;
+}
+
+function getUpstreamTimeoutMs() {
+  return parseEnvPositiveInt(
+    process.env.PAGER_UPSTREAM_TIMEOUT_MS,
+    DEFAULT_UPSTREAM_TIMEOUT_MS,
+  );
+}
+
+function getUpstreamMaxRetries() {
+  return parseEnvPositiveInt(
+    process.env.PAGER_UPSTREAM_MAX_RETRIES,
+    DEFAULT_UPSTREAM_MAX_RETRIES,
+  );
+}
+
+function getUpstreamRetryDelayMs() {
+  return parseEnvPositiveInt(
+    process.env.PAGER_UPSTREAM_RETRY_DELAY_MS,
+    DEFAULT_UPSTREAM_RETRY_DELAY_MS,
+  );
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 function decodeBasicCredentials(req) {
   const authHeader = safeTrim(req.headers.get("authorization"));
   if (!authHeader || !authHeader.toLowerCase().startsWith("basic ")) {
@@ -98,7 +134,109 @@ async function extractErrorMessage(res) {
   }
 
   const text = safeTrim(await res.text().catch(() => ""));
-  return text.slice(0, 500);
+  return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 500);
+}
+
+function shouldRetryUpstreamStatus(status) {
+  return status === 429 || status >= 500;
+}
+
+function buildUpstreamFailureDetail({ status, detail, attempts }) {
+  const normalizedDetail = safeTrim(detail);
+  const retrySuffix = attempts > 1 ? ` Tried ${attempts} attempts.` : "";
+
+  if (status === 0 || status === 502 || status === 503 || status === 504) {
+    return `HamPager upstream is currently unavailable. Please retry shortly.${retrySuffix}`;
+  }
+
+  if (status >= 500) {
+    const fallback = `Upstream request failed (${status}).`;
+    return `${normalizedDetail || fallback}${retrySuffix}`.trim();
+  }
+
+  return `${normalizedDetail || "Upstream request failed."}${retrySuffix}`.trim();
+}
+
+async function sendUpstreamCallWithRetry({ payload, authHeader }) {
+  const timeoutMs = getUpstreamTimeoutMs();
+  const maxRetries = getUpstreamMaxRetries();
+  const retryDelayMs = getUpstreamRetryDelayMs();
+
+  let attempts = 0;
+  let lastStatus = 0;
+  let lastDetail = "";
+
+  for (let attemptIndex = 0; attemptIndex <= maxRetries; attemptIndex += 1) {
+    attempts = attemptIndex + 1;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const upstreamRes = await fetch(HAMPAGER_CALLS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (upstreamRes.ok) {
+        return {
+          ok: true,
+          attempts,
+          response: upstreamRes,
+        };
+      }
+
+      lastStatus = upstreamRes.status;
+      lastDetail = await extractErrorMessage(upstreamRes);
+      if (
+        attemptIndex < maxRetries &&
+        shouldRetryUpstreamStatus(upstreamRes.status)
+      ) {
+        await sleep(retryDelayMs * (attemptIndex + 1));
+        continue;
+      }
+
+      return {
+        ok: false,
+        attempts,
+        status: lastStatus,
+        detail: lastDetail,
+      };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastStatus = 0;
+      lastDetail =
+        err?.name === "AbortError"
+          ? `Upstream request timed out after ${timeoutMs}ms.`
+          : safeTrim(err?.message || String(err));
+
+      if (attemptIndex < maxRetries) {
+        await sleep(retryDelayMs * (attemptIndex + 1));
+        continue;
+      }
+
+      return {
+        ok: false,
+        attempts,
+        status: 0,
+        detail: lastDetail,
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    attempts,
+    status: lastStatus,
+    detail: lastDetail,
+  };
 }
 
 export async function POST(req) {
@@ -203,30 +341,42 @@ export async function POST(req) {
       ownerName: getOwnerName(callSignNames),
     };
 
-    const upstreamRes = await fetch(HAMPAGER_CALLS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${Buffer.from(
-          `${hamPagerUsername}:${hamPagerPassword}`,
-          "utf8",
-        ).toString("base64")}`,
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
+    const upstreamAuthHeader = `Basic ${Buffer.from(
+      `${hamPagerUsername}:${hamPagerPassword}`,
+      "utf8",
+    ).toString("base64")}`;
+    const upstreamResult = await sendUpstreamCallWithRetry({
+      payload,
+      authHeader: upstreamAuthHeader,
     });
 
-    if (!upstreamRes.ok) {
-      const detail = await extractErrorMessage(upstreamRes);
+    if (!upstreamResult.ok) {
+      const detail = buildUpstreamFailureDetail({
+        status: upstreamResult.status,
+        detail: upstreamResult.detail,
+        attempts: upstreamResult.attempts,
+      });
+      console.error("Pager upstream call failed", {
+        status: upstreamResult.status || null,
+        attempts: upstreamResult.attempts,
+        detail,
+      });
+      const responseStatus =
+        upstreamResult.status >= 500 ||
+        upstreamResult.status === 0 ||
+        upstreamResult.status === 429
+          ? 503
+          : 502;
       return NextResponse.json(
         {
           error: "Failed to send pager call.",
-          detail: detail || `Upstream request failed (${upstreamRes.status}).`,
+          detail,
         },
-        { status: 502 },
+        { status: responseStatus },
       );
     }
 
+    const upstreamRes = upstreamResult.response;
     const upstreamJson = await upstreamRes.json().catch(() => null);
     const upstreamTimestamp = safeTrim(
       upstreamJson?.timestamp || upstreamJson?.data?.timestamp,
