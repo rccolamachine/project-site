@@ -145,6 +145,7 @@ function brushTierUnlocked(brushUnlocks, toolId, brushId) {
 
 export default function FarmPage() {
   const importFileRef = useRef(null);
+  const resetInProgressRef = useRef(false);
   const batchedLogRef = useRef({
     earnings: 0,
     harvests: 0,
@@ -326,12 +327,14 @@ export default function FarmPage() {
 
   useEffect(() => {
     if (!ready) return;
+    if (resetInProgressRef.current) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
   }, [game, ready]);
 
   useEffect(() => {
     if (!ready) return;
     const id = setInterval(() => {
+      if (resetInProgressRef.current) return;
       const currentNow = Date.now();
       setNow(currentNow);
       setGame((prev) => {
@@ -360,6 +363,7 @@ export default function FarmPage() {
   }, []);
 
   const mutate = (updater) => {
+    if (resetInProgressRef.current) return;
     setGame((prev) => {
       const next = cloneState(prev);
       const timestamp = Date.now();
@@ -600,6 +604,7 @@ export default function FarmPage() {
     if (!finalConfirm) return;
 
     try {
+      resetInProgressRef.current = true;
       localStorage.removeItem(STORAGE_KEY);
       batchedLogRef.current = {
         earnings: 0,
