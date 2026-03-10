@@ -22,6 +22,7 @@ const INITIAL_PROGRESS = {
   cancelled: false,
   successTimestamp: "",
   sentText: "",
+  retryCount: 0,
   stageTimestamps: {
     send_message: "",
     preflight: "",
@@ -29,6 +30,9 @@ const INITIAL_PROGRESS = {
     upstream_accept: "",
   },
 };
+
+const TELEMETRY_CONFIRMATION_RETRY_DELAY_MS = 30_000;
+const MAX_PAGER_AUTO_RETRIES = 2;
 
 function formatPagerTimestamp(value) {
   const raw = String(value || "").trim();
@@ -46,10 +50,23 @@ export default function PagerPage() {
   const [progress, setProgress] = useState(INITIAL_PROGRESS);
   const [telemetry, setTelemetry] = useState(null);
   const telemetryTimerRef = useRef(null);
+  const retryTimerRef = useRef(null);
   const telemetryPollRef = useRef({
     attempts: 0,
     text: "",
     timestamp: "",
+  });
+  const telemetrySnapshotRef = useRef({
+    stages: {},
+    expectedText: "",
+    full: false,
+  });
+  const retrySessionRef = useRef({
+    active: false,
+    text: "",
+    username: "",
+    password: "",
+    retriesUsed: 0,
   });
 
   const trimmedText = text.trim();
@@ -66,9 +83,43 @@ export default function PagerPage() {
     }
   };
 
+  const stopRetryTimer = () => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+  };
+
+  const clearRetrySession = () => {
+    retrySessionRef.current = {
+      active: false,
+      text: "",
+      username: "",
+      password: "",
+      retriesUsed: 0,
+    };
+  };
+
+  const updateTelemetrySnapshot = (stages, expectedText) => {
+    const safeStages =
+      stages && typeof stages === "object" && !Array.isArray(stages) ? stages : {};
+    const safeExpectedText = String(expectedText || "").trim();
+    const full = isPagerTelemetryFullConfirmation({
+      stages: safeStages,
+      expectedText: safeExpectedText,
+    });
+    telemetrySnapshotRef.current = {
+      stages: safeStages,
+      expectedText: safeExpectedText,
+      full,
+    };
+    return full;
+  };
+
   useEffect(() => {
     return () => {
       stopTelemetryPolling();
+      stopRetryTimer();
     };
   }, []);
 
@@ -83,93 +134,7 @@ export default function PagerPage() {
       error: "",
       polling: true,
     }));
-  };
-
-  const beginTelemetryPolling = ({ text: nextText, timestamp }) => {
-    const safeText = String(nextText || "").trim();
-    const safeTimestamp = String(timestamp || "").trim();
-    if (!safeText || !safeTimestamp) {
-      setTelemetry(null);
-      return;
-    }
-
-    stopTelemetryPolling();
-    telemetryPollRef.current = { attempts: 0, text: safeText, timestamp: safeTimestamp };
-    setTelemetry({
-      expectedText: safeText,
-      polling: true,
-      telemetryConfigured: false,
-      stages: {},
-      acceptedAt: "",
-      updatedAt: "",
-      error: "",
-    });
-
-    const poll = async () => {
-      const current = telemetryPollRef.current;
-      current.attempts += 1;
-
-      try {
-        const snapshot = await fetchPagerDeliveryStatus({
-          text: current.text,
-          timestamp: current.timestamp,
-        });
-
-        if (snapshot?.notFound) {
-          setTelemetry((prev) => ({
-            ...prev,
-            telemetryConfigured: Boolean(snapshot.telemetryConfigured),
-            polling: current.attempts < 30,
-          }));
-        } else if (snapshot?.ok) {
-          applyTelemetrySnapshot(snapshot);
-
-          if (
-            isPagerTelemetryFullConfirmation({
-              stages: snapshot?.stages,
-              expectedText: current.text,
-            })
-          ) {
-            stopTelemetryPolling();
-            setTelemetry((prev) => ({ ...prev, polling: false }));
-            return;
-          }
-        }
-      } catch (err) {
-        const message = err?.message || String(err);
-        setTelemetry((prev) => ({
-          ...prev,
-          error: message,
-          polling: current.attempts < 30,
-        }));
-      }
-
-      if (current.attempts >= 30) {
-        stopTelemetryPolling();
-        setTelemetry((prev) => ({ ...prev, polling: false }));
-      }
-    };
-
-    poll().catch(() => {});
-    telemetryTimerRef.current = setInterval(() => {
-      poll().catch(() => {});
-    }, 4000);
-  };
-
-  const setErrorState = (step, message, completedStep = -1) => {
-    setError(message);
-    setProgress((prev) => ({
-      ...INITIAL_PROGRESS,
-      activeStep: step,
-      completedStep,
-      errorStep: step,
-      errorMessage: message,
-      sentText: String(prev?.sentText || "").trim(),
-      stageTimestamps: {
-        ...INITIAL_PROGRESS.stageTimestamps,
-        ...(prev?.stageTimestamps || {}),
-      },
-    }));
+    updateTelemetrySnapshot(snapshot?.stages, telemetryPollRef.current?.text);
   };
 
   const getErrorStep = (message) => {
@@ -196,9 +161,174 @@ export default function PagerPage() {
     return 2;
   };
 
+  const setErrorState = (step, message, completedStep = -1) => {
+    setError(message);
+    stopRetryTimer();
+    clearRetrySession();
+    setProgress((prev) => ({
+      ...INITIAL_PROGRESS,
+      activeStep: step,
+      completedStep,
+      errorStep: step,
+      errorMessage: message,
+      sentText: String(prev?.sentText || "").trim(),
+      retryCount: Number(prev?.retryCount || 0),
+      stageTimestamps: {
+        ...INITIAL_PROGRESS.stageTimestamps,
+        ...(prev?.stageTimestamps || {}),
+      },
+    }));
+  };
+
+  const scheduleAutoRetryCheck = () => {
+    stopRetryTimer();
+    retryTimerRef.current = setTimeout(() => {
+      const session = retrySessionRef.current;
+      if (!session.active) return;
+      if (telemetrySnapshotRef.current.full) return;
+      if (session.retriesUsed >= MAX_PAGER_AUTO_RETRIES) return;
+
+      const runRetry = async () => {
+        const retryAttempt = session.retriesUsed + 1;
+        session.retriesUsed = retryAttempt;
+        const retryApiAt = new Date().toISOString();
+
+        setSending(true);
+        setProgress((prev) => ({
+          ...prev,
+          activeStep: 2,
+          completedStep: Math.max(1, prev?.completedStep ?? -1),
+          errorStep: -1,
+          errorMessage: "",
+          retryCount: retryAttempt,
+          stageTimestamps: {
+            ...INITIAL_PROGRESS.stageTimestamps,
+            ...(prev?.stageTimestamps || {}),
+            api_send: retryApiAt,
+          },
+        }));
+
+        try {
+          const payload = await sendPagerMessage({
+            text: session.text,
+            username: session.username,
+            password: session.password,
+          });
+
+          const upstreamAt =
+            String(payload.timestamp || "").trim() || new Date().toISOString();
+
+          setProgress((prev) => ({
+            ...prev,
+            activeStep: -1,
+            completedStep: 4,
+            errorStep: -1,
+            errorMessage: "",
+            cancelled: false,
+            successTimestamp: formatPagerTimestamp(upstreamAt),
+            sentText: String(payload.text || prev?.sentText || session.text).trim(),
+            retryCount: retryAttempt,
+            stageTimestamps: {
+              ...INITIAL_PROGRESS.stageTimestamps,
+              ...(prev?.stageTimestamps || {}),
+              upstream_accept: upstreamAt,
+            },
+          }));
+
+          beginTelemetryPolling({
+            text: payload.text || session.text,
+            timestamp: payload.timestamp,
+          });
+          scheduleAutoRetryCheck();
+        } catch (err) {
+          const message = err?.message || String(err);
+          const step = getErrorStep(message);
+          const completedStep = Math.max(-1, step - 1);
+          setErrorState(step, `Auto-retry ${retryAttempt} failed: ${message}`, completedStep);
+        } finally {
+          setSending(false);
+        }
+      };
+
+      runRetry().catch(() => {});
+    }, TELEMETRY_CONFIRMATION_RETRY_DELAY_MS);
+  };
+
+  const beginTelemetryPolling = ({ text: nextText, timestamp }) => {
+    const safeText = String(nextText || "").trim();
+    const safeTimestamp = String(timestamp || "").trim();
+    if (!safeText || !safeTimestamp) {
+      setTelemetry(null);
+      return;
+    }
+
+    stopTelemetryPolling();
+    telemetryPollRef.current = { attempts: 0, text: safeText, timestamp: safeTimestamp };
+    updateTelemetrySnapshot({}, safeText);
+    setTelemetry({
+      expectedText: safeText,
+      polling: true,
+      telemetryConfigured: false,
+      stages: {},
+      acceptedAt: "",
+      updatedAt: "",
+      error: "",
+    });
+
+    const poll = async () => {
+      const current = telemetryPollRef.current;
+      current.attempts += 1;
+
+      try {
+        const snapshot = await fetchPagerDeliveryStatus({
+          text: current.text,
+          timestamp: current.timestamp,
+        });
+
+        if (snapshot?.notFound) {
+          updateTelemetrySnapshot({}, current.text);
+          setTelemetry((prev) => ({
+            ...prev,
+            telemetryConfigured: Boolean(snapshot.telemetryConfigured),
+            polling: current.attempts < 30,
+          }));
+        } else if (snapshot?.ok) {
+          applyTelemetrySnapshot(snapshot);
+
+          if (updateTelemetrySnapshot(snapshot?.stages, current.text)) {
+            stopTelemetryPolling();
+            stopRetryTimer();
+            clearRetrySession();
+            setTelemetry((prev) => ({ ...prev, polling: false }));
+            return;
+          }
+        }
+      } catch (err) {
+        const message = err?.message || String(err);
+        setTelemetry((prev) => ({
+          ...prev,
+          error: message,
+          polling: current.attempts < 30,
+        }));
+      }
+
+      if (current.attempts >= 30) {
+        stopTelemetryPolling();
+        setTelemetry((prev) => ({ ...prev, polling: false }));
+      }
+    };
+
+    poll().catch(() => {});
+    telemetryTimerRef.current = setInterval(() => {
+      poll().catch(() => {});
+    }, 4000);
+  };
+
   const onSubmit = async (event) => {
     event.preventDefault();
     stopTelemetryPolling();
+    stopRetryTimer();
+    clearRetrySession();
     setTelemetry(null);
     setError("");
     const preflightAt = new Date().toISOString();
@@ -286,6 +416,7 @@ export default function PagerPage() {
         cancelled: false,
         successTimestamp: formatPagerTimestamp(upstreamAt),
         sentText: String(payload.text || prev?.sentText || safeSendText).trim(),
+        retryCount: 0,
         stageTimestamps: {
           ...INITIAL_PROGRESS.stageTimestamps,
           ...(prev?.stageTimestamps || {}),
@@ -299,6 +430,14 @@ export default function PagerPage() {
         text: payload.text || trimmedText,
         timestamp: payload.timestamp,
       });
+      retrySessionRef.current = {
+        active: true,
+        text: String(payload.text || safeSendText).trim(),
+        username: credentials.username,
+        password: credentials.password,
+        retriesUsed: 0,
+      };
+      scheduleAutoRetryCheck();
       setText("");
     } catch (err) {
       const message = err?.message || String(err);

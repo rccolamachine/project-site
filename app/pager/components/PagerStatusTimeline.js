@@ -100,6 +100,12 @@ function getSummaryTone(progress, sending, telemetryStatus) {
   return "muted";
 }
 
+function getStatusIcon(state) {
+  if (state === "error") return "X";
+  if (state === "done") return "✓";
+  if (state === "active") return "⌛";
+  return "·";
+}
 function getTelemetryStatus(telemetry) {
   if (!telemetry) {
     return {
@@ -212,6 +218,12 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
     String(telemetryStages?.mmdvm_tx_started?.at || "").trim() ||
     String(telemetryStages?.gateway_received?.at || "").trim();
 
+  const retryCount = Math.max(0, Number(progress?.retryCount || 0));
+  const apiSendDetail =
+    retryCount > 0
+      ? `Send POST /api/pager and await upstream acceptance. Auto-retry ${retryCount}/2.`
+      : "Send POST /api/pager and await upstream acceptance.";
+
   const groupedRows = [
     {
       title: "Send message",
@@ -227,7 +239,7 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
     },
     {
       title: "API send",
-      detail: "Send POST /api/pager and await upstream acceptance.",
+      detail: apiSendDetail,
       state: getFlowState("api_send", progress, sending),
       timestamp: stageTimestamps.api_send || "",
     },
@@ -254,9 +266,12 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
       <ol className={styles.statusList}>
         {groupedRows.map((row) => {
           const rowTimeLabel = getStateTimeLabel(row.state, row.timestamp);
+          const rowIcon = getStatusIcon(row.state);
           return (
             <li key={row.title} className={styles.statusItem}>
-              <span className={styles.statusDot} data-state={row.state} />
+              <span className={styles.statusDot} data-state={row.state} aria-hidden="true">
+                {rowIcon}
+              </span>
               <div>
                 <div className={styles.statusTitle}>
                   {row.title}
