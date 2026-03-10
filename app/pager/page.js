@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import PageIntro from "@/components/PageIntro";
 import PagerArchitectureDiagram from "./components/PagerArchitectureDiagram";
 import PagerStatusTimeline from "./components/PagerStatusTimeline";
-import { isPagerTelemetryFullConfirmation } from "@/lib/pagerTelemetryUtils";
+import {
+  isPagerGatewayTextMatch,
+  isPagerTelemetryFullConfirmation,
+} from "@/lib/pagerTelemetryUtils";
 import { fetchPagerDeliveryStatus, sendPagerMessage } from "./pagerApi";
 import {
   clampPagerText,
@@ -186,24 +189,52 @@ export default function PagerPage() {
       if (!session.active) return;
       if (telemetrySnapshotRef.current.full) return;
       if (session.retriesUsed >= MAX_PAGER_AUTO_RETRIES) return;
+      const snapshotStages =
+        telemetrySnapshotRef.current?.stages &&
+        typeof telemetrySnapshotRef.current.stages === "object" &&
+        !Array.isArray(telemetrySnapshotRef.current.stages)
+          ? telemetrySnapshotRef.current.stages
+          : {};
+      const hasGatewayTextMatch = isPagerGatewayTextMatch({
+        stages: snapshotStages,
+        expectedText: session.text,
+      });
+      const hasMmdvmActivity =
+        Boolean(String(snapshotStages?.mmdvm_tx_started?.at || "").trim()) ||
+        Boolean(String(snapshotStages?.mmdvm_tx_completed?.at || "").trim());
+      if (hasGatewayTextMatch || hasMmdvmActivity) return;
 
       const runRetry = async () => {
         const retryAttempt = session.retriesUsed + 1;
         session.retriesUsed = retryAttempt;
         const retryApiAt = new Date().toISOString();
 
+        updateTelemetrySnapshot({}, session.text);
+        setTelemetry((prev) => ({
+          expectedText: session.text,
+          polling: true,
+          telemetryConfigured: Boolean(prev?.telemetryConfigured),
+          stages: {},
+          acceptedAt: "",
+          updatedAt: "",
+          error: "",
+        }));
+
         setSending(true);
         setProgress((prev) => ({
           ...prev,
           activeStep: 2,
-          completedStep: Math.max(1, prev?.completedStep ?? -1),
+          completedStep: 1,
           errorStep: -1,
           errorMessage: "",
+          cancelled: false,
+          successTimestamp: "",
           retryCount: retryAttempt,
           stageTimestamps: {
             ...INITIAL_PROGRESS.stageTimestamps,
             ...(prev?.stageTimestamps || {}),
             api_send: retryApiAt,
+            upstream_accept: "",
           },
         }));
 
@@ -295,6 +326,35 @@ export default function PagerPage() {
           applyTelemetrySnapshot(snapshot);
 
           if (updateTelemetrySnapshot(snapshot?.stages, current.text)) {
+            const resolvedAt = String(
+              snapshot?.updatedAt || snapshot?.acceptedAt || "",
+            ).trim();
+            setProgress((prev) => {
+              const priorStageTimestamps =
+                prev?.stageTimestamps &&
+                typeof prev.stageTimestamps === "object" &&
+                !Array.isArray(prev.stageTimestamps)
+                  ? prev.stageTimestamps
+                  : {};
+              const upstreamAcceptAt =
+                resolvedAt || String(priorStageTimestamps?.upstream_accept || "").trim();
+              return {
+                ...prev,
+                activeStep: -1,
+                completedStep: 4,
+                errorStep: -1,
+                errorMessage: "",
+                cancelled: false,
+                successTimestamp:
+                  String(prev?.successTimestamp || "").trim() ||
+                  formatPagerTimestamp(upstreamAcceptAt),
+                stageTimestamps: {
+                  ...INITIAL_PROGRESS.stageTimestamps,
+                  ...priorStageTimestamps,
+                  upstream_accept: upstreamAcceptAt,
+                },
+              };
+            });
             stopTelemetryPolling();
             stopRetryTimer();
             clearRetrySession();

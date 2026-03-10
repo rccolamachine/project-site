@@ -1,3 +1,5 @@
+import Image from "next/image";
+import { useEffect, useRef } from "react";
 import styles from "../pager.module.css";
 import { isPagerGatewayTextMatch, safeTrim } from "@/lib/pagerTelemetryUtils";
 
@@ -57,15 +59,12 @@ function getSummary(progress, sending, telemetryStatus) {
   const specificError = String(progress?.errorMessage || "").trim();
   if (specificError) return specificError;
   if (telemetryStatus?.tone === "error") {
-    return (
-      String(telemetryStatus?.detail || "").trim() || "Message send failed."
-    );
+    return String(telemetryStatus?.detail || "").trim() || "Message send failed.";
   }
   if (progress?.errorStep >= 0) return "Message send failed.";
   if (progress?.cancelled) return "Message send failed.";
   if (telemetryStatus?.confirmation === "full") return "Message send complete.";
-  if (sending || progress?.completedStep >= 0)
-    return "Message send in progress.";
+  if (sending || progress?.completedStep >= 0) return "Message send in progress.";
   return "Message send in progress.";
 }
 
@@ -81,10 +80,11 @@ function getSummaryTone(progress, sending, telemetryStatus) {
 
 function getStatusIcon(state) {
   if (state === "error") return "X";
-  if (state === "done") return "✓";
-  if (state === "active") return "⌛";
-  return "·";
+  if (state === "done") return "OK";
+  if (state === "active") return "...";
+  return "-";
 }
+
 function getTelemetryStatus(telemetry) {
   if (!telemetry) {
     return {
@@ -141,8 +141,7 @@ function getTelemetryStatus(telemetry) {
   if (mmdvmConfirmed) {
     return {
       tone: "active",
-      detail:
-        "Pi-Star MMDVM send confirmed. Waiting for DAPNET gateway text match.",
+      detail: "Pi-Star MMDVM send confirmed. Waiting for DAPNET gateway text match.",
       confirmation: "mmdvm_only",
     };
   }
@@ -150,8 +149,7 @@ function getTelemetryStatus(telemetry) {
   if (gatewayTextMatched) {
     return {
       tone: "active",
-      detail:
-        "DAPNET gateway confirmed matching text. Waiting for Pi-Star MMDVM TX event.",
+      detail: "DAPNET gateway confirmed matching text. Waiting for Pi-Star MMDVM TX event.",
       confirmation: "dapnet_only",
     };
   }
@@ -159,8 +157,7 @@ function getTelemetryStatus(telemetry) {
   if (gatewayAt) {
     return {
       tone: "active",
-      detail:
-        "DAPNET gateway event observed; waiting for text match and Pi-Star TX event.",
+      detail: "DAPNET gateway event observed; waiting for text match and Pi-Star TX event.",
       confirmation: "none",
     };
   }
@@ -181,6 +178,8 @@ function getTelemetryStatus(telemetry) {
 }
 
 export default function PagerStatusTimeline({ progress, sending, telemetry }) {
+  const screenOverlayRef = useRef(null);
+  const previousVisibleCountRef = useRef(0);
   const telemetryStatus = getTelemetryStatus(telemetry);
   const summary = getSummary(progress, sending, telemetryStatus);
   const summaryTone = getSummaryTone(progress, sending, telemetryStatus);
@@ -196,6 +195,7 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
     !Array.isArray(telemetry.stages)
       ? telemetry.stages
       : {};
+
   const radioTimestamp =
     String(telemetryStages?.mmdvm_tx_completed?.at || "").trim() ||
     String(telemetryStages?.mmdvm_tx_started?.at || "").trim() ||
@@ -209,74 +209,112 @@ export default function PagerStatusTimeline({ progress, sending, telemetry }) {
 
   const groupedRows = [
     {
+      key: "submit_message",
       title: "Submit message",
-      detail: `Submit message: ${progress?.sentText ? `"${progress.sentText}"` : "(no text)"}`,
+      detail: `Submit message: ${progress?.sentText ? `\"${progress.sentText}\"` : "(no text)"}`,
       state: getMessageState(progress),
       timestamp: stageTimestamps.send_message || "",
+      used: Boolean(stageTimestamps.send_message),
     },
     {
+      key: "preflight",
       title: "Preflight checks",
       detail: "Validate text and endpoint credentials.",
       state: getFlowState("preflight", progress, sending),
       timestamp: stageTimestamps.preflight || "",
+      used: Boolean(stageTimestamps.preflight),
     },
     {
+      key: "api_send",
       title: "API send",
       detail: apiSendDetail,
       state: getFlowState("api_send", progress, sending),
       timestamp: stageTimestamps.api_send || "",
+      used:
+        Boolean(stageTimestamps.api_send) ||
+        progress.activeStep >= 2 ||
+        progress.completedStep >= 2 ||
+        progress.errorStep === 2,
     },
     {
+      key: "upstream_queue",
       title: "Upstream queue",
       detail: "Send DAPNET-accepted message to Pi-star radio.",
       state: getFlowState("upstream_accept", progress, sending),
       timestamp:
         String(telemetry?.acceptedAt || "").trim() ||
         String(stageTimestamps.upstream_accept || "").trim(),
+      used:
+        Boolean(telemetry?.acceptedAt) ||
+        Boolean(stageTimestamps.upstream_accept) ||
+        progress.completedStep >= 4 ||
+        progress.errorStep >= 3,
     },
     {
+      key: "radio_telemetry",
       title: "Radio telemetry",
       detail: telemetryStatus.detail,
       state: telemetryStatus.tone,
       timestamp: radioTimestamp,
+      used:
+        Boolean(telemetry) &&
+        (Boolean(telemetry?.polling) ||
+          Boolean(telemetry?.error) ||
+          Boolean(radioTimestamp) ||
+          telemetryStatus.confirmation !== "none"),
     },
   ];
 
+  const visibleRows = groupedRows.filter((row) => row.used).slice(0, 5);
+
+  useEffect(() => {
+    const nextCount = visibleRows.length;
+    if (nextCount > previousVisibleCountRef.current && screenOverlayRef.current) {
+      screenOverlayRef.current.scrollTo({
+        top: screenOverlayRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+    previousVisibleCountRef.current = nextCount;
+  }, [visibleRows.length]);
+
   return (
     <section className={styles.statusPanel} aria-live="polite">
-      <div className={styles.statusHeader}>Transmission status</div>
-
-      <ol className={styles.statusList}>
-        {groupedRows.map((row) => {
-          const rowTimeLabel = getStateTimeLabel(row.state, row.timestamp);
-          const rowIcon = getStatusIcon(row.state);
-          return (
-            <li key={row.title} className={styles.statusItem}>
-              <span
-                className={styles.statusDot}
-                data-state={row.state}
-                aria-hidden="true"
-              >
-                {rowIcon}
-              </span>
-              <div>
-                <div className={styles.statusTitle}>
-                  {row.title}
-                  {rowTimeLabel ? (
-                    <span className={styles.statusTitleMeta}>
-                      {` - ${rowTimeLabel}`}
-                    </span>
-                  ) : null}
-                </div>
-                <div className={styles.statusDetail}>{row.detail}</div>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-
-      <div className={styles.statusSummary} data-tone={summaryTone}>
-        {summary}
+      <div className={styles.pagerDeviceWrap}>
+        <Image
+          src="/pager/gp2009N.png"
+          alt="Pager device showing transmission status"
+          width={1536}
+          height={1024}
+          className={styles.pagerDeviceImage}
+        />
+        <div className={styles.pagerScreenOverlay} ref={screenOverlayRef}>
+          <div className={styles.pagerScreenHeader}>Transmission status</div>
+          <ol className={styles.pagerScreenList}>
+            {visibleRows.map((row) => {
+              const rowTimeLabel = getStateTimeLabel(row.state, row.timestamp);
+              return (
+                <li key={row.key} className={styles.pagerScreenItem}>
+                  <span className={styles.pagerScreenIcon} data-state={row.state}>
+                    {getStatusIcon(row.state)}
+                  </span>
+                  <span className={styles.pagerScreenText}>
+                    <span className={styles.pagerScreenTextPrimary}>{row.title}</span>
+                    {row.detail ? (
+                      <span className={styles.pagerScreenTextDetail}>{row.detail}</span>
+                    ) : null}
+                    {rowTimeLabel ? (
+                      <span className={styles.pagerScreenTextMeta}>{rowTimeLabel}</span>
+                    ) : null}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          <div className={styles.pagerScreenSummary} data-tone={summaryTone}>
+            {summary}
+          </div>
+        </div>
       </div>
     </section>
   );
