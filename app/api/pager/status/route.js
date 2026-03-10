@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getPagerStatus } from "@/lib/pagerDeliveryStatusStore";
+import {
+  getPagerStatus,
+  getPagerStatusStoreBackend,
+} from "@/lib/pagerDeliveryStatusStore";
 import {
   normalizeIsoTimestamp,
   parsePagerTelemetryDetail,
@@ -51,6 +54,7 @@ export async function POST(req) {
         {
           error: "No status found for this pager message.",
           telemetryConfigured: hasTelemetrySecret(),
+          storeBackend: getPagerStatusStoreBackend(),
         },
         { status: 404 },
       );
@@ -60,6 +64,7 @@ export async function POST(req) {
       {
         ok: true,
         telemetryConfigured: hasTelemetrySecret(),
+        storeBackend: getPagerStatusStoreBackend(),
         acceptedAt: status.acceptedAt || null,
         updatedAt: status.updatedAt || null,
         stages: buildPublicStages(status.stages),

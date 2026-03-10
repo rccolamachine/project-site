@@ -17,6 +17,7 @@ MMDVM_LOG_SWITCH_INTERVAL_SEC="${MMDVM_LOG_SWITCH_INTERVAL_SEC:-30}"
 PAGER_TELEMETRY_LOG_FULL_PAYLOAD="${PAGER_TELEMETRY_LOG_FULL_PAYLOAD:-0}"
 GATEWAY_DUPLICATE_WINDOW_SEC="${GATEWAY_DUPLICATE_WINDOW_SEC:-30}"
 MMDVM_TX_STARTED_COOLDOWN_SEC="${MMDVM_TX_STARTED_COOLDOWN_SEC:-3}"
+MMDVM_LINK_LAST_GATEWAY_TEXT_SEC="${MMDVM_LINK_LAST_GATEWAY_TEXT_SEC:-120}"
 
 GATEWAY_RECEIVED_REGEX="${GATEWAY_RECEIVED_REGEX:-DAPNET|POCSAG.*(queue|queued|received)}"
 MMDVM_TX_STARTED_REGEX="${MMDVM_TX_STARTED_REGEX:-POCSAG.*(tx|transmit|transmitted|sending|start|starting)}"
@@ -77,6 +78,9 @@ if ! [[ "$GATEWAY_DUPLICATE_WINDOW_SEC" =~ ^[0-9]+$ ]] || (( GATEWAY_DUPLICATE_W
 fi
 if ! [[ "$MMDVM_TX_STARTED_COOLDOWN_SEC" =~ ^[0-9]+$ ]] || (( MMDVM_TX_STARTED_COOLDOWN_SEC < 0 )); then
   MMDVM_TX_STARTED_COOLDOWN_SEC=3
+fi
+if ! [[ "$MMDVM_LINK_LAST_GATEWAY_TEXT_SEC" =~ ^[0-9]+$ ]] || (( MMDVM_LINK_LAST_GATEWAY_TEXT_SEC < 0 )); then
+  MMDVM_LINK_LAST_GATEWAY_TEXT_SEC=120
 fi
 
 json_escape() {
@@ -178,6 +182,7 @@ build_enriched_detail() {
   local stage="$1"
   local raw_line="$2"
   local source_file="${3:-}"
+  local fallback_text="${4:-}"
   local normalized_line
   local target=""
   local text=""
@@ -195,6 +200,9 @@ build_enriched_detail() {
 
   if text="$(extract_text_from_line "$raw_line")"; then
     text="$(sanitize_extracted_text "$text")"
+    text="$(truncate_value "$text" 120)"
+  elif [[ -n "$fallback_text" ]]; then
+    text="$(sanitize_extracted_text "$fallback_text")"
     text="$(truncate_value "$text" 120)"
   fi
 
@@ -228,6 +236,9 @@ build_enriched_detail() {
 
   if [[ "$normalized_stage" == "mmdvm_tx_started" ]]; then
     concise="event:mmdvm_tx_started"
+    if [[ -n "$text" ]]; then
+      concise="${concise} text:\"${text}\""
+    fi
     if [[ -n "$source_name" ]]; then
       concise="${concise} source:${source_name}"
     fi
@@ -237,6 +248,9 @@ build_enriched_detail() {
 
   if [[ "$normalized_stage" == "mmdvm_tx_completed" ]]; then
     concise="event:mmdvm_tx_completed"
+    if [[ -n "$text" ]]; then
+      concise="${concise} text:\"${text}\""
+    fi
     if [[ -n "$source_name" ]]; then
       concise="${concise} source:${source_name}"
     fi
@@ -467,6 +481,7 @@ process_log_line() {
   local extracted_gateway_text=""
   local normalized_gateway_text=""
   local now_epoch
+  local fallback_text=""
   local stage=""
   local signature
 
@@ -487,15 +502,24 @@ process_log_line() {
         return 0
       fi
       LAST_GATEWAY_TEXT_KEY="$normalized_gateway_text"
+      LAST_GATEWAY_TEXT_RAW="$extracted_gateway_text"
       LAST_GATEWAY_TEXT_AT="$now_epoch"
       stage="gateway_received"
     fi
   elif [[ "$line" =~ $MMDVM_TX_COMPLETED_REGEX ]]; then
+    if (( MMDVM_LINK_LAST_GATEWAY_TEXT_SEC > 0 )) && \
+      (( now_epoch - LAST_GATEWAY_TEXT_AT <= MMDVM_LINK_LAST_GATEWAY_TEXT_SEC )); then
+      fallback_text="$LAST_GATEWAY_TEXT_RAW"
+    fi
     stage="mmdvm_tx_completed"
   elif [[ "$line" =~ $MMDVM_TX_STARTED_REGEX ]]; then
     if (( MMDVM_TX_STARTED_COOLDOWN_SEC > 0 )) && \
       (( now_epoch - LAST_MMDVM_TX_STARTED_AT < MMDVM_TX_STARTED_COOLDOWN_SEC )); then
       return 0
+    fi
+    if (( MMDVM_LINK_LAST_GATEWAY_TEXT_SEC > 0 )) && \
+      (( now_epoch - LAST_GATEWAY_TEXT_AT <= MMDVM_LINK_LAST_GATEWAY_TEXT_SEC )); then
+      fallback_text="$LAST_GATEWAY_TEXT_RAW"
     fi
     LAST_MMDVM_TX_STARTED_AT="$now_epoch"
     stage="mmdvm_tx_started"
@@ -513,7 +537,7 @@ process_log_line() {
   fi
   LAST_SIGNATURE="$signature"
 
-  enriched_detail="$(build_enriched_detail "$stage" "$line" "$source_file")"
+  enriched_detail="$(build_enriched_detail "$stage" "$line" "$source_file" "$fallback_text")"
   post_stage "$stage" "$enriched_detail" "$line" || true
 }
 
@@ -536,6 +560,7 @@ LAST_SEND_ERROR=""
 LAST_SEND_PAYLOAD=""
 LAST_TAIL_SOURCE=""
 LAST_GATEWAY_TEXT_KEY=""
+LAST_GATEWAY_TEXT_RAW=""
 LAST_GATEWAY_TEXT_AT=0
 LAST_MMDVM_TX_STARTED_AT=0
 TAIL_PID=""

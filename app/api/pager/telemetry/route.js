@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { applyPagerTelemetryEvent } from "@/lib/pagerDeliveryStatusStore";
+import {
+  applyPagerTelemetryEvent,
+  getPagerStatusStoreBackend,
+} from "@/lib/pagerDeliveryStatusStore";
 
 export const runtime = "nodejs";
 
@@ -36,19 +39,31 @@ export async function POST(req) {
     const configuredSecret = getConfiguredSecret();
     if (!configuredSecret) {
       return NextResponse.json(
-        { error: "Telemetry secret not configured." },
+        {
+          error: "Telemetry secret not configured.",
+          storeBackend: getPagerStatusStoreBackend(),
+        },
         { status: 500 },
       );
     }
 
     const providedSecret = readProvidedSecret(req);
     if (!providedSecret || providedSecret !== configuredSecret) {
-      return NextResponse.json({ error: "Invalid telemetry secret." }, { status: 401 });
+      return NextResponse.json(
+        {
+          error: "Invalid telemetry secret.",
+          storeBackend: getPagerStatusStoreBackend(),
+        },
+        { status: 401 },
+      );
     }
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid JSON body.", storeBackend: getPagerStatusStoreBackend() },
+        { status: 400 },
+      );
     }
 
     const trackingKey = safeTrim(body.trackingKey);
@@ -60,7 +75,7 @@ export async function POST(req) {
 
     if (!stage) {
       return NextResponse.json(
-        { error: "Stage is required." },
+        { error: "Stage is required.", storeBackend: getPagerStatusStoreBackend() },
         { status: 400 },
       );
     }
@@ -79,6 +94,7 @@ export async function POST(req) {
         {
           error:
             "Unable to apply telemetry event. Provide trackingKey, text+timestamp, or ensure a recent pending pager request exists.",
+          storeBackend: getPagerStatusStoreBackend(),
         },
         { status: 404 },
       );
@@ -87,6 +103,7 @@ export async function POST(req) {
     return NextResponse.json(
       {
         ok: true,
+        storeBackend: getPagerStatusStoreBackend(),
         acceptedAt: updated.acceptedAt || null,
         updatedAt: updated.updatedAt || null,
         stages: updated.stages || {},
@@ -98,6 +115,7 @@ export async function POST(req) {
       {
         error: "Failed to ingest telemetry event.",
         detail: err?.message || String(err),
+        storeBackend: getPagerStatusStoreBackend(),
       },
       { status: 500 },
     );
