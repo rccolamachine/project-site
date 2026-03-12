@@ -7,8 +7,15 @@ import PacketArchitectureDiagram from "./components/PacketArchitectureDiagram";
 import {
   DEFAULT_DURATION_HOURS,
   DURATION_CANDIDATE_HOURS,
+  formatDurationLabel,
+  formatLatitude,
+  formatLongitude,
+  formatNumber,
+  formatTimestamp,
+  formatTimestampParts,
+  getSymbolRenderData,
+  getSymbolSpriteStyleVars,
   hasMappableCoordinates,
-  hasSymbolSprite,
   parseIsoToMs,
 } from "./packetShared";
 import styles from "./packet.module.css";
@@ -16,79 +23,37 @@ import styles from "./packet.module.css";
 const REFRESH_INTERVAL_MS = 60_000;
 const SNAPSHOT_CACHE_KEY = "packet_ky4zo_snapshot_v1";
 
-function formatTimestamp(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "--";
-
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return raw;
-  return date.toLocaleString();
-}
-
-function formatTimestampParts(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return { date: "--", time: "" };
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return { date: raw, time: "" };
-
-  return {
-    date: parsed.toLocaleDateString(),
-    time: parsed.toLocaleTimeString(),
-  };
-}
-
-function formatLatitude(value) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return "--";
-  return `${Math.abs(numeric).toFixed(5)}\u00B0 ${numeric >= 0 ? "N" : "S"}`;
-}
-
-function formatLongitude(value) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return "--";
-  return `${Math.abs(numeric).toFixed(5)}\u00B0 ${numeric >= 0 ? "E" : "W"}`;
-}
-
-function formatNumber(value, digits = 1) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return "--";
-  return numeric.toFixed(digits);
-}
-
-function formatDurationLabel(hours) {
-  const numeric = Number(hours);
-  if (!Number.isFinite(numeric) || numeric <= 0) return "All";
-  if (numeric < 24) return `Past ${numeric} hour${numeric === 1 ? "" : "s"}`;
-
-  const days = numeric / 24;
-  if (Number.isInteger(days)) {
-    return `Past ${days} day${days === 1 ? "" : "s"}`;
+function readSnapshotCache() {
+  try {
+    const cachedRaw = window.sessionStorage.getItem(SNAPSHOT_CACHE_KEY);
+    if (!cachedRaw) return null;
+    const cached = JSON.parse(cachedRaw);
+    if (!cached || typeof cached !== "object") return null;
+    return normalizeSnapshotPayload(cached);
+  } catch {
+    return null;
   }
+}
 
-  return `Past ${numeric} hours`;
+function writeSnapshotCache(snapshot) {
+  try {
+    window.sessionStorage.setItem(SNAPSHOT_CACHE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Ignore storage errors.
+  }
 }
 
 function SymbolCell({ entry }) {
-  const symbolCode = String(entry?.symbolCode || "").trim();
-  const overlay = String(entry?.symbolOverlay || "").trim();
-  const hasSprite = hasSymbolSprite(entry);
-  const tableId = Number(entry?.symbolTableId);
-  const spriteCol = Number(entry?.symbolSpriteCol);
-  const spriteRow = Number(entry?.symbolSpriteRow);
+  const render = getSymbolRenderData(entry);
   const spriteTableClass =
-    tableId === 0
+    render.symbolTableId === 0
       ? styles.packetSpriteTable0
-      : tableId === 1
+      : render.symbolTableId === 1
         ? styles.packetSpriteTable1
         : "";
-  const spriteColClass = styles[`packetSpriteCol${spriteCol}`] || "";
-  const spriteRowClass = styles[`packetSpriteRow${spriteRow}`] || "";
   const spriteClassName = [
     styles.tableSymbolSprite,
     spriteTableClass,
-    spriteColClass,
-    spriteRowClass,
   ]
     .filter(Boolean)
     .join(" ");
@@ -97,18 +62,21 @@ function SymbolCell({ entry }) {
     <div className={styles.symbolCell}>
       <span
         className={styles.tableSymbolBadge}
-        aria-label={symbolCode || "Packet symbol"}
-        title={symbolCode || "Packet symbol"}
+        aria-label={render.symbolCode || "Packet symbol"}
+        title={render.symbolCode || "Packet symbol"}
       >
-        {hasSprite ? (
-          <span className={spriteClassName} />
+        {render.hasSprite ? (
+          <span
+            className={spriteClassName}
+            style={getSymbolSpriteStyleVars(entry)}
+          />
         ) : (
           <span className={styles.tableSymbolFallback}>
-            {symbolCode || "--"}
+            {render.symbolCode || "--"}
           </span>
         )}
-        {overlay ? (
-          <span className={styles.tableSymbolOverlay}>{overlay}</span>
+        {render.symbolOverlay ? (
+          <span className={styles.tableSymbolOverlay}>{render.symbolOverlay}</span>
         ) : null}
       </span>
     </div>
@@ -190,14 +158,7 @@ export default function PacketPage() {
 
         const snapshot = normalizeSnapshotPayload(payload);
         applySnapshot(snapshot);
-        try {
-          window.sessionStorage.setItem(
-            SNAPSHOT_CACHE_KEY,
-            JSON.stringify(snapshot),
-          );
-        } catch {
-          // Ignore storage errors.
-        }
+        writeSnapshotCache(snapshot);
         setError("");
       } catch (err) {
         if (controller.signal.aborted || requestId !== requestIdRef.current)
@@ -219,19 +180,12 @@ export default function PacketPage() {
   );
 
   useEffect(() => {
-    let usedCache = false;
-    try {
-      const cachedRaw = window.sessionStorage.getItem(SNAPSHOT_CACHE_KEY);
-      if (cachedRaw) {
-        const cached = JSON.parse(cachedRaw);
-        if (cached && typeof cached === "object") {
-          applySnapshot(normalizeSnapshotPayload(cached));
-          setLoading(false);
-          usedCache = true;
-        }
-      }
-    } catch {
-      // Ignore cache read/parse errors.
+    const cachedSnapshot = readSnapshotCache();
+    const usedCache = Boolean(cachedSnapshot);
+
+    if (cachedSnapshot) {
+      applySnapshot(cachedSnapshot);
+      setLoading(false);
     }
 
     loadSnapshot({ silent: usedCache }).catch(() => {});
@@ -337,6 +291,10 @@ export default function PacketPage() {
     setSelectedCallsign(next);
   }, []);
 
+  const handleRefreshNow = useCallback(() => {
+    loadSnapshot().catch(() => {});
+  }, [loadSnapshot]);
+
   return (
     <section className="page">
       <header className={styles.pageHeader}>
@@ -385,7 +343,7 @@ export default function PacketPage() {
             </label>
             <button
               type="button"
-              onClick={() => loadSnapshot().catch(() => {})}
+              onClick={handleRefreshNow}
               disabled={loading || refreshing}
             >
               {refreshing ? "Refreshing..." : "Refresh now"}
@@ -434,11 +392,9 @@ export default function PacketPage() {
               {filteredMapResults.map((entry) => (
                 <tr
                   key={entry.callsign}
-                  className={`${entry.hasLocation ? "" : styles.rowNoFix} ${
-                    selectedCallsign === entry.callsign
-                      ? styles.rowSelected
-                      : ""
-                  }`.trim()}
+                  className={
+                    selectedCallsign === entry.callsign ? styles.rowSelected : ""
+                  }
                   tabIndex={0}
                   role="button"
                   aria-pressed={selectedCallsign === entry.callsign}

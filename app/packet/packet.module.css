@@ -277,74 +277,6 @@
   background-image: url("/packet/packet-symbols-24-1.png");
 }
 
-.packetSpriteCol0 {
-  --packet-col: 0;
-}
-.packetSpriteCol1 {
-  --packet-col: 1;
-}
-.packetSpriteCol2 {
-  --packet-col: 2;
-}
-.packetSpriteCol3 {
-  --packet-col: 3;
-}
-.packetSpriteCol4 {
-  --packet-col: 4;
-}
-.packetSpriteCol5 {
-  --packet-col: 5;
-}
-.packetSpriteCol6 {
-  --packet-col: 6;
-}
-.packetSpriteCol7 {
-  --packet-col: 7;
-}
-.packetSpriteCol8 {
-  --packet-col: 8;
-}
-.packetSpriteCol9 {
-  --packet-col: 9;
-}
-.packetSpriteCol10 {
-  --packet-col: 10;
-}
-.packetSpriteCol11 {
-  --packet-col: 11;
-}
-.packetSpriteCol12 {
-  --packet-col: 12;
-}
-.packetSpriteCol13 {
-  --packet-col: 13;
-}
-.packetSpriteCol14 {
-  --packet-col: 14;
-}
-.packetSpriteCol15 {
-  --packet-col: 15;
-}
-
-.packetSpriteRow0 {
-  --packet-row: 0;
-}
-.packetSpriteRow1 {
-  --packet-row: 1;
-}
-.packetSpriteRow2 {
-  --packet-row: 2;
-}
-.packetSpriteRow3 {
-  --packet-row: 3;
-}
-.packetSpriteRow4 {
-  --packet-row: 4;
-}
-.packetSpriteRow5 {
-  --packet-row: 5;
-}
-
 .packetMarkerOverlay,
 .tableSymbolOverlay {
   position: absolute;
@@ -432,10 +364,6 @@
   background: color-mix(in srgb, var(--cyan) 24%, transparent);
 }
 
-.rowNoFix {
-  opacity: 0.72;
-}
-
 .symbolCell {
   display: inline-flex;
   align-items: center;
@@ -517,40 +445,4 @@
 
 .mapShell :global(.leaflet-tooltip-top:before) {
   border-top-color: rgba(5, 4, 10, 0.92);
-}
-
-.diagramWrap {
-  overflow-x: auto;
-}
-
-.diagramSvg {
-  width: 100%;
-  height: auto;
-}
-
-.diagramLaneLabel {
-  fill: rgba(243, 244, 255, 0.85);
-  font-size: 9px;
-  text-anchor: middle;
-  text-decoration: underline;
-}
-
-.diagramBoxWeb {
-  fill: rgba(45, 226, 230, 0.09);
-  stroke: rgba(45, 226, 230, 0.56);
-}
-
-.diagramBoxRadio {
-  fill: rgba(255, 79, 216, 0.1);
-  stroke: rgba(255, 79, 216, 0.58);
-}
-
-.diagramStepTitle {
-  fill: #f3f4ff;
-  font-size: 10px;
-}
-
-.diagramStepBody {
-  fill: rgba(243, 244, 255, 0.78);
-  font-size: 7px;
 }

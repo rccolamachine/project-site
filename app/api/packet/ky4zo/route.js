@@ -10,7 +10,10 @@ const CALLSIGN_PREFIX = `${CALLSIGN_ROOT}-`;
 const MIN_SSID = 1;
 const MAX_SSID = 20;
 const CACHE_TTL_MS = 60_000;
+const USER_AGENT = "rcpacketmachine-packet-map/1.0";
 const SYMBOL_SPEC_PATH = path.join(process.cwd(), "data", "packet_symbolsX.txt");
+const SYMBOL_LOOKUP_STORE_KEY = "__packetSymbolLookupStore";
+const ROUTE_STORE_KEY = "__packetKy4zoRouteStore";
 const SYMBOL_LINE_PATTERN =
   /^\s*(\/.)\s+\S+\s*(.*?)\s{2,}(\\.)\s+\S+\s*(.*?)\s*$/;
 
@@ -51,9 +54,8 @@ function normalizeSymbolDescription(value) {
 }
 
 function getSymbolLookup() {
-  const key = "__packetSymbolLookupStore";
-  if (globalThis[key]) {
-    return globalThis[key];
+  if (globalThis[SYMBOL_LOOKUP_STORE_KEY]) {
+    return globalThis[SYMBOL_LOOKUP_STORE_KEY];
   }
 
   const lookup = new Map();
@@ -80,7 +82,7 @@ function getSymbolLookup() {
     // Leave lookup empty; client can still show the symbol code itself.
   }
 
-  globalThis[key] = lookup;
+  globalThis[SYMBOL_LOOKUP_STORE_KEY] = lookup;
   return lookup;
 }
 
@@ -129,15 +131,14 @@ function parseSymbolInfo(symbolRaw, symbolLookup) {
 }
 
 function getStore() {
-  const key = "__packetKy4zoRouteStore";
-  if (!globalThis[key]) {
-    globalThis[key] = {
+  if (!globalThis[ROUTE_STORE_KEY]) {
+    globalThis[ROUTE_STORE_KEY] = {
       cache: null,
       inflight: null,
     };
   }
 
-  return globalThis[key];
+  return globalThis[ROUTE_STORE_KEY];
 }
 
 function buildConfiguredCallsigns() {
@@ -146,6 +147,8 @@ function buildConfiguredCallsigns() {
     return `${CALLSIGN_ROOT}-${ssid}`;
   });
 }
+
+const CONFIGURED_CALLSIGNS = buildConfiguredCallsigns();
 
 function buildApiUrl({ name, apikey, limit = 200 }) {
   const params = new URLSearchParams({
@@ -163,7 +166,7 @@ async function fetchPacketEntries({ name, apikey, limit }) {
   const response = await fetch(buildApiUrl({ name, apikey, limit }), {
     cache: "no-store",
     headers: {
-      "User-Agent": "rcpacketmachine-packet-map/1.0",
+      "User-Agent": USER_AGENT,
       Accept: "application/json",
     },
   });
@@ -220,12 +223,11 @@ function buildResultEntry(entry, callsignFallback, symbolLookup) {
 }
 
 async function loadKy4zoLocationSnapshot(apikey) {
-  const requestedCallsigns = buildConfiguredCallsigns();
   const symbolLookup = getSymbolLookup();
   const entries = await fetchPacketEntries({
-    name: requestedCallsigns.join(","),
+    name: CONFIGURED_CALLSIGNS.join(","),
     apikey,
-    limit: requestedCallsigns.length,
+    limit: CONFIGURED_CALLSIGNS.length,
   });
 
   const entryByCallsign = new Map(

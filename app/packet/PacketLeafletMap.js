@@ -1,14 +1,16 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { hasMappableCoordinates } from "./packetShared";
+import {
+  getSymbolRenderData,
+  getSymbolSpriteStyleAttr,
+  hasMappableCoordinates,
+} from "./packetShared";
 import styles from "./packet.module.css";
 
 const DEFAULT_CENTER = [39.5, -98.35];
 const DEFAULT_ZOOM = 4;
 const OVERLAP_SPACING_METERS = 18;
-const MAX_SPRITE_COL = 15;
-const MAX_SPRITE_ROW = 5;
 
 function escapeHtml(value) {
   return String(value || "")
@@ -20,42 +22,28 @@ function escapeHtml(value) {
 }
 
 function buildMarkerHtml(entry, isSelected) {
-  const tableId = Number(entry?.symbolTableId);
-  const spriteCol = Number(entry?.symbolSpriteCol);
-  const spriteRow = Number(entry?.symbolSpriteRow);
-  const hasSprite =
-    (tableId === 0 || tableId === 1) &&
-    Number.isFinite(spriteCol) &&
-    Number.isFinite(spriteRow) &&
-    spriteCol >= 0 &&
-    spriteCol <= MAX_SPRITE_COL &&
-    spriteRow >= 0 &&
-    spriteRow <= MAX_SPRITE_ROW;
-  const overlay = String(entry?.symbolOverlay || "").trim();
-  const symbolCode = String(entry?.symbolCode || "").trim() || "--";
+  const render = getSymbolRenderData(entry);
+  const symbolCode = render.symbolCode || "--";
   const selectedClass = isSelected ? ` ${styles.packetMarkerBadgeSelected}` : "";
 
-  if (!hasSprite) {
+  if (!render.hasSprite) {
     return `<div class="${styles.packetMarkerBadge}${selectedClass}"><span class="${styles.packetMarkerFallback}">${escapeHtml(symbolCode)}</span></div>`;
   }
 
   const spriteTableClass =
-    tableId === 0 ? styles.packetSpriteTable0 : styles.packetSpriteTable1;
-  const spriteColClass = styles[`packetSpriteCol${spriteCol}`] || "";
-  const spriteRowClass = styles[`packetSpriteRow${spriteRow}`] || "";
+    render.symbolTableId === 0 ? styles.packetSpriteTable0 : styles.packetSpriteTable1;
   const spriteClassName = [
     styles.packetMarkerSprite,
     spriteTableClass,
-    spriteColClass,
-    spriteRowClass,
   ]
     .filter(Boolean)
     .join(" ");
-  const overlayHtml = overlay
-    ? `<span class="${styles.packetMarkerOverlay}">${escapeHtml(overlay)}</span>`
+  const overlayHtml = render.symbolOverlay
+    ? `<span class="${styles.packetMarkerOverlay}">${escapeHtml(render.symbolOverlay)}</span>`
     : "";
+  const spriteStyleAttr = escapeHtml(getSymbolSpriteStyleAttr(entry));
 
-  return `<div class="${styles.packetMarkerBadge}${selectedClass}"><span class="${spriteClassName}"></span>${overlayHtml}</div>`;
+  return `<div class="${styles.packetMarkerBadge}${selectedClass}"><span class="${spriteClassName}" style="${spriteStyleAttr}"></span>${overlayHtml}</div>`;
 }
 
 function getCoordinateKey(entry) {

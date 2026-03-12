@@ -1,0 +1,35 @@
+.diagramWrap {
+  overflow-x: auto;
+}
+
+.diagramSvg {
+  width: 100%;
+  height: auto;
+}
+
+.diagramLaneLabel {
+  fill: rgba(243, 244, 255, 0.85);
+  font-size: 9px;
+  text-anchor: middle;
+  text-decoration: underline;
+}
+
+.diagramBoxWeb {
+  fill: rgba(45, 226, 230, 0.09);
+  stroke: rgba(45, 226, 230, 0.56);
+}
+
+.diagramBoxRadio {
+  fill: rgba(255, 79, 216, 0.1);
+  stroke: rgba(255, 79, 216, 0.58);
+}
+
+.diagramStepTitle {
+  fill: #f3f4ff;
+  font-size: 10px;
+}
+
+.diagramStepBody {
+  fill: rgba(243, 244, 255, 0.78);
+  font-size: 7px;
+}

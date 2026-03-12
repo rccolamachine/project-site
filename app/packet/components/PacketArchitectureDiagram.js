@@ -1,215 +1,265 @@
-import styles from "../packet.module.css";
-
-const TITLE_MAX_CHARS = 44;
-const BODY_MAX_CHARS = 62;
-const TEXT_LINE_HEIGHT = 12;
-
-function wrapText(text, maxChars) {
-  const raw = String(text || "").trim();
-  if (!raw) return [];
-
-  const words = raw.split(/\s+/);
-  const lines = [];
-  let current = words[0] || "";
-
-  for (let i = 1; i < words.length; i += 1) {
-    const next = words[i];
-    if (`${current} ${next}`.length <= maxChars) {
-      current = `${current} ${next}`;
-    } else {
-      lines.push(current);
-      current = next;
-    }
-  }
-
-  if (current) lines.push(current);
-  return lines;
-}
-
-function WrappedText({ x, y, className, lines }) {
-  return (
-    <text x={x} y={y} className={className}>
-      {lines.map((line, index) => (
-        <tspan
-          key={`${className}-${line}-${index}`}
-          x={x}
-          dy={index === 0 ? 0 : TEXT_LINE_HEIGHT}
-        >
-          {line}
-        </tspan>
-      ))}
-    </text>
-  );
-}
-
-function DiagramBlock({ x, y, width, height, boxClassName, title, bodyLines }) {
-  const numericX = Number(x);
-  const numericY = Number(y);
-  const numericWidth = Number(width);
-  const numericHeight = Number(height);
-  const wrappedTitleLines = wrapText(title, TITLE_MAX_CHARS);
-  const sourceBodyLines = Array.isArray(bodyLines) ? bodyLines : [bodyLines];
-  const wrappedBodyLines = sourceBodyLines.flatMap((line) =>
-    wrapText(line, BODY_MAX_CHARS),
-  );
-  const titleY = numericY + 24;
-  const bodyY =
-    titleY + (wrappedTitleLines.length - 1) * TEXT_LINE_HEIGHT + 18;
-
-  return (
-    <>
-      <rect
-        x={numericX}
-        y={numericY}
-        width={numericWidth}
-        height={numericHeight}
-        rx="14"
-        className={boxClassName}
-      />
-      <WrappedText
-        x={numericX + 20}
-        y={titleY}
-        className={styles.diagramStepTitle}
-        lines={wrappedTitleLines}
-      />
-      <WrappedText
-        x={numericX + 20}
-        y={bodyY}
-        className={styles.diagramStepBody}
-        lines={wrappedBodyLines}
-      />
-    </>
-  );
-}
+import {
+  DiagramBlock,
+  HORIZONTAL_ARROW,
+  VERTICAL_ARROW,
+  horizontalArrowLeftToRight,
+  measureBlockHeight,
+  verticalArrowBetween,
+} from "../../components/architecture/ArchitectureDiagramPrimitives";
+import diagramStyles from "../../components/architecture/architectureDiagram.module.css";
 
 export default function PacketArchitectureDiagram() {
+  const LEFT_LANE_X = 36;
+  const RIGHT_LANE_X = 560;
+  const BLOCK_WIDTH = 460;
+  const leftLaneCenterX = LEFT_LANE_X + BLOCK_WIDTH / 2;
+  const rightLaneCenterX = RIGHT_LANE_X + BLOCK_WIDTH / 2;
+  const ARROW_GAP = VERTICAL_ARROW.height;
+  const MIN_BLOCK_HEIGHT = 52;
+
+  const radio1 = {
+    x: LEFT_LANE_X,
+    y: 136,
+    width: BLOCK_WIDTH,
+    title: "1) KY4ZO radio sends position packet",
+    bodyLines: "GPS-equipped station transmits APRS packet over radio frequencies (RF).",
+  };
+  radio1.height = measureBlockHeight({
+    width: radio1.width,
+    title: radio1.title,
+    bodyLines: radio1.bodyLines,
+    minHeight: MIN_BLOCK_HEIGHT,
+  });
+
+  const radio2 = {
+    x: LEFT_LANE_X,
+    y: radio1.y + radio1.height + ARROW_GAP,
+    width: BLOCK_WIDTH,
+    title: "2) iGate bridges RF packet to APRS-IS",
+    bodyLines:
+      "Internet-connected iGate receives the radio packet, converts it to internet traffic, and uploads it to APRS-IS.",
+  };
+  radio2.height = measureBlockHeight({
+    width: radio2.width,
+    title: radio2.title,
+    bodyLines: radio2.bodyLines,
+    minHeight: MIN_BLOCK_HEIGHT,
+  });
+
+  const web3 = {
+    x: RIGHT_LANE_X,
+    y: 56,
+    width: BLOCK_WIDTH,
+    title: "3) Packets UI (/packet)",
+    bodyLines: "Opening the page or clicking Refresh starts the fetch flow.",
+  };
+  web3.height = measureBlockHeight({
+    width: web3.width,
+    title: web3.title,
+    bodyLines: web3.bodyLines,
+    minHeight: MIN_BLOCK_HEIGHT,
+  });
+
+  const web4 = {
+    x: RIGHT_LANE_X,
+    y: web3.y + web3.height + ARROW_GAP,
+    width: BLOCK_WIDTH,
+    title: "4) GET /api/packet/ky4zo",
+    bodyLines: "Browser requests the latest snapshot from the server route.",
+  };
+  web4.height = measureBlockHeight({
+    width: web4.width,
+    title: web4.title,
+    bodyLines: web4.bodyLines,
+    minHeight: MIN_BLOCK_HEIGHT,
+  });
+
+  const web5 = {
+    x: RIGHT_LANE_X,
+    y: web4.y + web4.height + ARROW_GAP,
+    width: BLOCK_WIDTH,
+    title: "5) Upstream call to aprs.fi API",
+    bodyLines:
+      "Server queries the latest KY4ZO records using a secure upstream access token.",
+  };
+  web5.height = measureBlockHeight({
+    width: web5.width,
+    title: web5.title,
+    bodyLines: web5.bodyLines,
+    minHeight: MIN_BLOCK_HEIGHT,
+  });
+
+  const web6 = {
+    x: RIGHT_LANE_X,
+    y: web5.y + web5.height + ARROW_GAP,
+    width: BLOCK_WIDTH,
+    title: "6) API response to browser",
+    bodyLines: "Normalized data drives map and table rendering.",
+  };
+  web6.height = measureBlockHeight({
+    width: web6.width,
+    title: web6.title,
+    bodyLines: web6.bodyLines,
+    minHeight: MIN_BLOCK_HEIGHT,
+  });
+
+  const blocks = {
+    radio1,
+    radio2,
+    web3,
+    web4,
+    web5,
+    web6,
+  };
+
+  const diagramHeight =
+    Math.max(radio2.y + radio2.height, web6.y + web6.height) + 24;
+
+  const arrow12 = verticalArrowBetween(blocks.radio1);
+  const arrow34 = verticalArrowBetween(blocks.web3);
+  const arrow45 = verticalArrowBetween(blocks.web4);
+  const arrow56 = verticalArrowBetween(blocks.web5);
+  const arrow25 = horizontalArrowLeftToRight(
+    blocks.radio2,
+    blocks.web5.y + blocks.web5.height / 2,
+  );
+
   return (
-    <div className={styles.diagramWrap}>
+    <div className={diagramStyles.diagramWrap}>
       <svg
-        viewBox="0 0 980 430"
-        className={styles.diagramSvg}
+        viewBox={`0 0 1060 ${diagramHeight}`}
+        className={diagramStyles.diagramSvg}
         role="img"
         aria-label="Simplified two-lane architecture diagram for Packets feature"
         shapeRendering="crispEdges"
       >
-        <text x="246" y="24" className={styles.diagramLaneLabel}>
+        <text x={leftLaneCenterX} y="24" className={diagramStyles.diagramLaneLabel}>
           Radio delivery lane
         </text>
-        <text x="734" y="24" className={styles.diagramLaneLabel}>
+        <text x={rightLaneCenterX} y="24" className={diagramStyles.diagramLaneLabel}>
           Web/API lane
         </text>
 
         <DiagramBlock
-          x="36"
-          y="136"
-          width="420"
-          height="74"
-          boxClassName={styles.diagramBoxRadio}
-          title="1) KY4ZO radio sends position packet"
-          bodyLines={[
-            "GPS-equipped station transmits APRS packet over radio frequencies (RF)",
-          ]}
+          idPrefix="packet"
+          x={blocks.radio1.x}
+          y={blocks.radio1.y}
+          width={blocks.radio1.width}
+          height={blocks.radio1.height}
+          boxClassName={diagramStyles.diagramBoxRadio}
+          title={blocks.radio1.title}
+          bodyLines={blocks.radio1.bodyLines}
+          titleClassName={diagramStyles.diagramStepTitle}
+          bodyClassName={diagramStyles.diagramStepBody}
         />
 
         <DiagramBlock
-          x="36"
-          y="226"
-          width="420"
-          height="88"
-          boxClassName={styles.diagramBoxRadio}
-          title="2) iGate bridges RF packet to APRS-IS"
-          bodyLines={[
-            "Internet-connected radio receives radio packet",
-            "Converts packet to electronic web signal",
-            "Uploads web packet to APRS-IS",
-          ]}
+          idPrefix="packet"
+          x={blocks.radio2.x}
+          y={blocks.radio2.y}
+          width={blocks.radio2.width}
+          height={blocks.radio2.height}
+          boxClassName={diagramStyles.diagramBoxRadio}
+          title={blocks.radio2.title}
+          bodyLines={blocks.radio2.bodyLines}
+          titleClassName={diagramStyles.diagramStepTitle}
+          bodyClassName={diagramStyles.diagramStepBody}
         />
 
         <DiagramBlock
-          x="524"
-          y="56"
-          width="420"
-          height="62"
-          boxClassName={styles.diagramBoxWeb}
-          title="3) Packets UI (/packet)"
-          bodyLines={["Opening page or clicking Refresh starts fetch flow"]}
+          idPrefix="packet"
+          x={blocks.web3.x}
+          y={blocks.web3.y}
+          width={blocks.web3.width}
+          height={blocks.web3.height}
+          boxClassName={diagramStyles.diagramBoxWeb}
+          title={blocks.web3.title}
+          bodyLines={blocks.web3.bodyLines}
+          titleClassName={diagramStyles.diagramStepTitle}
+          bodyClassName={diagramStyles.diagramStepBody}
         />
 
         <DiagramBlock
-          x="524"
-          y="136"
-          width="420"
-          height="62"
-          boxClassName={styles.diagramBoxWeb}
-          title="4) GET /api/packet/ky4zo"
-          bodyLines={["Browser requests snapshot from server route"]}
+          idPrefix="packet"
+          x={blocks.web4.x}
+          y={blocks.web4.y}
+          width={blocks.web4.width}
+          height={blocks.web4.height}
+          boxClassName={diagramStyles.diagramBoxWeb}
+          title={blocks.web4.title}
+          bodyLines={blocks.web4.bodyLines}
+          titleClassName={diagramStyles.diagramStepTitle}
+          bodyClassName={diagramStyles.diagramStepBody}
         />
 
         <DiagramBlock
-          x="524"
-          y="226"
-          width="420"
-          height="74"
-          boxClassName={styles.diagramBoxWeb}
-          title="5) Upstream call to aprs.fi API"
-          bodyLines={[
-            "Server queries latest KY4ZO records",
-            "using secure upstream access token",
-          ]}
+          idPrefix="packet"
+          x={blocks.web5.x}
+          y={blocks.web5.y}
+          width={blocks.web5.width}
+          height={blocks.web5.height}
+          boxClassName={diagramStyles.diagramBoxWeb}
+          title={blocks.web5.title}
+          bodyLines={blocks.web5.bodyLines}
+          titleClassName={diagramStyles.diagramStepTitle}
+          bodyClassName={diagramStyles.diagramStepBody}
         />
 
         <DiagramBlock
-          x="524"
-          y="326"
-          width="420"
-          height="62"
-          boxClassName={styles.diagramBoxWeb}
-          title="6) API response to browser"
-          bodyLines={["Normalized data drives map and table rendering"]}
+          idPrefix="packet"
+          x={blocks.web6.x}
+          y={blocks.web6.y}
+          width={blocks.web6.width}
+          height={blocks.web6.height}
+          boxClassName={diagramStyles.diagramBoxWeb}
+          title={blocks.web6.title}
+          bodyLines={blocks.web6.bodyLines}
+          titleClassName={diagramStyles.diagramStepTitle}
+          bodyClassName={diagramStyles.diagramStepBody}
         />
 
         <image
           href="/pager/pink-arrow-transparent.png"
-          x="235"
-          y="210"
-          width="18"
-          height="16"
+          x={arrow12.x}
+          y={arrow12.y}
+          width={VERTICAL_ARROW.width}
+          height={VERTICAL_ARROW.height}
           preserveAspectRatio="none"
         />
 
         <image
           href="/pager/cyan-arrow-transparent.png"
-          x="725"
-          y="118"
-          width="22"
-          height="18"
+          x={arrow34.x}
+          y={arrow34.y}
+          width={VERTICAL_ARROW.width}
+          height={VERTICAL_ARROW.height}
           preserveAspectRatio="none"
         />
         <image
           href="/pager/cyan-arrow-transparent.png"
-          x="725"
-          y="198"
-          width="22"
-          height="28"
+          x={arrow45.x}
+          y={arrow45.y}
+          width={VERTICAL_ARROW.width}
+          height={VERTICAL_ARROW.height}
           preserveAspectRatio="none"
         />
         <image
           href="/pager/cyan-arrow-transparent.png"
-          x="725"
-          y="300"
-          width="22"
-          height="26"
+          x={arrow56.x}
+          y={arrow56.y}
+          width={VERTICAL_ARROW.width}
+          height={VERTICAL_ARROW.height}
           preserveAspectRatio="none"
         />
 
         <image
           href="/pager/cyan-arrow-transparent.png"
-          x="479"
-          y="234"
-          width="22"
-          height="68"
+          x={arrow25.x}
+          y={arrow25.y}
+          width={HORIZONTAL_ARROW.width}
+          height={HORIZONTAL_ARROW.height}
           preserveAspectRatio="none"
-          transform="rotate(-90 490 268)"
+          transform={arrow25.transform}
         />
       </svg>
     </div>
