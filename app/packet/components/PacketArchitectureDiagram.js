@@ -22,7 +22,8 @@ export default function PacketArchitectureDiagram() {
     y: 136,
     width: BLOCK_WIDTH,
     title: "1) KY4ZO radio sends position packet",
-    bodyLines: "GPS-equipped station transmits APRS packet over radio frequencies (RF).",
+    bodyLines:
+      "GPS-equipped station transmits APRS packet over radio frequencies (RF).",
   };
   radio1.height = measureBlockHeight({
     width: radio1.width,
@@ -78,7 +79,7 @@ export default function PacketArchitectureDiagram() {
     x: RIGHT_LANE_X,
     y: web4.y + web4.height + ARROW_GAP,
     width: BLOCK_WIDTH,
-    title: "5) Upstream call to aprs.fi API",
+    title: "5) Upstream call to APRS-IS API",
     bodyLines:
       "Server queries the latest KY4ZO records using a secure upstream access token.",
   };
@@ -133,10 +134,18 @@ export default function PacketArchitectureDiagram() {
         aria-label="Simplified two-lane architecture diagram for Packets feature"
         shapeRendering="crispEdges"
       >
-        <text x={leftLaneCenterX} y="24" className={diagramStyles.diagramLaneLabel}>
+        <text
+          x={leftLaneCenterX}
+          y="24"
+          className={diagramStyles.diagramLaneLabel}
+        >
           Radio delivery lane
         </text>
-        <text x={rightLaneCenterX} y="24" className={diagramStyles.diagramLaneLabel}>
+        <text
+          x={rightLaneCenterX}
+          y="24"
+          className={diagramStyles.diagramLaneLabel}
+        >
           Web/API lane
         </text>
 
