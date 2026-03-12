@@ -111,6 +111,13 @@ export default function SiteHeader() {
             Pager
           </Link>
           <Link
+            className={pathname.startsWith("/packet") ? "active" : ""}
+            href="/packet"
+            prefetch={false}
+          >
+            Packets
+          </Link>
+          <Link
             className={pathname.startsWith("/about") ? "active" : ""}
             href="/about"
             prefetch={false}

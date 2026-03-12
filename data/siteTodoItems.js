@@ -129,13 +129,23 @@ export const SITE_TODO_ITEMS = [
       "Inconsistent header styles across pages. Standardize on a style for H1s and ledes, and update all pages to match for a more cohesive feel.",
   },
   {
-    id: "add-aprs-page",
-    title: "Add APRS page",
-    area: "Ham radio",
+    id: "add-packet-page",
+    title: "Add Packet page",
+    area: "Packet radio",
+    priority: "P3",
+    status: "done",
+    notes:
+      "Add page exhibiting live Packet tracking data from local iGate/APRS feed. Try to get a map working with real-time position updates. Could be fun and also a neat demo of live data handling.",
+    links: [{ label: "Open Packets", href: "/packet" }],
+  },
+  {
+    id: "architecture-diagrams-all-pages",
+    title: "Add architecture diagrams for all pages",
+    area: "General",
     priority: "P3",
     status: "todo",
     notes:
-      "Add page exhibiting live APRS data from local iGate. Try to get a map working with real-time position updates. Could be fun and also a neat demo of live data handling.",
+      "Create architecture diagrams across all major pages, using a consistent card/toggle pattern and per-page flow content.",
   },
   {
     id: "add-pager-page",

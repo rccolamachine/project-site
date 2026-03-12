@@ -42,5 +42,9 @@ export default function sitemap() {
       url: `${baseUrl}/mixtape`,
       lastModified: new Date(),
     },
+    {
+      url: `${baseUrl}/packet`,
+      lastModified: new Date(),
+    },
   ];
 }

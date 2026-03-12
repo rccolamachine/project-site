@@ -2,6 +2,7 @@
 import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 import SiteHeader from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
 

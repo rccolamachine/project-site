@@ -1,0 +1,411 @@
+.mapCard {
+  margin-top: 8px;
+  display: grid;
+  gap: 10px;
+}
+
+.mapCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mapControls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.durationControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.durationLabel {
+  font-size: 10px;
+  opacity: 0.82;
+}
+
+.durationSelect {
+  min-width: 160px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(45, 226, 230, 0.34);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text);
+  padding: 0 10px;
+  text-align: right;
+  text-align-last: right;
+}
+
+.mapControls button {
+  height: 34px;
+}
+
+.mapFooter {
+  margin-top: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+}
+
+.mapSummary {
+  flex: 1 1 260px;
+  text-align: left;
+}
+
+.mapAttribution {
+  flex: 1 1 220px;
+  text-align: right;
+}
+
+.tableCard {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.tableUpdated {
+  margin-top: -2px;
+  text-align: right;
+}
+
+.cardHeading {
+  margin: 0;
+}
+
+.contextBlurb {
+  margin-top: 4px;
+  margin-bottom: 14px;
+  max-width: 92ch;
+}
+
+.mapShell {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.leafletMap {
+  width: 100%;
+  min-height: 340px;
+  height: min(62vh, 560px);
+  background: rgba(4, 10, 16, 0.95);
+}
+
+.mapToneOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 220;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      130% 88% at 16% 16%,
+      color-mix(in srgb, var(--pink) 36%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      120% 78% at 86% 12%,
+      color-mix(in srgb, var(--cyan) 42%, transparent),
+      transparent 56%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--pink) 18%, transparent),
+      rgba(3, 7, 16, 0.3)
+    );
+  mix-blend-mode: soft-light;
+}
+
+.mapDuotoneOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 230;
+  pointer-events: none;
+  opacity: 0.5;
+  background: linear-gradient(
+    122deg,
+    color-mix(in srgb, var(--pink) 88%, #000 12%) 5%,
+    color-mix(in srgb, var(--pink) 66%, #000 34%) 44%,
+    color-mix(in srgb, var(--cyan) 84%, #000 16%) 100%
+  );
+  mix-blend-mode: color;
+}
+
+.mapGridOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 260;
+  pointer-events: none;
+  opacity: 0.3;
+  mix-blend-mode: screen;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.1) 0,
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.1) 0,
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px,
+      transparent 40px
+    );
+}
+
+.mapLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(4, 10, 16, 0.45), rgba(4, 10, 16, 0.6)),
+    rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(1px);
+}
+
+.mapLoadingText {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(45, 226, 230, 0.45);
+  background: rgba(5, 4, 10, 0.84);
+  color: #f3f4ff;
+  font-size: 11px;
+  box-shadow: 0 0 0 1px rgba(255, 79, 216, 0.22) inset;
+}
+
+.packetMarkerRoot {
+  background: transparent !important;
+  border: none !important;
+}
+
+.packetMarkerBadge,
+.tableSymbolBadge {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  overflow: hidden;
+}
+
+.packetMarkerBadgeSelected {
+  border-color: color-mix(in srgb, var(--cyan) 74%, white 26%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--cyan) 62%, transparent),
+    0 0 9px color-mix(in srgb, var(--cyan) 65%, transparent);
+  background: color-mix(in srgb, var(--cyan) 15%, transparent);
+}
+
+.packetMarkerSprite,
+.tableSymbolSprite {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  border-radius: 4px;
+  background-repeat: no-repeat;
+  background-size: 384px 144px;
+  background-position: calc(var(--packet-col) * -24px) calc(var(--packet-row) * -24px);
+  image-rendering: pixelated;
+}
+
+.packetMarkerSprite {
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.7));
+}
+
+.packetMarkerOverlay,
+.tableSymbolOverlay {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 12px;
+  height: 12px;
+  padding: 0 2px;
+  border-radius: 999px;
+  background: rgba(10, 10, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f3f4ff;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  line-height: 10px;
+  text-align: center;
+}
+
+.packetMarkerFallback,
+.tableSymbolFallback {
+  min-width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-family: var(--font-mono);
+  font-size: 8px;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.resultsTable {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.resultsTable th,
+.resultsTable td {
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.resultsTable td:nth-child(2) {
+  white-space: nowrap;
+  min-width: 58px;
+}
+
+.resultsTable th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(6, 10, 16, 0.95);
+}
+
+.resultsTable tbody tr:hover {
+  background: rgba(45, 226, 230, 0.08);
+}
+
+.resultsTable tbody tr {
+  cursor: pointer;
+}
+
+.resultsTable tbody tr:focus-visible {
+  outline: 1px solid var(--cyan);
+  outline-offset: -1px;
+}
+
+.rowSelected,
+.resultsTable tbody tr.rowSelected:hover {
+  background: color-mix(in srgb, var(--cyan) 24%, transparent);
+}
+
+.rowNoFix {
+  opacity: 0.72;
+}
+
+.symbolCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lastSeenCell {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+
+.lastSeenTime {
+  opacity: 0.84;
+}
+
+.tableLinks {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.tableLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(10, 10, 25, 0.58);
+  font-size: 10px;
+  color: var(--text);
+}
+
+.tableLinkBtn:hover {
+  border-color: rgba(45, 226, 230, 0.55);
+  background: rgba(45, 226, 230, 0.1);
+}
+
+.emptyRow {
+  text-align: center;
+  opacity: 0.8;
+}
+
+.mapShell :global(.leaflet-container) {
+  font-family: var(--font-pixel);
+}
+
+.mapShell :global(.leaflet-tile-pane) {
+  filter: grayscale(0.65) saturate(1.08) brightness(0.8) contrast(1.2);
+}
+
+.mapShell :global(.leaflet-overlay-pane),
+.mapShell :global(.leaflet-marker-pane),
+.mapShell :global(.leaflet-tooltip-pane),
+.mapShell :global(.leaflet-popup-pane),
+.mapShell :global(.leaflet-control-container) {
+  filter: none;
+}
+
+.mapShell :global(.leaflet-control-attribution) {
+  background: rgba(5, 4, 10, 0.78) !important;
+  color: rgba(243, 244, 255, 0.78) !important;
+}
+
+.mapShell :global(.leaflet-control-attribution a) {
+  color: var(--cyan) !important;
+}
+
+.mapShell :global(.leaflet-tooltip) {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(5, 4, 10, 0.92);
+  color: var(--text);
+  box-shadow: none;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+}
+
+.mapShell :global(.leaflet-tooltip-top:before) {
+  border-top-color: rgba(5, 4, 10, 0.92);
+}
+

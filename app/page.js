@@ -47,6 +47,12 @@ const sections = [
         href: "/pager",
         cta: "Bleep Bleep",
       },
+      {
+        title: "Packets",
+        description: "New: Track Rob's radios via APRS.",
+        href: "/packet",
+        cta: "Follow Rob",
+      },
     ],
   },
   {
