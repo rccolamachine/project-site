@@ -1,3 +1,7 @@
+.pageHeader {
+  margin-bottom: 16px;
+}
+
 .messageCard {
   max-width: 760px;
   margin: 0 auto;

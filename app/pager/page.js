@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import PageIntro from "@/components/PageIntro";
+import DesktopBadge from "../../components/DesktopBadge";
 import PagerArchitectureDiagram from "./components/PagerArchitectureDiagram";
 import PagerStatusTimeline from "./components/PagerStatusTimeline";
 import {
@@ -536,10 +536,13 @@ export default function PagerPage() {
 
   return (
     <section className="page">
-      <PageIntro
-        title="Pager"
-        lede="Rob has an old-school pager that he can receive messages on. Page him!"
-      />
+      <header className={styles.pageHeader}>
+        <h1>Pager</h1>
+        <p className="lede">
+          Rob has an old-school pager that he can receive messages on. Page him!
+        </p>
+      </header>
+      <DesktopBadge />
 
       <div className={`card ${styles.messageCard}`}>
         <form className={`ui-form ${styles.messageForm}`} onSubmit={onSubmit}>

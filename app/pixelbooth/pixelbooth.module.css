@@ -26,6 +26,10 @@
   color: var(--text);
 }
 
+.pageHeader {
+  margin-bottom: 16px;
+}
+
 .actionsRow {
   display: flex;
   gap: 12px;

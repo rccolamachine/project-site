@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import PageIntro from "@/components/PageIntro";
+import DesktopBadge from "../../components/DesktopBadge";
 import PacketLeafletMap from "./PacketLeafletMap";
 import {
   DEFAULT_DURATION_HOURS,
@@ -325,7 +325,10 @@ export default function PacketPage() {
 
   return (
     <section className="page">
-      <PageIntro title="Packets" lede="Live KY4ZO positions from APRS.fi." />
+      <header className={styles.pageHeader}>
+        <h1>Packets</h1>
+        <p className="lede">Live KY4ZO positions from APRS.fi.</p>
+      </header>
       <p className={`lede ${styles.contextBlurb}`}>
         Rob is a ham operator with his Amateur Extra radio license, callsign
         KY4ZO. APRS (Automatic Packet Reporting System) is a digital radio data
@@ -335,6 +338,7 @@ export default function PacketPage() {
         like aprs.fi so nearby and internet users can view live activity on a
         map.
       </p>
+      <DesktopBadge />
 
       {error ? (
         <div className="card ui-errorCard">

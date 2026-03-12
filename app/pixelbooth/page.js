@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import DesktopBadge from "../../components/DesktopBadge";
 import GuestbookSubmissionModal from "../../components/GuestbookSubmissionModal";
-import PageIntro from "@/components/PageIntro";
 import {
   EMPTY_GUESTBOOK_LEAD,
   appendGuestbookLead,
@@ -867,10 +866,13 @@ export default function Page() {
       <canvas ref={bgCanvasRef} className={styles.bgCanvas} />
 
       <div className={styles.contentShell}>
-        <PageIntro
-          title="Pixelbooth"
-          lede="Resize pixels, snap a photo, drag and drop to swap pixels, then save it to the guestbook so everyone can see it."
-        />
+        <header className={styles.pageHeader}>
+          <h1>Pixelbooth</h1>
+          <p className="lede">
+            Resize pixels, snap a photo, drag and drop to swap pixels, then save it
+            to the guestbook so everyone can see it.
+          </p>
+        </header>
         <DesktopBadge />
 
         {error ? <div className="card ui-errorCard ui-mb12">{error}</div> : null}
