@@ -133,7 +133,11 @@ export default function Home() {
         <div key={section.title} className="homeSectionPanel">
           <div className="homeSectionHeader">
             <h2 className="homeSectionTitle">{section.title}</h2>
-            {section.title === "Play" ? <DesktopBadge small /> : null}
+            {section.title === "Play" ? (
+              <div className="homePlayBadgeWrap">
+                <DesktopBadge />
+              </div>
+            ) : null}
           </div>
           <div className="cardRow">
             {section.cards.map((card) => (

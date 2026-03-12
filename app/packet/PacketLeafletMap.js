@@ -7,6 +7,8 @@ import styles from "./packet.module.css";
 const DEFAULT_CENTER = [39.5, -98.35];
 const DEFAULT_ZOOM = 4;
 const OVERLAP_SPACING_METERS = 18;
+const MAX_SPRITE_COL = 15;
+const MAX_SPRITE_ROW = 5;
 
 function escapeHtml(value) {
   return String(value || "")
@@ -24,7 +26,11 @@ function buildMarkerHtml(entry, isSelected) {
   const hasSprite =
     (tableId === 0 || tableId === 1) &&
     Number.isFinite(spriteCol) &&
-    Number.isFinite(spriteRow);
+    Number.isFinite(spriteRow) &&
+    spriteCol >= 0 &&
+    spriteCol <= MAX_SPRITE_COL &&
+    spriteRow >= 0 &&
+    spriteRow <= MAX_SPRITE_ROW;
   const overlay = String(entry?.symbolOverlay || "").trim();
   const symbolCode = String(entry?.symbolCode || "").trim() || "--";
   const selectedClass = isSelected ? ` ${styles.packetMarkerBadgeSelected}` : "";
@@ -33,12 +39,23 @@ function buildMarkerHtml(entry, isSelected) {
     return `<div class="${styles.packetMarkerBadge}${selectedClass}"><span class="${styles.packetMarkerFallback}">${escapeHtml(symbolCode)}</span></div>`;
   }
 
-  const spriteStyle = `background-image:url('/packet/packet-symbols-24-${tableId}.png');--packet-col:${spriteCol};--packet-row:${spriteRow};`;
+  const spriteTableClass =
+    tableId === 0 ? styles.packetSpriteTable0 : styles.packetSpriteTable1;
+  const spriteColClass = styles[`packetSpriteCol${spriteCol}`] || "";
+  const spriteRowClass = styles[`packetSpriteRow${spriteRow}`] || "";
+  const spriteClassName = [
+    styles.packetMarkerSprite,
+    spriteTableClass,
+    spriteColClass,
+    spriteRowClass,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const overlayHtml = overlay
     ? `<span class="${styles.packetMarkerOverlay}">${escapeHtml(overlay)}</span>`
     : "";
 
-  return `<div class="${styles.packetMarkerBadge}${selectedClass}"><span class="${styles.packetMarkerSprite}" style="${spriteStyle}"></span>${overlayHtml}</div>`;
+  return `<div class="${styles.packetMarkerBadge}${selectedClass}"><span class="${spriteClassName}"></span>${overlayHtml}</div>`;
 }
 
 function getCoordinateKey(entry) {

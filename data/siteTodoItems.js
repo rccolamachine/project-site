@@ -143,7 +143,7 @@ export const SITE_TODO_ITEMS = [
     title: "Add architecture diagrams for all pages",
     area: "General",
     priority: "P3",
-    status: "todo",
+    status: "inProgress",
     notes:
       "Create architecture diagrams across all major pages, using a consistent card/toggle pattern and per-page flow content.",
   },

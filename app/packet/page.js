@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DesktopBadge from "../../components/DesktopBadge";
 import PacketLeafletMap from "./PacketLeafletMap";
+import PacketArchitectureDiagram from "./components/PacketArchitectureDiagram";
 import {
   DEFAULT_DURATION_HOURS,
   DURATION_CANDIDATE_HOURS,
@@ -72,6 +73,25 @@ function SymbolCell({ entry }) {
   const symbolCode = String(entry?.symbolCode || "").trim();
   const overlay = String(entry?.symbolOverlay || "").trim();
   const hasSprite = hasSymbolSprite(entry);
+  const tableId = Number(entry?.symbolTableId);
+  const spriteCol = Number(entry?.symbolSpriteCol);
+  const spriteRow = Number(entry?.symbolSpriteRow);
+  const spriteTableClass =
+    tableId === 0
+      ? styles.packetSpriteTable0
+      : tableId === 1
+        ? styles.packetSpriteTable1
+        : "";
+  const spriteColClass = styles[`packetSpriteCol${spriteCol}`] || "";
+  const spriteRowClass = styles[`packetSpriteRow${spriteRow}`] || "";
+  const spriteClassName = [
+    styles.tableSymbolSprite,
+    spriteTableClass,
+    spriteColClass,
+    spriteRowClass,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={styles.symbolCell}>
@@ -81,14 +101,7 @@ function SymbolCell({ entry }) {
         title={symbolCode || "Packet symbol"}
       >
         {hasSprite ? (
-          <span
-            className={styles.tableSymbolSprite}
-            style={{
-              backgroundImage: `url('/packet/packet-symbols-24-${Number(entry.symbolTableId)}.png')`,
-              "--packet-col": Number(entry.symbolSpriteCol),
-              "--packet-row": Number(entry.symbolSpriteRow),
-            }}
-          />
+          <span className={spriteClassName} />
         ) : (
           <span className={styles.tableSymbolFallback}>
             {symbolCode || "--"}
@@ -135,6 +148,7 @@ export default function PacketPage() {
     String(DEFAULT_DURATION_HOURS),
   );
   const [selectedCallsign, setSelectedCallsign] = useState("");
+  const [showArchitecture, setShowArchitecture] = useState(true);
 
   const applySnapshot = useCallback((payload) => {
     const snapshot = normalizeSnapshotPayload(payload);
@@ -468,7 +482,7 @@ export default function PacketPage() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        APRS.fi map
+                        APRS.fi
                       </a>
                     </div>
                   </td>
@@ -489,6 +503,31 @@ export default function PacketPage() {
         <div className={`ui-helperText ${styles.tableUpdated}`}>
           Updated: {formatTimestamp(fetchedAt)}
         </div>
+      </div>
+
+      <div className={`card ${styles.diagramCard}`}>
+        <div className={styles.diagramHeader}>
+          <div>
+            <h2 className={styles.diagramTitle}>Architecture Diagram</h2>
+            <p className={`ui-helperText ${styles.diagramSubtitle}`}>
+              What&apos;s going on under the hood?
+            </p>
+          </div>
+          <button
+            type="button"
+            className={styles.diagramToggle}
+            onClick={() => setShowArchitecture((prev) => !prev)}
+            aria-expanded={showArchitecture}
+            aria-controls="packet-architecture-diagram"
+          >
+            {showArchitecture ? "Hide" : "Show"}
+          </button>
+        </div>
+        {showArchitecture ? (
+          <div id="packet-architecture-diagram">
+            <PacketArchitectureDiagram />
+          </div>
+        ) : null}
       </div>
     </section>
   );

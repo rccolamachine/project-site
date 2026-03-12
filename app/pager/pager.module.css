@@ -342,14 +342,6 @@
   .pagerScreenSummary {
     font-size: 7px;
   }
-
-  .diagramHeader {
-    flex-direction: column;
-  }
-
-  .diagramToggle {
-    align-self: flex-end;
-  }
 }
 
 .diagramWrap {

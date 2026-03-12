@@ -42,6 +42,10 @@ export default function TodoPage() {
   const [filter, setFilter] = useState("open");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const applyFilter = (nextFilter) => {
+    setFilter(nextFilter);
+    setPage(1);
+  };
 
   const openCount = useMemo(
     () => SITE_TODO_ITEMS.filter((item) => isOpenStatus(item.status)).length,
@@ -108,10 +112,24 @@ export default function TodoPage() {
       />
 
       <div className="ui-pillRow">
-        <span className="ui-pill" data-tone="accent">
+        <button
+          type="button"
+          className="ui-pill ui-noTransform"
+          data-tone={filter === "open" ? "accent" : "muted"}
+          aria-pressed={filter === "open"}
+          onClick={() => applyFilter("open")}
+        >
           open: {openCount}
-        </span>
-        <span className="ui-pill">done: {doneCount}</span>
+        </button>
+        <button
+          type="button"
+          className="ui-pill ui-noTransform"
+          data-tone={filter === "done" ? "primary" : "muted"}
+          aria-pressed={filter === "done"}
+          onClick={() => applyFilter("done")}
+        >
+          done: {doneCount}
+        </button>
       </div>
 
       <div className="card ui-mt16">
@@ -130,8 +148,7 @@ export default function TodoPage() {
             className="ui-input ui-select"
             value={filter}
             onChange={(event) => {
-              setFilter(event.target.value);
-              setPage(1);
+              applyFilter(event.target.value);
             }}
           >
             <option value="open">Open</option>
@@ -178,17 +195,17 @@ export default function TodoPage() {
               className={`card${isDone ? " ui-cardDone" : ""}`}
             >
               <div className="ui-minWidth260">
-                <div className="ui-pillRow">
+                <div className="todoCardMetaRow">
                   <span
-                    className="ui-pill"
+                    className="ui-pill todoCardMetaLeft"
                     data-tone={getPriorityTone(item.priority)}
                   >
                     {item.priority}
                   </span>
-                  <span className="ui-pill" data-tone="muted">
+                  <span className="ui-pill todoCardMetaCenter" data-tone="muted">
                     {item.area || "General"}
                   </span>
-                  <span className="ui-pill">{prettyStatus(item.status)}</span>
+                  <span className="ui-pill todoCardMetaRight">{prettyStatus(item.status)}</span>
                 </div>
 
                 <div
