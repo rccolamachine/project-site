@@ -549,6 +549,8 @@ export default function PagerPage() {
           <label className="ui-field">
             <span className="ui-fieldLabel">Message</span>
             <input
+              id="pager-message"
+              name="message"
               className="ui-input"
               type="text"
               value={text}

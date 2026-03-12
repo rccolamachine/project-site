@@ -330,6 +330,8 @@ export default function PacketPage() {
             <label className={styles.durationControl}>
               <span className={styles.durationLabel}>Duration</span>
               <select
+                id="packet-map-duration"
+                name="mapDurationHours"
                 className={styles.durationSelect}
                 value={mapDurationHours}
                 onChange={(event) => setMapDurationHours(event.target.value)}

@@ -307,6 +307,8 @@ export default function ButtonGamePage() {
 
               {availableRangeOptions.length > 1 ? (
                 <select
+                  id="button-chart-range"
+                  name="chartRange"
                   value={activeValueSeriesRange}
                   onChange={(event) =>
                     setValueSeriesRange(String(event.target.value || "30m"))
