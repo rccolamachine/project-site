@@ -51,10 +51,7 @@ function SymbolCell({ entry }) {
       : render.symbolTableId === 1
         ? styles.packetSpriteTable1
         : "";
-  const spriteClassName = [
-    styles.tableSymbolSprite,
-    spriteTableClass,
-  ]
+  const spriteClassName = [styles.tableSymbolSprite, spriteTableClass]
     .filter(Boolean)
     .join(" ");
 
@@ -76,7 +73,9 @@ function SymbolCell({ entry }) {
           </span>
         )}
         {render.symbolOverlay ? (
-          <span className={styles.tableSymbolOverlay}>{render.symbolOverlay}</span>
+          <span className={styles.tableSymbolOverlay}>
+            {render.symbolOverlay}
+          </span>
         ) : null}
       </span>
     </div>
@@ -299,7 +298,7 @@ export default function PacketPage() {
     <section className="page">
       <header className={styles.pageHeader}>
         <h1>Packets</h1>
-        <p className="lede">Live KY4ZO positions from APRS.fi.</p>
+        <p className="lede">Live KY4ZO positions from APRS internet service.</p>
       </header>
       <p className={`lede ${styles.contextBlurb}`}>
         Rob is a ham operator with his Amateur Extra radio license, callsign
@@ -307,7 +306,7 @@ export default function PacketPage() {
         network used to share position, telemetry, weather, and short status
         packets. My little radio stations with GPS transmit small bursts of data
         that are relayed by digipeaters and iGates, then aggregated by services
-        like aprs.fi so nearby and internet users can view live activity on a
+        like APRS-IS so nearby and internet users can view live activity on a
         map.
       </p>
       <DesktopBadge />
@@ -360,8 +359,8 @@ export default function PacketPage() {
         />
         <div className={styles.mapFooter}>
           <div className={`ui-helperText ${styles.mapSummary}`}>
-            Showing {mapPointCount} map point{mapPointCount === 1 ? "" : "s"} for{" "}
-            {selectedDurationLabel}.
+            Showing {mapPointCount} map point{mapPointCount === 1 ? "" : "s"}{" "}
+            for {selectedDurationLabel}.
           </div>
           <div className={`ui-helperText ${styles.mapAttribution}`}>
             Data from{" "}
@@ -395,7 +394,9 @@ export default function PacketPage() {
                 <tr
                   key={entry.callsign}
                   className={
-                    selectedCallsign === entry.callsign ? styles.rowSelected : ""
+                    selectedCallsign === entry.callsign
+                      ? styles.rowSelected
+                      : ""
                   }
                   tabIndex={0}
                   role="button"
