@@ -33,6 +33,8 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true";
+
   return (
     <html lang="en">
       <body
@@ -44,7 +46,7 @@ export default function RootLayout({ children }) {
           <main className="main">{children}</main>
           <Footer />
         </div>
-        <Analytics />
+        {analyticsEnabled ? <Analytics /> : null}
       </body>
     </html>
   );
