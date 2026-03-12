@@ -176,8 +176,6 @@ export default function PacketLeafletMap({
       const plottedLat = Number(plotted.latitude);
       const plottedLon = Number(plotted.longitude);
       const callsign = String(entry.callsign || "").trim() || "Unknown";
-      const symbolCode = String(entry.symbolCode || "").trim() || "--";
-      const symbolDescription = String(entry.symbolDescription || "").trim() || "Unknown";
       const isSelected = callsign === selectedCallsign;
 
       points.push([plottedLat, plottedLon]);
@@ -192,7 +190,7 @@ export default function PacketLeafletMap({
         }),
       });
 
-      marker.bindTooltip(`${callsign} | ${symbolCode} | ${symbolDescription}`, {
+      marker.bindTooltip(callsign, {
         direction: "top",
         offset: [0, -10],
         opacity: 0.95,
