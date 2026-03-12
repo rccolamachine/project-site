@@ -16,7 +16,8 @@ const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata = {
-  title: "rccolamachine | pixel sandboxes and vaporwave vibes",
+  title:
+    "rccolamachine | pixel sandboxes and vaporwave vibes. and a little ham.",
   description: "Lead SDET. Automation Architect. Vaporwave builder.",
   icons: {
     icon: [{ url: "/brand/pixel-rob.png", type: "image/png" }],
@@ -25,7 +26,7 @@ export const metadata = {
   },
   openGraph: {
     title: "Rob Chapleski",
-    description: "Automation engineering meets arcade aesthetics.",
+    description: "Pixel sandboxes and vaporwave vibes. And a little ham.",
     url: "https://rccolamachine.com",
     siteName: "rccolamachine",
   },
