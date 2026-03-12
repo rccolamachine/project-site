@@ -618,6 +618,11 @@ textarea::placeholder {
   white-space: nowrap;
 }
 
+.farm-pixel-icon {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
 .ui-pill[data-tone="primary"] {
   border-color: rgba(255, 79, 216, 0.35);
   background: rgba(255, 79, 216, 0.1);
@@ -772,6 +777,27 @@ textarea::placeholder {
 
 .homePlayBadgeWrap .ui-desktopBadge {
   margin-bottom: 0;
+}
+
+.home-farm-card {
+  position: relative;
+}
+
+.home-farm-win-corner {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 5px;
+  gap: 3px;
+  border-radius: 7px;
+  border: 1px solid rgba(45, 226, 230, 0.55);
+  background: rgba(18, 10, 28, 0.78);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(45, 226, 230, 0.22);
 }
 
 .guestbookCtaRow {

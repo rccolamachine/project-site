@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import DesktopBadge from "../components/DesktopBadge";
+import FarmWinHomeCorner from "../components/FarmWinHomeCorner";
 
 const sections = [
   {
@@ -8,8 +9,7 @@ const sections = [
     cards: [
       {
         title: "Farm Idle",
-        description:
-          "Grow a farm, water on schedule, and optimize harvest timing for profit. Addictive!",
+        description: "Grow a farm, sell your crops, buy a house. Addictive!",
         href: "/farm",
         cta: "Start farming",
       },
@@ -141,7 +141,11 @@ export default function Home() {
           </div>
           <div className="cardRow">
             {section.cards.map((card) => (
-              <div className="card" key={card.title}>
+              <div
+                className={`card${card.title === "Farm Idle" ? " home-farm-card" : ""}`}
+                key={card.title}
+              >
+                {card.title === "Farm Idle" ? <FarmWinHomeCorner /> : null}
                 <h2>{card.title}</h2>
                 <p>{renderDescriptionWithNewBadge(card.description)}</p>
                 <Link

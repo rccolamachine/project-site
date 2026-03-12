@@ -139,16 +139,30 @@ function getToolIconRects(toolId) {
   return [];
 }
 
-export function Stat({ label, value }) {
+export function Stat({ label, value, valueClassName = "" }) {
+  const classes = ["farm-stat-value", valueClassName].filter(Boolean).join(" ");
   return (
     <div className="farm-stat">
       <div className="farm-stat-label">{label}</div>
-      <div className="farm-stat-value">{value}</div>
+      <div className={classes}>{value}</div>
     </div>
   );
 }
 
-export function tileColor(tile) {
+export function tileColor(tile, theme = "classic") {
+  if (theme === "rccola") {
+    if (tile.soil !== "plowed") return "#241536";
+    if (!tile.plant) return tile.watered ? "#153a54" : "#3a214f";
+
+    const stage = tile.plant.stageIndex;
+    const needsWater = stage < 3 && !tile.plant.stageWatered;
+    if (needsWater) return "#5f4d83";
+    if (stage === 0) return tile.watered ? "#1f5c78" : "#4a3170";
+    if (stage === 1) return tile.watered ? "#247094" : "#5a3b86";
+    if (stage === 2) return tile.watered ? "#2d7aa3" : "#66459a";
+    if (stage === 3) return tile.watered ? "#3c88b8" : "#7252ad";
+    return tile.watered ? "#4f78a4" : "#5f4b8b";
+  }
   if (tile.soil !== "plowed") return "#463423";
   if (!tile.plant) return tile.watered ? "#4d6a84" : "#6f4f33";
 
@@ -162,53 +176,99 @@ export function tileColor(tile) {
   return tile.watered ? "#a28f5a" : "#8a794d";
 }
 
-export function TileSprite({ tile, seed, tileIndex = 0, animTick = 0 }) {
+export function TileSprite({
+  tile,
+  seed,
+  tileIndex = 0,
+  animTick = 0,
+  theme = "classic",
+}) {
   const stage = tile.plant?.stageIndex ?? -1;
   const hasPlant = Boolean(tile.plant);
   const maturePlant = stage === 3;
   const oldPlant = stage > 3;
   const needsWater = hasPlant && stage < 3 && !tile.plant.stageWatered;
   const soil =
-    tile.soil !== "plowed"
-      ? "#5a3e28"
-      : hasPlant
-        ? needsWater
-          ? "#8f816f"
-          : oldPlant
+    theme === "rccola"
+      ? tile.soil !== "plowed"
+        ? "#301a42"
+        : hasPlant
+          ? needsWater
+            ? "#62528a"
+            : oldPlant
+              ? tile.watered
+                ? "#4f6e9a"
+                : "#5c487d"
+              : maturePlant
+                ? tile.watered
+                  ? "#3a83b2"
+                  : "#6e4ca9"
+                : tile.watered
+                  ? "#256f92"
+                  : "#513472"
+          : tile.watered
+            ? "#16405a"
+            : "#3a214f"
+      : tile.soil !== "plowed"
+        ? "#5a3e28"
+        : hasPlant
+          ? needsWater
+            ? "#8f816f"
+            : oldPlant
+              ? tile.watered
+                ? "#8a7a4e"
+                : "#776744"
+              : maturePlant
+                ? tile.watered
+                  ? "#dbc46d"
+                  : "#c8b060"
+                : tile.watered
+                  ? "#6aaea1"
+                  : "#739f97"
+          : tile.watered
+            ? "#4a6a7a"
+            : "#6f4d32";
+  const soilBottom =
+    theme === "rccola"
+      ? tile.soil !== "plowed"
+        ? "#21112f"
+        : hasPlant
+          ? oldPlant
             ? tile.watered
-              ? "#8a7a4e"
-              : "#776744"
+              ? "#365173"
+              : "#453462"
             : maturePlant
               ? tile.watered
-                ? "#dbc46d"
-                : "#c8b060"
-              : tile.watered
-                ? "#6aaea1"
-                : "#739f97"
-        : tile.watered
-          ? "#4a6a7a"
-          : "#6f4d32";
-  const soilBottom =
-    tile.soil !== "plowed"
-      ? "#4a2f1e"
-      : hasPlant
-        ? oldPlant
-          ? tile.watered
-            ? "#62573a"
-            : "#524833"
-          : maturePlant
+                ? "#2d6286"
+                : "#553983"
+              : needsWater
+                ? "#4d3f70"
+                : tile.watered
+                  ? "#1d5673"
+                  : "#3f2a5e"
+          : tile.watered
+            ? "#12334a"
+            : "#2d183f"
+      : tile.soil !== "plowed"
+        ? "#4a2f1e"
+        : hasPlant
+          ? oldPlant
             ? tile.watered
-              ? "#a78f4d"
-              : "#957f45"
-            : needsWater
-              ? "#766a5a"
-              : tile.watered
-                ? "#4f8178"
-                : "#5a7871"
-        : tile.watered
-          ? "#355a6c"
-          : "#5a3f29";
-  const seedPalette = getSeedPalette(seed?.id);
+              ? "#62573a"
+              : "#524833"
+            : maturePlant
+              ? tile.watered
+                ? "#a78f4d"
+                : "#957f45"
+              : needsWater
+                ? "#766a5a"
+                : tile.watered
+                  ? "#4f8178"
+                  : "#5a7871"
+          : tile.watered
+            ? "#355a6c"
+            : "#5a3f29";
+  const seedPalette = getSeedPalette(seed?.id, theme);
   const plantXOffset = 1;
   const animals = tileAnimalIds(tile).slice(0, MAX_ANIMALS_PER_TILE);
   const animalTileScale = 0.75;
@@ -944,6 +1004,87 @@ const BASE_SEED_PALETTES = {
   },
 };
 
+const RCCOLA_PLANT_PALETTE = {
+  stem: "#ff56d9",
+  leaf: "#ff7ee8",
+  leafDark: "#b737a8",
+};
+
+const RCCOLA_PRODUCE_ACCENTS = {
+  carrot: {
+    seed: "#a9f3ff",
+    fruit: "#2de2e6",
+    fruitHi: "#aefcff",
+    old: "#3a8f9a",
+  },
+  corn: {
+    seed: "#d8ff9a",
+    fruit: "#ffe66d",
+    fruitHi: "#fff6b5",
+    old: "#a6964e",
+  },
+  rose: {
+    seed: "#b7ecff",
+    fruit: "#36c6ff",
+    fruitHi: "#a8e9ff",
+    old: "#3d7f9f",
+  },
+  tulip: {
+    seed: "#b8f2ff",
+    fruit: "#ffd84d",
+    fruitHi: "#fff4ac",
+    old: "#a48743",
+  },
+  lotus: {
+    seed: "#c2f7ff",
+    fruit: "#00f0ff",
+    fruitHi: "#b7fdff",
+    old: "#3b8a98",
+  },
+  cacao: {
+    seed: "#b6ebff",
+    fruit: "#56d5ff",
+    fruitHi: "#c2eeff",
+    old: "#3f7893",
+  },
+  lavender: {
+    seed: "#cfffb0",
+    fruit: "#ffe14d",
+    fruitHi: "#fff7b8",
+    old: "#9f8842",
+  },
+  sunflower: {
+    seed: "#b6f4ff",
+    fruit: "#2ff4ff",
+    fruitHi: "#b8fdff",
+    old: "#3a8f95",
+  },
+  turnip: {
+    seed: "#d6ffa8",
+    fruit: "#d6ff4d",
+    fruitHi: "#efffb6",
+    old: "#8ca646",
+  },
+  berry: {
+    seed: "#d8ff9f",
+    fruit: "#ffdf4d",
+    fruitHi: "#fff6b8",
+    old: "#a38945",
+  },
+  pumpkin: {
+    seed: "#a8f0ff",
+    fruit: "#3de8ff",
+    fruitHi: "#b8f8ff",
+    old: "#3f8f97",
+  },
+  default: {
+    seed: "#b6f0ff",
+    fruit: "#2de2e6",
+    fruitHi: "#b3fcff",
+    old: "#3a8f95",
+  },
+};
+
 function clampRgbChannel(value) {
   return Math.max(0, Math.min(255, Math.round(value)));
 }
@@ -979,9 +1120,35 @@ function enhancePlantPalette(palette) {
   };
 }
 
-function getSeedPalette(seedId) {
+function applyRccolaPlantPalette(palette) {
+  return {
+    ...palette,
+    stem: boostHexColor(RCCOLA_PLANT_PALETTE.stem, 1.05, 1.02, 1.02),
+    leaf: boostHexColor(RCCOLA_PLANT_PALETTE.leaf, 1.08, 1.04, 1.03),
+    leafDark: boostHexColor(RCCOLA_PLANT_PALETTE.leafDark, 1.1, 0.98, 1.04),
+  };
+}
+
+function applyRccolaProducePalette(palette, seedId) {
+  const accent =
+    RCCOLA_PRODUCE_ACCENTS[seedId] || RCCOLA_PRODUCE_ACCENTS.default;
+  return {
+    ...palette,
+    seed: boostHexColor(accent.seed, 1.08, 1.06, 1.05),
+    fruit: boostHexColor(accent.fruit, 1.2, 1.12, 1.12),
+    fruitHi: boostHexColor(accent.fruitHi, 1.12, 1.16, 1.08),
+    old: boostHexColor(accent.old, 1.04, 1.02, 1.05),
+  };
+}
+
+function getSeedPalette(seedId, theme = "classic") {
   const base = BASE_SEED_PALETTES[seedId] || BASE_SEED_PALETTES.default;
-  return enhancePlantPalette(base);
+  const enhanced = enhancePlantPalette(base);
+  if (theme === "rccola") {
+    const rccolaPlants = applyRccolaPlantPalette(enhanced);
+    return applyRccolaProducePalette(rccolaPlants, seedId);
+  }
+  return enhanced;
 }
 
 export function harvestValuePreview(state, tile) {

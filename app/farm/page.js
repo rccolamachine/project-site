@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import DesktopBadge from "../../components/DesktopBadge";
+import PixelHouseIcon from "../../components/PixelHouseIcon";
 import {
   decryptSaveJsonPayload,
   encryptSaveJson,
@@ -38,8 +39,9 @@ import {
   FARM_EXPANSIONS,
   GAME_TICK_MS,
   GRID_SIZE,
+  HOUSE_GOAL_MONEY,
   MAX_ANIMALS_PER_TILE,
-  PRESTIGE_MILESTONES,
+  SECOND_HOUSE_GOAL_MONEY,
   SEEDS,
   SHARD_UPGRADES,
   STORAGE_KEY,
@@ -59,7 +61,6 @@ import {
   animalMaxOwnedForPrestige,
   animalPrestigeRequirement,
   animalPrestigeRequirementByIndex,
-  applyPrestigeMilestones,
   autoKeyForTool,
   automationCostForState,
   blockerLabel,
@@ -73,11 +74,14 @@ import {
   cropCategory,
   currentMarketSeason,
   farmExpansionBySize,
+  farmExpansionMoneyCost,
+  farmExpansionShardCost,
   formatDuration,
   formatLargeNumber,
   formatMoney,
   getBrushById,
   getBrushIndicesWithSize,
+  hasToolUpgradesUnlocked,
   isToolVisible,
   marketSeasonRemainingMs,
   normalizeState,
@@ -107,6 +111,7 @@ import {
 
 const LOG_BATCH_MS = 15000;
 const LOG_MAX_ENTRIES = 50;
+const RUNTIME_EVENT_DEDUPE_WINDOW_MS = LOG_BATCH_MS * 2;
 const LOG_FILTERS = [
   { id: "all", label: "All" },
   { id: "earning", label: "Earnings" },
@@ -120,6 +125,14 @@ const BONUS_LOG_LABELS = {
   regrow: "multi-spawn",
   thrift_refund: "thrift refund",
   seasonal: "seasonal boost",
+};
+
+const LOG_TONE_CLASS = {
+  bonus: "farm-log-time-bonus",
+  earning: "farm-log-time-earning",
+  spend: "farm-log-time-spend",
+  upgrade: "farm-log-time-upgrade",
+  neutral: "farm-log-time-neutral",
 };
 
 const AUTO_LABEL_BY_KEY = {
@@ -147,9 +160,17 @@ function brushTierUnlocked(brushUnlocks, toolId, brushId) {
   );
 }
 
+function houseCountForState(state) {
+  const raw =
+    state?.houseCount ??
+    (state?.housePurchased || state?.postWinContinued ? 1 : 0);
+  return clamp(Math.floor(Number(raw || 0)), 0, 2);
+}
+
 export default function FarmPage() {
   const importFileRef = useRef(null);
   const resetInProgressRef = useRef(false);
+  const runtimeEventDedupeRef = useRef(new Map());
   const batchedLogRef = useRef({
     earnings: 0,
     harvests: 0,
@@ -166,6 +187,7 @@ export default function FarmPage() {
   const [expandedSeedId, setExpandedSeedId] = useState(null);
   const [expandedAnimalId, setExpandedAnimalId] = useState(null);
   const [showTileValueTags, setShowTileValueTags] = useState(false);
+  const [showTileStatus, setShowTileStatus] = useState(true);
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
   const [logs, setLogs] = useState([]);
@@ -194,6 +216,24 @@ export default function FarmPage() {
 
   const queueRuntimeEvent = useCallback((event) => {
     if (!event || typeof event !== "object") return;
+    const mutationId =
+      typeof event.mutationId === "string" ? event.mutationId : "";
+    const eventSeq = Number(event.eventSeq || 0);
+    if (mutationId && Number.isFinite(eventSeq) && eventSeq > 0) {
+      const dedupeKey = `${mutationId}:${eventSeq}`;
+      const nowMs = Date.now();
+      const seenMap = runtimeEventDedupeRef.current;
+      const seenAt = seenMap.get(dedupeKey);
+      if (typeof seenAt === "number") return;
+      seenMap.set(dedupeKey, nowMs);
+      if (seenMap.size > 4000) {
+        for (const [key, at] of seenMap.entries()) {
+          if (nowMs - Number(at || 0) > RUNTIME_EVENT_DEDUPE_WINDOW_MS) {
+            seenMap.delete(key);
+          }
+        }
+      }
+    }
     if (event.kind === "earning") {
       const amount = Math.max(0, Math.floor(Number(event.amount || 0)));
       const count = Math.max(1, Math.floor(Number(event.count || 1)));
@@ -307,7 +347,6 @@ export default function FarmPage() {
     progressState(copy, loadedAt);
     runTileAutomation(copy, loadedAt);
     updateDiscoveries(copy);
-    applyPrestigeMilestones(copy);
     copy.maxPrestigeShardsEver = Math.max(
       Number(copy.maxPrestigeShardsEver || 0),
       Number(copy.prestigeShards || 0),
@@ -340,19 +379,21 @@ export default function FarmPage() {
     const id = setInterval(() => {
       if (resetInProgressRef.current) return;
       const currentNow = Date.now();
+      const runtimeMutationId = `tick-${currentNow}`;
       setNow(currentNow);
       setGame((prev) => {
         const next = cloneState(prev);
+        next.__runtimeMutationId = runtimeMutationId;
+        next.__runtimeEventSeq = 0;
         next.__runtimeEventSink = queueRuntimeEvent;
         const progressed = progressState(next, currentNow);
         const automated = runTileAutomation(next, currentNow);
         const discovered = updateDiscoveries(next);
-        const milestones = applyPrestigeMilestones(next);
         next.maxPrestigeShardsEver = Math.max(
           Number(next.maxPrestigeShardsEver || 0),
           Number(next.prestigeShards || 0),
         );
-        const changed = progressed || automated || discovered || milestones;
+        const changed = progressed || automated || discovered;
         return changed ? next : prev;
       });
     }, GAME_TICK_MS);
@@ -368,15 +409,17 @@ export default function FarmPage() {
 
   const mutate = (updater) => {
     if (resetInProgressRef.current) return;
+    const runtimeMutationId = `mut-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     setGame((prev) => {
       const next = cloneState(prev);
       const timestamp = Date.now();
+      next.__runtimeMutationId = runtimeMutationId;
+      next.__runtimeEventSeq = 0;
       next.__runtimeEventSink = queueRuntimeEvent;
       progressState(next, timestamp);
       runTileAutomation(next, timestamp);
       updater(next, timestamp);
       updateDiscoveries(next);
-      applyPrestigeMilestones(next);
       next.maxPrestigeShardsEver = Math.max(
         Number(next.maxPrestigeShardsEver || 0),
         Number(next.prestigeShards || 0),
@@ -414,25 +457,97 @@ export default function FarmPage() {
 
   const unlockFarmExpansion = (size) => {
     const expansion = farmExpansionBySize(size);
-    if (!expansion || size <= 3) return;
+    if (!expansion || size <= 1) return;
     if (game.farmSizeUnlocks?.[size]) return;
-    if (game.prestigeLevel < expansion.reqPrestige) return;
-    if (game.prestigeShards < expansion.unlockShards) return;
+    const unlockMoney = farmExpansionMoneyCost(size);
+    const unlockShards = farmExpansionShardCost(size);
+    if (unlockMoney <= 0) {
+      if (game.prestigeLevel < expansion.reqPrestige) return;
+      if (game.prestigeShards < unlockShards) return;
+    } else if (game.money < unlockMoney) {
+      return;
+    }
     const idx = FARM_EXPANSIONS.findIndex((exp) => exp.size === size);
     if (idx > 0) {
       const prevSize = FARM_EXPANSIONS[idx - 1].size;
       if (!game.farmSizeUnlocks?.[prevSize]) return;
     }
     mutate((state) => {
-      state.prestigeShards -= expansion.unlockShards;
+      if (unlockMoney > 0) state.money -= unlockMoney;
+      else state.prestigeShards -= unlockShards;
       state.farmSizeUnlocks[size] = true;
-      state.activeFarmSize = Math.max(Number(state.activeFarmSize || 3), size);
+      state.activeFarmSize = Math.max(Number(state.activeFarmSize || 1), size);
     });
     appendLog({
       tone: "spend",
       category: "upgrade",
-      text: `Unlocked farm expansion ${size}x${size} for ${formatLargeNumber(expansion.unlockShards)} platinum.`,
+      text:
+        unlockMoney > 0
+          ? `Unlocked farm expansion ${size}x${size} for ${formatMoney(unlockMoney)}.`
+          : `Unlocked farm expansion ${size}x${size} for ${formatLargeNumber(unlockShards)} platinum.`,
     });
+  };
+
+  const buyHouse = () => {
+    if (game.housePurchased) return;
+    const currentHouseCount = houseCountForState(game);
+    if (currentHouseCount >= 2) return;
+    const currentHouseGoalMoney =
+      currentHouseCount <= 0 ? HOUSE_GOAL_MONEY : SECOND_HOUSE_GOAL_MONEY;
+    if (game.money < currentHouseGoalMoney) return;
+    mutate((state, timestamp) => {
+      const stateHouseCount = houseCountForState(state);
+      const stateHouseGoalMoney =
+        stateHouseCount <= 0 ? HOUSE_GOAL_MONEY : SECOND_HOUSE_GOAL_MONEY;
+      if (state.money < stateHouseGoalMoney) return;
+      if (state.housePurchased || stateHouseCount >= 2) return;
+      state.money -= stateHouseGoalMoney;
+      state.houseCount = stateHouseCount + 1;
+      state.housePurchased = true;
+      state.housePurchasedAt = timestamp;
+      state.postWinContinued = true;
+    });
+    appendLog({
+      tone: "upgrade",
+      category: "upgrade",
+      text: `You bought a house for ${formatMoney(currentHouseGoalMoney)}.`,
+    });
+  };
+
+  const resetFromWin = () => {
+    if (!game.housePurchased) return;
+    const currentHouseCount = houseCountForState(game);
+    const confirmed =
+      typeof window === "undefined"
+        ? true
+        : window.confirm(
+            `Are you sure? This will reset everything and start you back at a 1x1 farm. You will keep your ${currentHouseCount} ${countLabel(currentHouseCount, "house")} and the new color scheme.`,
+          );
+    if (!confirmed) return;
+
+    setPendingAutoMode(null);
+    setHoveredTileIndex(null);
+    setAnimalTileAction("place");
+    setExpandedSeedId(null);
+    setExpandedAnimalId(null);
+    setShowTileValueTags(false);
+    setSaveStatus("");
+    setLogFilter("all");
+    setLogs([]);
+    batchedLogRef.current = {
+      earnings: 0,
+      harvests: 0,
+      bonuses: {},
+      spending: {},
+    };
+    setGame(
+      createInitialState({
+        houseCount: currentHouseCount,
+        housePurchased: false,
+        housePurchasedAt: 0,
+        postWinContinued: true,
+      }),
+    );
   };
 
   const prestigeNow = () => {
@@ -451,6 +566,7 @@ export default function FarmPage() {
     setGame((prev) => {
       if (prev.money < prestigeMoneyCost(prev.prestigeLevel)) return prev;
       const gain = prestigeShardGain(prev);
+      const preservedHouseCount = houseCountForState(prev);
       const next = createInitialState({
         prestigeLevel: (prev.prestigeLevel || 0) + 1,
         prestigeShards: (prev.prestigeShards || 0) + gain,
@@ -490,13 +606,18 @@ export default function FarmPage() {
           },
         },
         farmSizeUnlocks: { ...(prev.farmSizeUnlocks || {}) },
-        activeFarmSize: Number(prev.activeFarmSize || 3),
+        activeFarmSize: Number(prev.activeFarmSize || 1),
         shardUpgrades: { ...(prev.shardUpgrades || {}) },
-        milestonesClaimed: { ...(prev.milestonesClaimed || {}) },
         marketSeasonIndex: Number(prev.marketSeasonIndex || 0),
         marketSeasonStartedAt: Number(prev.marketSeasonStartedAt || Date.now()),
         animalClearUnlocked: Boolean(prev.animalClearUnlocked),
         animalOwned: { ...(prev.animalOwned || {}) },
+        houseCount: preservedHouseCount,
+        housePurchased: Boolean(prev.housePurchased),
+        housePurchasedAt: Number(prev.housePurchasedAt || 0),
+        postWinContinued: Boolean(
+          prev.postWinContinued || preservedHouseCount > 0,
+        ),
         selectedAnimal: prev.selectedAnimal || ANIMALS[0].id,
       });
       next.__runtimeEventSink = queueRuntimeEvent;
@@ -513,7 +634,6 @@ export default function FarmPage() {
       if (!next.discovered.tools[next.selectedTool]) {
         next.selectedTool = "plow";
       }
-      applyPrestigeMilestones(next);
       return next;
     });
     appendLog({
@@ -648,6 +768,7 @@ export default function FarmPage() {
   };
 
   const buyBrushUpgrade = (toolId, brushId) => {
+    if (!hasToolUpgradesUnlocked(game)) return;
     const brush = getBrushById(brushId);
     if (brush.cost <= 0) return;
     if (
@@ -687,12 +808,13 @@ export default function FarmPage() {
   };
 
   const buyAllAutomationForKey = (autoKey) => {
+    if (!hasToolUpgradesUnlocked(game)) return;
     if (!autoKey) return;
     const unitCostPreview = automationCostForState(game, autoKey);
     if (!Number.isFinite(unitCostPreview) || unitCostPreview <= 0) return;
     const activeSizePreview = clamp(
-      Number(game.activeFarmSize || 3),
-      3,
+      Number(game.activeFarmSize || 1),
+      1,
       GRID_SIZE,
     );
     let remainingCount = 0;
@@ -712,7 +834,7 @@ export default function FarmPage() {
     mutate((state) => {
       const unitCost = automationCostForState(state, autoKey);
       if (!Number.isFinite(unitCost) || unitCost <= 0) return;
-      const activeSize = clamp(Number(state.activeFarmSize || 3), 3, GRID_SIZE);
+      const activeSize = clamp(Number(state.activeFarmSize || 1), 1, GRID_SIZE);
       const remainingIndices = [];
       for (let r = 0; r < activeSize; r += 1) {
         for (let c = 0; c < activeSize; c += 1) {
@@ -742,10 +864,11 @@ export default function FarmPage() {
   };
 
   const cancelAllAutomationForKey = (autoKey, autoLabel) => {
+    if (!hasToolUpgradesUnlocked(game)) return;
     if (!autoKey) return;
     const activeSizePreview = clamp(
-      Number(game.activeFarmSize || 3),
-      3,
+      Number(game.activeFarmSize || 1),
+      1,
       GRID_SIZE,
     );
     let coveredCount = 0;
@@ -768,7 +891,7 @@ export default function FarmPage() {
     if (!confirmed) return;
     setPendingAutoMode(null);
     mutate((state) => {
-      const activeSize = clamp(Number(state.activeFarmSize || 3), 3, GRID_SIZE);
+      const activeSize = clamp(Number(state.activeFarmSize || 1), 1, GRID_SIZE);
       for (let r = 0; r < activeSize; r += 1) {
         for (let c = 0; c < activeSize; c += 1) {
           const idx = r * GRID_SIZE + c;
@@ -867,7 +990,7 @@ export default function FarmPage() {
         if (!wasWater) return;
       }
 
-      if (pendingAutoMode) {
+      if (pendingAutoMode && hasToolUpgradesUnlocked(state)) {
         const { type, key } = pendingAutoMode;
         if (type === "buy") {
           const cost = automationCostForState(state, key);
@@ -981,21 +1104,6 @@ export default function FarmPage() {
   const canMarketNow = game.money >= currentPrestigeCost;
   const currentSeason = currentMarketSeason(now);
   const seasonRemainingMs = marketSeasonRemainingMs(now);
-  const milestoneClaimedCount = PRESTIGE_MILESTONES.filter(
-    (m) => game.milestonesClaimed?.[m.id],
-  ).length;
-  const totalMilestoneRewardShards = PRESTIGE_MILESTONES.filter(
-    (m) => game.milestonesClaimed?.[m.id],
-  ).reduce((sum, m) => sum + m.rewardShards, 0);
-  const earnedMilestones = useMemo(
-    () => PRESTIGE_MILESTONES.filter((m) => game.milestonesClaimed?.[m.id]),
-    [game.milestonesClaimed],
-  );
-  const nextMilestone = useMemo(
-    () =>
-      PRESTIGE_MILESTONES.find((m) => !game.milestonesClaimed?.[m.id]) || null,
-    [game.milestonesClaimed],
-  );
   const nextMarketingLevel = Math.max(0, Number(game.prestigeLevel || 0)) + 1;
   const nextMarketingUnlocks = useMemo(() => {
     const unlocks = [];
@@ -1032,34 +1140,116 @@ export default function FarmPage() {
       unlocks.push(`Animals: ${animalsAtNext.map((a) => a.name).join(", ")}`);
     }
 
-    const milestoneAtNext = PRESTIGE_MILESTONES.find(
-      (m) =>
-        m.reqPrestige === nextMarketingLevel && !game.milestonesClaimed?.[m.id],
-    );
-    if (milestoneAtNext) {
-      unlocks.push(`Milestone: ${milestoneAtNext.title}`);
-    }
-
     return unlocks;
   }, [
     game.farmSizeUnlocks,
-    game.milestonesClaimed,
     game.prestigeLevel,
     nextMarketingLevel,
   ]);
   const nextLockedFarmExpansion =
     FARM_EXPANSIONS.find((exp) => !game.farmSizeUnlocks?.[exp.size]) || null;
-  const maxVisibleFarmReq = nextLockedFarmExpansion
-    ? nextLockedFarmExpansion.reqPrestige
-    : Number.POSITIVE_INFINITY;
-  const visibleFarmExpansions = FARM_EXPANSIONS.filter(
-    (exp) =>
-      Boolean(game.farmSizeUnlocks?.[exp.size]) ||
-      exp.reqPrestige <= maxVisibleFarmReq,
-  );
+  const visibleFarmExpansions = useMemo(() => {
+    const unlocked = game.farmSizeUnlocks || {};
+    if (!nextLockedFarmExpansion) {
+      return FARM_EXPANSIONS.filter((exp) => Boolean(unlocked[exp.size]));
+    }
+    return FARM_EXPANSIONS.filter(
+      (exp) =>
+        Boolean(unlocked[exp.size]) ||
+        exp.size === nextLockedFarmExpansion.size,
+    );
+  }, [game.farmSizeUnlocks, nextLockedFarmExpansion]);
+  const totalHouseCount = houseCountForState(game);
+  const reachedHouseCap = totalHouseCount >= 2;
+  const activeHouseGoalMoney =
+    totalHouseCount <= 0 ? HOUSE_GOAL_MONEY : SECOND_HOUSE_GOAL_MONEY;
+  const houseGoalReached = game.money >= activeHouseGoalMoney;
+  const gameCompleted = Boolean(game.housePurchased);
+  const canBuyHouseNow = !gameCompleted && !reachedHouseCap && houseGoalReached;
+  const showMarketingStats = game.prestigeLevel > 0;
+  const showHouseStat = totalHouseCount > 0;
+  const statColumnCount =
+    (showMarketingStats ? 3 : 1) + (showHouseStat ? 1 : 0);
+  const houseGoalProgressPct =
+    gameCompleted || reachedHouseCap
+      ? 100
+      : clamp(
+          Math.floor((Math.max(0, game.money) / activeHouseGoalMoney) * 100),
+          0,
+          100,
+        );
+  const houseGoalTitle = `To Win: Buy house (${houseGoalProgressPct}% progress)`;
+  const houseButtonLabel = reachedHouseCap ? "Max houses" : "Buy house";
+  const currentWinHouseSwapped = gameCompleted && totalHouseCount >= 2;
+  const farmTheme =
+    totalHouseCount > 0 || game.postWinContinued ? "rccola" : "classic";
+  const nextFarmGoal = useMemo(() => {
+    const expansion =
+      FARM_EXPANSIONS.find((exp) => !game.farmSizeUnlocks?.[exp.size]) || null;
+    if (!expansion) return null;
+    const unlockMoney = farmExpansionMoneyCost(expansion.size);
+    const unlockShards = farmExpansionShardCost(expansion.size);
+    if (unlockMoney > 0) {
+      const progressPct = clamp(
+        Math.floor((Math.max(0, Number(game.money || 0)) / unlockMoney) * 100),
+        0,
+        100,
+      );
+      return {
+        size: expansion.size,
+        actionLabel: "Buy",
+        titleLabel: `Buy ${expansion.size}x${expansion.size} farm`,
+        buttonLabel: `Buy ${expansion.size}x${expansion.size} farm`,
+        costLabel: formatMoney(unlockMoney),
+        progressPct,
+        canComplete: game.money >= unlockMoney,
+      };
+    }
+    const reqMarketing = Math.max(0, Number(expansion.reqPrestige || 0));
+    const marketingPct =
+      reqMarketing <= 0
+        ? 100
+        : clamp(
+            Math.floor(
+              (Math.max(0, Number(game.prestigeLevel || 0)) / reqMarketing) *
+                100,
+            ),
+            0,
+            100,
+          );
+    const shardPct =
+      unlockShards <= 0
+        ? 100
+        : clamp(
+            Math.floor(
+              (Math.max(0, Number(game.prestigeShards || 0)) / unlockShards) *
+                100,
+            ),
+            0,
+            100,
+          );
+    return {
+      size: expansion.size,
+      actionLabel: "Unlock",
+      titleLabel: `Unlock ${expansion.size}x${expansion.size} farm`,
+      buttonLabel: `Unlock ${expansion.size}x${expansion.size} farm`,
+      costLabel: `M${reqMarketing} + ${formatLargeNumber(unlockShards)} platinum`,
+      progressPct: Math.min(marketingPct, shardPct),
+      canComplete:
+        game.prestigeLevel >= reqMarketing &&
+        game.prestigeShards >= unlockShards,
+    };
+  }, [
+    game.farmSizeUnlocks,
+    game.money,
+    game.prestigeLevel,
+    game.prestigeShards,
+  ]);
+  const toolUpgradesUnlocked = hasToolUpgradesUnlocked(game);
   const showShardUpgradesPanel =
     game.prestigeLevel >= RESEARCH_UNLOCK_MARKETING;
   const showAutomationPanel =
+    toolUpgradesUnlocked &&
     ACTION_TOOLS.includes(game.selectedTool) &&
     Boolean(game.discovered?.automation?.[game.selectedTool]);
   const actionToolLabelByTool = {
@@ -1097,7 +1287,7 @@ export default function FarmPage() {
     game.selectedTool === "marketing"
       ? ""
       : game.selectedTool === "expandFarm"
-        ? "Use platinum to buy a bigger farm at higher marketing levels."
+        ? "Farm upgrades"
         : game.selectedTool === "research"
           ? "Research permanently increases stats of all squares. All labs unlock at M3."
           : "";
@@ -1106,11 +1296,45 @@ export default function FarmPage() {
     1,
     2.5,
   );
-  const topLabelFontSize = 5 * tileLabelScale;
-  const progressLabelFontSize = 6 * tileLabelScale;
-  const blockerLabelFontSize = 5 * tileLabelScale;
+  const compactTileLabels = Number(game.activeFarmSize || 1) >= 4;
+  const tileLabelSizeScale = compactTileLabels ? 0.72 : 1;
+  const topLabelFontSize = 5 * tileLabelScale * tileLabelSizeScale;
+  const progressLabelFontSize = 6 * tileLabelScale * tileLabelSizeScale;
+  const blockerLabelFontSize = 5 * tileLabelScale * tileLabelSizeScale;
+  const tileLabelFontWeight = compactTileLabels ? 300 : 400;
+  const tileLabelTextShadow = compactTileLabels
+    ? "0 0 1px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(0, 0, 0, 0.45)"
+    : "0 0 2px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(0, 0, 0, 0.75)";
+  const farmGridTilePx = useMemo(() => {
+    const size = clamp(Number(game.activeFarmSize || 1), 1, GRID_SIZE);
+    if (size <= 1) return 132;
+    if (size <= 2) return 118;
+    if (size <= 3) return 102;
+    if (size <= 5) return 78;
+    if (size <= 7) return 70;
+    return 62;
+  }, [game.activeFarmSize]);
+  const farmGridPixelWidth = useMemo(() => {
+    const size = clamp(Number(game.activeFarmSize || 1), 1, GRID_SIZE);
+    const gapPx = 4;
+    return size * farmGridTilePx + Math.max(0, size - 1) * gapPx;
+  }, [farmGridTilePx, game.activeFarmSize]);
+  const farmStatGridStyle = useMemo(
+    () => ({
+      "--farm-stat-cols": String(statColumnCount),
+    }),
+    [statColumnCount],
+  );
+  const farmActiveGridStyle = useMemo(
+    () => ({
+      "--farm-grid-size": String(game.activeFarmSize),
+      "--farm-grid-min-tile": `${game.activeFarmSize <= 3 ? 72 : 44}px`,
+      "--farm-grid-max-width": `${farmGridPixelWidth}px`,
+    }),
+    [farmGridPixelWidth, game.activeFarmSize],
+  );
   const visibleTileIndices = useMemo(() => {
-    const size = clamp(Number(game.activeFarmSize || 3), 3, GRID_SIZE);
+    const size = clamp(Number(game.activeFarmSize || 1), 1, GRID_SIZE);
     const out = [];
     for (let r = 0; r < size; r += 1) {
       for (let c = 0; c < size; c += 1) {
@@ -1262,10 +1486,12 @@ export default function FarmPage() {
     Boolean(selectedAutoKey) &&
     Boolean(selectedAutoBulk) &&
     selectedAutoBulk.covered > 1;
-  const showActionUnlocks = ACTION_TOOLS.includes(game.selectedTool);
+  const showActionUnlocks =
+    toolUpgradesUnlocked && ACTION_TOOLS.includes(game.selectedTool);
   const showMarketingUnlocks = game.selectedTool === "marketing";
   const showFarmUnlocks = game.selectedTool === "expandFarm";
   const showResearchUnlocks = game.selectedTool === "research";
+  const showHarvestFestivalPanel = toolUpgradesUnlocked;
   const showGenericUnlockCard =
     Boolean(toolUnlockText) || showFarmUnlocks || showResearchUnlocks;
   const activeToolHintByTool = {
@@ -1289,6 +1515,11 @@ export default function FarmPage() {
     return logs.filter((entry) => entry.category === logFilter);
   }, [logFilter, logs]);
 
+  useEffect(() => {
+    if (toolUpgradesUnlocked) return;
+    if (pendingAutoMode) setPendingAutoMode(null);
+  }, [toolUpgradesUnlocked, pendingAutoMode]);
+
   if (!ready) {
     return (
       <section className="page">
@@ -1306,11 +1537,18 @@ export default function FarmPage() {
       <header className="farm-header">
         <h1>Farm Idle</h1>
         <p className="lede">
-          Idle farming sim with lots of unlocks, automation, and levels. Click
-          the field to get started!
+          Idle farming sim with lots of unlocks, automation, and levels. Make lots of money and buy a house-- the millennial dream!
         </p>
       </header>
-      <DesktopBadge />
+      <div className="farm-top-badges">
+        <DesktopBadge />
+        {gameCompleted ? (
+          <div className="ui-desktopBadge farm-you-win-badge farm-win-animated">
+            <PixelHouseIcon size={18} swapped={currentWinHouseSwapped} />
+            YOU WIN!!!
+          </div>
+        ) : null}
+      </div>
 
       <div className="farm-layout">
         <div className="farm-sidebar">
@@ -1323,7 +1561,9 @@ export default function FarmPage() {
                     key={tool.id}
                     onClick={() => setTool(tool.id)}
                     className="farm-tool-button"
-                    data-selected={game.selectedTool === tool.id ? "true" : "false"}
+                    data-selected={
+                      game.selectedTool === tool.id ? "true" : "false"
+                    }
                   >
                     <ToolButtonIcon
                       toolId={tool.id}
@@ -1340,7 +1580,6 @@ export default function FarmPage() {
               <br />
               {activeToolHint}
             </div>
-
             {game.selectedTool === "save" ? (
               <div className="farm-inset-card">
                 <div className="farm-copy-sm">Save Transfer</div>
@@ -1460,7 +1699,9 @@ export default function FarmPage() {
                             <div className="farm-text-9-80 farm-margin-top-2">
                               Cost:{" "}
                               <span
-                                className={cannotAffordMinimum ? "farm-cost-muted" : ""}
+                                className={
+                                  cannotAffordMinimum ? "farm-cost-muted" : ""
+                                }
                               >
                                 {costValueLabel}
                               </span>{" "}
@@ -1496,6 +1737,7 @@ export default function FarmPage() {
                                   autoEverything: false,
                                 }}
                                 seed={seed}
+                                theme={farmTheme}
                               />
                             </div>
                           </div>
@@ -1559,7 +1801,9 @@ export default function FarmPage() {
                         setAnimalTileAction("place");
                       }}
                       className="farm-auto-toggle-btn"
-                      data-active={animalTileAction === "place" ? "true" : "false"}
+                      data-active={
+                        animalTileAction === "place" ? "true" : "false"
+                      }
                     >
                       Place Mode
                     </button>
@@ -1569,7 +1813,9 @@ export default function FarmPage() {
                         setAnimalTileAction("clearAll");
                       }}
                       className="farm-auto-toggle-btn"
-                      data-active={animalTileAction === "clearAll" ? "true" : "false"}
+                      data-active={
+                        animalTileAction === "clearAll" ? "true" : "false"
+                      }
                     >
                       Clear Tile Mode
                     </button>
@@ -1755,63 +2001,6 @@ export default function FarmPage() {
                     <button onClick={prestigeNow} disabled={!canMarketNow}>
                       Market for Platinum ({formatMoney(currentPrestigeCost)})
                     </button>
-                  </div>
-                </div>
-                <div className="farm-panel-muted-8">
-                  <div className="farm-text-10-88">
-                    Farm milestones award bonus platinum for leveling marketing
-                  </div>
-                  <div className="farm-panel-muted-6">
-                    <div className="farm-text-10-84">
-                      Farm Milestones ({milestoneClaimedCount}/
-                      {PRESTIGE_MILESTONES.length})
-                    </div>
-                    <div className="farm-text-10-74">
-                      Claimed platinum rewards:{" "}
-                      {formatLargeNumber(totalMilestoneRewardShards)}
-                    </div>
-                    <div className="farm-text-10-80">Earned milestones:</div>
-                    {earnedMilestones.length > 0 ? (
-                      <ul className="farm-list-grid">
-                        {earnedMilestones.map((m) => (
-                          <li
-                            key={`earned-${m.id}`}
-                            className="farm-text-10-84"
-                          >
-                            <div className="farm-row-between-top">
-                              <span>
-                                M{m.reqPrestige}: {m.title}
-                              </span>
-                              <span className="farm-opacity-68">Claimed</span>
-                            </div>
-                            <div className="farm-opacity-68">
-                              +{formatLargeNumber(m.rewardShards)} platinum
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="farm-text-10-66">None yet.</div>
-                    )}
-                    <div className="farm-text-10-80">Next milestone:</div>
-                    {nextMilestone ? (
-                      <ul className="farm-list-compact">
-                        <li className="farm-text-10-82">
-                          <div>
-                            M{nextMilestone.reqPrestige}: {nextMilestone.title}
-                          </div>
-                          <div className="farm-opacity-68">
-                            Reward: +
-                            {formatLargeNumber(nextMilestone.rewardShards)}{" "}
-                            platinum
-                          </div>
-                        </li>
-                      </ul>
-                    ) : (
-                      <div className="farm-text-10-76">
-                        All farm milestones claimed.
-                      </div>
-                    )}
                   </div>
                 </div>
               </>
@@ -2007,6 +2196,9 @@ export default function FarmPage() {
                         const unlocked = Boolean(
                           game.farmSizeUnlocks?.[exp.size],
                         );
+                        const unlockMoney = farmExpansionMoneyCost(exp.size);
+                        const unlockShards = farmExpansionShardCost(exp.size);
+                        const usesMoney = unlockMoney > 0;
                         const expIdx = FARM_EXPANSIONS.findIndex(
                           (e) => e.size === exp.size,
                         );
@@ -2021,8 +2213,10 @@ export default function FarmPage() {
                         const canBuy =
                           !unlocked &&
                           prevUnlocked &&
-                          game.prestigeLevel >= exp.reqPrestige &&
-                          game.prestigeShards >= exp.unlockShards;
+                          (usesMoney
+                            ? game.money >= unlockMoney
+                            : game.prestigeLevel >= exp.reqPrestige &&
+                              game.prestigeShards >= unlockShards);
                         return (
                           <div
                             key={`farm-exp-${exp.size}`}
@@ -2030,9 +2224,11 @@ export default function FarmPage() {
                           >
                             <span className="farm-text-10-80">
                               {exp.size}x{exp.size}{" "}
-                              {exp.size === 3
+                              {exp.size === 1
                                 ? "(starter)"
-                                : `(M${exp.reqPrestige}, ${formatLargeNumber(exp.unlockShards)} platinum)`}
+                                : usesMoney
+                                  ? `(${formatMoney(unlockMoney)})`
+                                  : `(M${exp.reqPrestige}, ${formatLargeNumber(unlockShards)} platinum)`}
                             </span>
                             {unlocked ? (
                               <span className="farm-text-10-78">
@@ -2045,7 +2241,7 @@ export default function FarmPage() {
                                 onClick={() => unlockFarmExpansion(exp.size)}
                                 disabled={!canBuy}
                               >
-                                Unlock
+                                {usesMoney ? "Buy" : "Unlock"}
                               </button>
                             )}
                           </div>
@@ -2114,39 +2310,53 @@ export default function FarmPage() {
         </div>
         <div className="farm-main">
           <div className="card farm-main-card farm-main-card-tight">
-            <div
-              className="farm-grid-gap-8"
-              style={{
-                gridTemplateColumns:
-                  game.prestigeLevel > 0
-                    ? "repeat(3, minmax(0, 1fr))"
-                    : "repeat(1, minmax(0, 1fr))",
-              }}
-            >
+            <div className="farm-grid-gap-8 farm-stat-grid" style={farmStatGridStyle}>
               <Stat
                 label="Money"
                 value={formatMoneyAdaptive(game.money, 13, 2)}
+                valueClassName={
+                  showMarketingStats ? "" : "farm-stat-value-hero"
+                }
               />
-              {game.prestigeLevel > 0 ? (
+              {showMarketingStats ? (
                 <Stat
                   label="Marketing Level"
                   value={`M${formatLargeNumber(game.prestigeLevel)}`}
                 />
               ) : null}
-              {game.prestigeLevel > 0 ? (
+              {showMarketingStats ? (
                 <Stat
                   label="Platinum"
                   value={formatLargeNumber(game.prestigeShards)}
+                />
+              ) : null}
+              {showHouseStat ? (
+                <Stat
+                  label="House"
+                  value={
+                    <span
+                      className="farm-house-icons"
+                      aria-label={`${totalHouseCount} ${countLabel(totalHouseCount, "house")}`}
+                    >
+                      {Array.from({ length: totalHouseCount }).map((_, idx) => (
+                        <PixelHouseIcon
+                          key={`house-stat-${idx}`}
+                          size={20}
+                          className="farm-house-stat-icon"
+                          swapped={idx === 1}
+                        />
+                      ))}
+                    </span>
+                  }
+                  valueClassName="farm-house-stat-value"
                 />
               ) : null}
             </div>
           </div>
           <div className="card farm-main-card farm-main-card-roomy">
             <div
-              className="farm-grid-gap-4"
-              style={{
-                gridTemplateColumns: `repeat(${game.activeFarmSize}, minmax(0, 1fr))`,
-              }}
+              className="farm-grid-gap-4 farm-active-grid"
+              style={farmActiveGridStyle}
               onMouseLeave={() => setHoveredTileIndex(null)}
             >
               {visibleTileIndices.map((idx) => {
@@ -2176,6 +2386,12 @@ export default function FarmPage() {
                     ? ["needs", "harvest"]
                     : splitNeedsLabel(blockerTag);
                 const isPreview = previewIndices.has(idx);
+                const showOverlay = showTileStatus || showTileValueTags;
+                const showProgressLabel =
+                  showTileValueTags || (showTileStatus && canHarvest);
+                const progressLabelClassName = canHarvest
+                  ? "farm-tile-label-progress farm-tile-label-progress-center"
+                  : "farm-tile-label-progress";
 
                 return (
                   <button
@@ -2200,7 +2416,7 @@ export default function FarmPage() {
                     )}
                     className="farm-grid-button"
                     style={{
-                      "--farm-tile-bg": tileColor(tile),
+                      "--farm-tile-bg": tileColor(tile, farmTheme),
                       "--farm-tile-border": tile.autoEverything
                         ? "1px solid rgba(126, 255, 180, 0.95)"
                         : tile.autoPlow ||
@@ -2215,6 +2431,8 @@ export default function FarmPage() {
                       "--farm-top-label-font-size": `${topLabelFontSize}px`,
                       "--farm-progress-label-font-size": `${progressLabelFontSize}px`,
                       "--farm-blocker-label-font-size": `${blockerLabelFontSize}px`,
+                      "--farm-label-font-weight": tileLabelFontWeight,
+                      "--farm-label-text-shadow": tileLabelTextShadow,
                     }}
                   >
                     <TileSprite
@@ -2222,54 +2440,149 @@ export default function FarmPage() {
                       seed={seed}
                       tileIndex={idx}
                       animTick={animTick}
+                      theme={farmTheme}
                     />
-                    <span className="farm-tile-overlay">
-                      <span className="farm-tile-label-top">
-                        {seedTagLines.map((line, i) => (
-                          <span key={`${idx}-seed-${i}`}>{line}</span>
-                        ))}
+                    {showOverlay ? (
+                      <span className="farm-tile-overlay">
+                        {showTileStatus ? (
+                          <span className="farm-tile-label-top">
+                            {seedTagLines.map((line, i) => (
+                              <span key={`${idx}-seed-${i}`}>{line}</span>
+                            ))}
+                          </span>
+                        ) : null}
+                        {showProgressLabel ? (
+                          <span className={progressLabelClassName}>
+                            {progressTag}
+                          </span>
+                        ) : null}
+                        {showTileStatus ? (
+                          <span className="farm-tile-label-blocker">
+                            {blockerLines.map((line, i) => (
+                              <span key={`${idx}-blk-${i}`}>{line}</span>
+                            ))}
+                          </span>
+                        ) : null}
                       </span>
-                      {showTileValueTags || canHarvest ? (
-                        <span className="farm-tile-label-progress">
-                          {progressTag}
-                        </span>
-                      ) : null}
-                      <span className="farm-tile-label-blocker">
-                        {blockerLines.map((line, i) => (
-                          <span key={`${idx}-blk-${i}`}>{line}</span>
-                        ))}
-                      </span>
-                    </span>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
-            <label className="farm-toggle-label">
-              <input
-                type="checkbox"
-                checked={showTileValueTags}
-                onChange={(e) => setShowTileValueTags(e.target.checked)}
-              />
-              Show tile %
-            </label>
+            <div className="farm-toggle-row">
+              <label className="farm-toggle-label">
+                <input
+                  type="checkbox"
+                  checked={showTileValueTags}
+                  onChange={(e) => setShowTileValueTags(e.target.checked)}
+                />
+                Show tile %
+              </label>
+              <label className="farm-toggle-label">
+                <input
+                  type="checkbox"
+                  checked={showTileStatus}
+                  onChange={(e) => setShowTileStatus(e.target.checked)}
+                />
+                Show status
+              </label>
+            </div>
           </div>
           <div className="card farm-main-card farm-main-card-tight">
-            <div className="farm-season-card">
-              <div className="farm-text-10-72">Harvest Festival</div>
-              <div className="farm-text-12">
-                <strong>{currentSeason.label}</strong>
+            <div className="farm-grid-gap-4">
+              <div className="farm-text-10-84">
+                <strong>Goals</strong>
               </div>
-              <div className="farm-text-10-78">
-                +{Math.round(currentSeason.baseBonus * 100)}% to{" "}
-                {currentSeason.categories.join(", ")} crops
-                {currentSeason.synergyAnimal
-                  ? ` (+${Math.round(currentSeason.synergyBonus * 100)}% with ${animalById(currentSeason.synergyAnimal)?.name || currentSeason.synergyAnimal})`
-                  : ""}
+              <div className="farm-panel-muted-6">
+                <div className="farm-row-between-top">
+                  <div className="farm-grid-gap-2">
+                    {nextFarmGoal ? (
+                      <div className="farm-text-10-72">
+                        Next: {nextFarmGoal.titleLabel} (
+                        {nextFarmGoal.progressPct}% progress)
+                      </div>
+                    ) : (
+                      <div className="farm-text-10-72">
+                        Next: All farm upgrades unlocked (100% progress)
+                      </div>
+                    )}
+                    <div className="farm-text-10-80">
+                      {nextFarmGoal ? nextFarmGoal.costLabel : "--"}
+                    </div>
+                  </div>
+                  {nextFarmGoal ? (
+                    <button
+                      onClick={() => unlockFarmExpansion(nextFarmGoal.size)}
+                      disabled={!nextFarmGoal.canComplete}
+                    >
+                      {nextFarmGoal.buttonLabel}
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="farm-text-10-68">
-                Rotates in {formatDuration(seasonRemainingMs)}
-              </div>
+              {!reachedHouseCap ? (
+                <div className="farm-panel-muted-6">
+                  <div className="farm-row-between-top">
+                    <div className="farm-grid-gap-2">
+                      <div className="farm-text-10-72">{houseGoalTitle}</div>
+                      <div className="farm-text-10-80">
+                        {formatMoney(activeHouseGoalMoney)}
+                      </div>
+                    </div>
+                    <div className="farm-goal-win-cta">
+                      <button
+                        onClick={gameCompleted ? resetFromWin : buyHouse}
+                        disabled={!canBuyHouseNow && !gameCompleted}
+                        className={
+                          gameCompleted
+                            ? "farm-you-win-button farm-win-animated"
+                            : ""
+                        }
+                      >
+                        {gameCompleted ? (
+                          <span className="farm-you-win-inline">
+                            <PixelHouseIcon
+                              size={14}
+                              className="farm-you-win-icon"
+                              swapped={currentWinHouseSwapped}
+                            />
+                            YOU WIN!!!
+                          </span>
+                        ) : (
+                          houseButtonLabel
+                        )}
+                      </button>
+                      {gameCompleted ? (
+                        <div className="farm-text-9-72 farm-goal-reset-note">
+                          Clicking YOU WIN!!! resets everything to a 1x1 farm.
+                          New color scheme stays unlocked.
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
+          </div>
+          <div className="card farm-main-card farm-main-card-tight">
+            {showHarvestFestivalPanel ? (
+              <div className="farm-season-card">
+                <div className="farm-text-10-72">Harvest Festival</div>
+                <div className="farm-text-12">
+                  <strong>{currentSeason.label}</strong>
+                </div>
+                <div className="farm-text-10-78">
+                  +{Math.round(currentSeason.baseBonus * 100)}% to{" "}
+                  {currentSeason.categories.join(", ")} crops
+                  {currentSeason.synergyAnimal
+                    ? ` (+${Math.round(currentSeason.synergyBonus * 100)}% with ${animalById(currentSeason.synergyAnimal)?.name || currentSeason.synergyAnimal})`
+                    : ""}
+                </div>
+                <div className="farm-text-10-68">
+                  Rotates in {formatDuration(seasonRemainingMs)}
+                </div>
+              </div>
+            ) : null}
             <div className="farm-log-card">
               <div className="farm-text-10-72">
                 Logs
@@ -2303,22 +2616,11 @@ export default function FarmPage() {
               ) : (
                 <div className="farm-log-list">
                   {visibleLogs.map((entry) => {
-                    const toneColor =
-                      entry.tone === "bonus"
-                        ? "#ffd987"
-                        : entry.tone === "earning"
-                          ? "#a9f1b0"
-                          : entry.tone === "spend"
-                            ? "#ffb394"
-                            : entry.tone === "upgrade"
-                              ? "#9fd1ff"
-                              : "#e8ddcb";
+                    const toneClass =
+                      LOG_TONE_CLASS[entry.tone] || LOG_TONE_CLASS.neutral;
                     return (
                       <div key={entry.id} className="farm-log-item">
-                        <span
-                          className="farm-log-time farm-log-time-tone"
-                          style={{ "--farm-tone-color": toneColor }}
-                        >
+                        <span className={`farm-log-time farm-log-time-tone ${toneClass}`}>
                           {formatLogClock(entry.at)}
                         </span>
                         <span className="farm-text-10-90">{entry.text}</span>
