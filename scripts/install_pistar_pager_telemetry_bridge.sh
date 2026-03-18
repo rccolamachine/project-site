@@ -64,6 +64,7 @@ if [[ ! -f "$DEST_ENV_FILE" ]]; then
   echo "IMPORTANT: Edit $DEST_ENV_FILE and set:"
   echo "  - PAGER_TELEMETRY_URL or PAGER_TELEMETRY_URLS"
   echo "  - PAGER_TELEMETRY_SECRET"
+  echo "  - (optional) PAGER_TELEMETRY_ACTIVE_CONTEXT_URL"
   echo "  - MMDVM_LOG_GLOB (recommended) or MMDVM_LOG_FILE"
   echo
 else

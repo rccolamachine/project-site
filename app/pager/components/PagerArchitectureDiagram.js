@@ -155,8 +155,10 @@ export default function PagerArchitectureDiagram() {
     y: radio8.y + radio8.height + ARROW_GAP,
     width: BLOCK_WIDTH,
     title: "10) Pi-Star telemetry bridge",
-    bodyLines:
-      "A bridge tails DAPNET/MMDVM logs and posts telemetry events to POST /api/pager/telemetry using a shared secret.",
+    bodyLines: [
+      "Bridge checks GET /api/pager/telemetry/active (shared secret) and only sends telemetry when a pending pager message exists.",
+      "For each message, it posts only relevant events to POST /api/pager/telemetry with trackingKey (max: one gateway + one MMDVM event).",
+    ],
   };
   radio10.height = measureBlockHeight({
     width: radio10.width,
@@ -171,7 +173,7 @@ export default function PagerArchitectureDiagram() {
     width: BLOCK_WIDTH,
     title: "11) Database",
     bodyLines:
-      "Status records live in database: seeded at send acceptance, then updated by telemetry stages.",
+      "Status records are seeded at send acceptance, then updated by trackingKey-scoped telemetry stages.",
   };
   web11.height = measureBlockHeight({
     width: web11.width,

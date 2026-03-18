@@ -41,6 +41,10 @@ The Pager UI telemetry panel is fed by `POST /api/pager/telemetry`. The app does
 not automatically connect to Pi-Star by itself; Pi-Star (or another bridge) must
 push events into this endpoint.
 
+To prevent background telemetry noise, the bridge now gates sends through
+`GET /api/pager/telemetry/active` and only emits telemetry when there is an
+active pending pager message.
+
 A helper bridge script and systemd setup templates are included at:
 
 `scripts/pager_telemetry_bridge.sh`
@@ -68,6 +72,10 @@ PAGER_TELEMETRY_URL="https://rccolamachine.com/api/pager/telemetry"
 # Optional fan-out to local dev while testing:
 # PAGER_TELEMETRY_URLS="https://rccolamachine.com/api/pager/telemetry,http://192.168.1.66:3000/api/pager/telemetry"
 PAGER_TELEMETRY_SECRET="<your-secret>"
+# Optional explicit active-context endpoint (auto-derived if omitted):
+# PAGER_TELEMETRY_ACTIVE_CONTEXT_URL="https://rccolamachine.com/api/pager/telemetry/active"
+PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC="2"
+PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS="600000"
 MMDVM_LOG_GLOB="/var/log/pi-star/MMDVM-*.log"
 DAPNET_LOG_GLOB="/var/log/pi-star/DAPNETGateway-*.log"
 MMDVM_LOG_SWITCH_INTERVAL_SEC="30"
@@ -104,6 +112,10 @@ Notes:
 - Telemetry destination can be set as:
   - `PAGER_TELEMETRY_URL` for one endpoint
   - `PAGER_TELEMETRY_URLS` for many endpoints (comma-separated fan-out)
+- Active message gating can be set as:
+  - `PAGER_TELEMETRY_ACTIVE_CONTEXT_URL` for explicit context endpoint (optional)
+  - `PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC` for context refresh interval
+  - `PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS` for pending-message lookup window
 - Log source can be set as:
   - `MMDVM_LOG_FILE` for one exact file
   - `DAPNET_LOG_FILE` for one exact DAPNET file
@@ -116,8 +128,10 @@ Notes:
 - Logging verbosity:
   - `PAGER_TELEMETRY_LOG_FULL_PAYLOAD=0` logs concise send/fail lines (recommended)
   - `PAGER_TELEMETRY_LOG_FULL_PAYLOAD=1` logs payload + raw matched line (debug)
-- The telemetry endpoint accepts stage-only updates and can correlate to the most
-  recent pending pager request.
+- Bridge behavior:
+  - Sends telemetry only while an active pending pager message exists.
+  - Includes `trackingKey` on telemetry updates so events attach to the correct message.
+  - Emits at most one `gateway_received` and one MMDVM (`mmdvm_tx_started` or `mmdvm_tx_completed`) event per pager message.
 - Status semantics:
   - `mmdvm_tx_started` means Pi-Star MMDVM send observed.
   - `gateway_received` counts as DAPNET confirmation only when extracted text matches

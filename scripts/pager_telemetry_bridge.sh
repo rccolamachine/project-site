@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Watches a Pi-Star/MMDVM log and emits telemetry events to /api/pager/telemetry.
-# The telemetry endpoint can now match by recent pending pager request, so this
-# script only needs to send stage + detail.
+# Watches Pi-Star/MMDVM logs and emits pager telemetry events.
+# To avoid background noise, this bridge first checks for an active pending pager
+# request and only emits telemetry when one exists.
 
 PAGER_TELEMETRY_URL="${PAGER_TELEMETRY_URL:-}"
 PAGER_TELEMETRY_URLS="${PAGER_TELEMETRY_URLS:-}"
 PAGER_TELEMETRY_SECRET="${PAGER_TELEMETRY_SECRET:-}"
+PAGER_TELEMETRY_ACTIVE_CONTEXT_URL="${PAGER_TELEMETRY_ACTIVE_CONTEXT_URL:-}"
+PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC="${PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC:-2}"
+PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS="${PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS:-600000}"
 MMDVM_LOG_FILE="${MMDVM_LOG_FILE:-}"
 MMDVM_LOG_GLOB="${MMDVM_LOG_GLOB:-/var/log/pi-star/MMDVM-*.log}"
 DAPNET_LOG_FILE="${DAPNET_LOG_FILE:-}"
@@ -70,6 +73,18 @@ if [[ -z "$PAGER_TELEMETRY_SECRET" ]]; then
   exit 1
 fi
 
+if [[ -z "$PAGER_TELEMETRY_ACTIVE_CONTEXT_URL" ]]; then
+  first_destination="${TELEMETRY_DESTINATIONS[0]}"
+  if [[ "$first_destination" == *"/api/pager/telemetry"* ]]; then
+    PAGER_TELEMETRY_ACTIVE_CONTEXT_URL="${first_destination/\/api\/pager\/telemetry/\/api\/pager\/telemetry\/active}"
+  fi
+fi
+
+if [[ -z "$PAGER_TELEMETRY_ACTIVE_CONTEXT_URL" ]]; then
+  echo "Missing active-context URL. Set PAGER_TELEMETRY_ACTIVE_CONTEXT_URL." >&2
+  exit 1
+fi
+
 if ! [[ "$MMDVM_LOG_SWITCH_INTERVAL_SEC" =~ ^[0-9]+$ ]] || (( MMDVM_LOG_SWITCH_INTERVAL_SEC <= 0 )); then
   MMDVM_LOG_SWITCH_INTERVAL_SEC=30
 fi
@@ -81,6 +96,12 @@ if ! [[ "$MMDVM_TX_STARTED_COOLDOWN_SEC" =~ ^[0-9]+$ ]] || (( MMDVM_TX_STARTED_C
 fi
 if ! [[ "$MMDVM_LINK_LAST_GATEWAY_TEXT_SEC" =~ ^[0-9]+$ ]] || (( MMDVM_LINK_LAST_GATEWAY_TEXT_SEC < 0 )); then
   MMDVM_LINK_LAST_GATEWAY_TEXT_SEC=120
+fi
+if ! [[ "$PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC" =~ ^[0-9]+$ ]] || (( PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC < 0 )); then
+  PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC=2
+fi
+if ! [[ "$PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS" =~ ^[0-9]+$ ]] || (( PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS <= 0 )); then
+  PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS=600000
 fi
 
 json_escape() {
@@ -295,14 +316,25 @@ send_stage_to_destination() {
   local stage="$2"
   local at="$3"
   local detail="$4"
+  local tracking_key="${5:-}"
   local curl_output=""
 
-  LAST_SEND_PAYLOAD=$(
-    printf '{"stage":"%s","at":"%s","detail":"%s"}' \
-      "$stage" \
-      "$at" \
-      "$(json_escape "$detail")"
-  )
+  if [[ -n "$tracking_key" ]]; then
+    LAST_SEND_PAYLOAD=$(
+      printf '{"trackingKey":"%s","stage":"%s","at":"%s","detail":"%s"}' \
+        "$(json_escape "$tracking_key")" \
+        "$stage" \
+        "$at" \
+        "$(json_escape "$detail")"
+    )
+  else
+    LAST_SEND_PAYLOAD=$(
+      printf '{"stage":"%s","at":"%s","detail":"%s"}' \
+        "$stage" \
+        "$at" \
+        "$(json_escape "$detail")"
+    )
+  fi
 
   if curl_output="$(
     curl -fsS --max-time 6 \
@@ -327,6 +359,7 @@ post_stage() {
   local stage="$1"
   local detail="$2"
   local raw_line="${3:-}"
+  local tracking_key="${4:-}"
   local at
   local destination
   local any_success=0
@@ -335,11 +368,18 @@ post_stage() {
   local raw_line_normalized=""
   at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   log_context="$(build_send_log_context "$detail")"
+  if [[ -n "$tracking_key" ]]; then
+    if [[ -n "$log_context" ]]; then
+      log_context="trackingKey=${tracking_key:0:12} ${log_context}"
+    else
+      log_context="trackingKey=${tracking_key:0:12}"
+    fi
+  fi
   raw_line_normalized="$(normalize_whitespace "$raw_line")"
 
   for destination in "${TELEMETRY_DESTINATIONS[@]}"; do
     LAST_SEND_ERROR=""
-    if send_stage_to_destination "$destination" "$stage" "$at" "$detail"; then
+    if send_stage_to_destination "$destination" "$stage" "$at" "$detail" "$tracking_key"; then
       if [[ "$PAGER_TELEMETRY_LOG_FULL_PAYLOAD" == "1" ]]; then
         if [[ -n "$raw_line_normalized" ]]; then
           printf '%s sent %s -> %s | payload=%s | raw="%s"\n' \
@@ -473,6 +513,93 @@ stop_tail_reader() {
   fi
 }
 
+extract_json_string_value() {
+  local json="$1"
+  local key="$2"
+  printf '%s' "$json" | sed -n "s/.*\"${key}\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -n 1
+}
+
+json_has_true_flag() {
+  local json="$1"
+  local key="$2"
+  if printf '%s' "$json" | grep -Eqi "\"${key}\"[[:space:]]*:[[:space:]]*true"; then
+    return 0
+  fi
+  return 1
+}
+
+refresh_active_context() {
+  local now_epoch
+  local request_url=""
+  local separator="?"
+  local response_body=""
+  local active_flag=0
+  local tracking_key=""
+  now_epoch="$(date +%s)"
+
+  if (( PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC > 0 )) && (( now_epoch < ACTIVE_CONTEXT_CACHE_UNTIL )); then
+    return 0
+  fi
+
+  request_url="$PAGER_TELEMETRY_ACTIVE_CONTEXT_URL"
+  if [[ "$request_url" == *\?* ]]; then
+    separator="&"
+  fi
+  request_url="${request_url}${separator}maxAgeMs=${PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS}"
+
+  if ! response_body="$(
+    curl -fsS --max-time 4 \
+      -X GET "$request_url" \
+      -H "x-pager-telemetry-secret: $PAGER_TELEMETRY_SECRET" \
+      2>&1
+  )"; then
+    ACTIVE_CONTEXT_TRACKING_KEY=""
+    ACTIVE_CONTEXT_LAST_ERROR="$(normalize_whitespace "$response_body")"
+    ACTIVE_CONTEXT_CACHE_UNTIL=$(( now_epoch + PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC ))
+    if (( now_epoch - ACTIVE_CONTEXT_LAST_ERROR_LOG_AT >= 30 )); then
+      printf '%s active context lookup failed (%s)\n' \
+        "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+        "${ACTIVE_CONTEXT_LAST_ERROR:0:160}" >&2
+      ACTIVE_CONTEXT_LAST_ERROR_LOG_AT="$now_epoch"
+    fi
+    return 1
+  fi
+
+  if json_has_true_flag "$response_body" "active"; then
+    active_flag=1
+  fi
+
+  if (( active_flag == 1 )); then
+    tracking_key="$(extract_json_string_value "$response_body" "trackingKey")"
+    tracking_key="$(trim "$tracking_key")"
+  fi
+
+  ACTIVE_CONTEXT_TRACKING_KEY="$tracking_key"
+  ACTIVE_CONTEXT_CACHE_UNTIL=$(( now_epoch + PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC ))
+  ACTIVE_CONTEXT_LAST_ERROR=""
+
+  if [[ "$ACTIVE_CONTEXT_TRACKING_KEY" != "$LAST_ACTIVE_TRACKING_KEY" ]]; then
+    LAST_ACTIVE_TRACKING_KEY="$ACTIVE_CONTEXT_TRACKING_KEY"
+    LAST_POSTED_GATEWAY_TRACKING_KEY=""
+    LAST_POSTED_MMDVM_TRACKING_KEY=""
+  fi
+
+  return 0
+}
+
+stage_bucket_for_limit() {
+  local stage="$1"
+  if [[ "$stage" == "gateway_received" ]]; then
+    printf '%s' "gateway"
+    return 0
+  fi
+  if [[ "$stage" == "mmdvm_tx_started" || "$stage" == "mmdvm_tx_completed" ]]; then
+    printf '%s' "mmdvm"
+    return 0
+  fi
+  printf '%s' "$stage"
+}
+
 process_log_line() {
   local line="$1"
   local source_file="${2:-}"
@@ -484,6 +611,8 @@ process_log_line() {
   local fallback_text=""
   local stage=""
   local signature
+  local tracking_key=""
+  local stage_bucket=""
 
   source_name="$(basename "$(normalize_whitespace "$source_file")")"
   now_epoch="$(date +%s)"
@@ -537,13 +666,39 @@ process_log_line() {
   fi
   LAST_SIGNATURE="$signature"
 
+  if ! refresh_active_context; then
+    return 0
+  fi
+  tracking_key="$ACTIVE_CONTEXT_TRACKING_KEY"
+  if [[ -z "$tracking_key" ]]; then
+    return 0
+  fi
+
+  stage_bucket="$(stage_bucket_for_limit "$stage")"
+  if [[ "$stage_bucket" == "gateway" && "$LAST_POSTED_GATEWAY_TRACKING_KEY" == "$tracking_key" ]]; then
+    return 0
+  fi
+  if [[ "$stage_bucket" == "mmdvm" && "$LAST_POSTED_MMDVM_TRACKING_KEY" == "$tracking_key" ]]; then
+    return 0
+  fi
+
   enriched_detail="$(build_enriched_detail "$stage" "$line" "$source_file" "$fallback_text")"
-  post_stage "$stage" "$enriched_detail" "$line" || true
+  if post_stage "$stage" "$enriched_detail" "$line" "$tracking_key"; then
+    if [[ "$stage_bucket" == "gateway" ]]; then
+      LAST_POSTED_GATEWAY_TRACKING_KEY="$tracking_key"
+    fi
+    if [[ "$stage_bucket" == "mmdvm" ]]; then
+      LAST_POSTED_MMDVM_TRACKING_KEY="$tracking_key"
+    fi
+  fi
 }
 
 for destination in "${TELEMETRY_DESTINATIONS[@]}"; do
   echo "Telemetry destination: $destination"
 done
+echo "Active context URL: $PAGER_TELEMETRY_ACTIVE_CONTEXT_URL"
+echo "Active context cache: ${PAGER_TELEMETRY_ACTIVE_CONTEXT_CACHE_SEC}s"
+echo "Active context max age: ${PAGER_TELEMETRY_ACTIVE_CONTEXT_MAX_AGE_MS}ms"
 
 echo "MMDVM explicit file: ${MMDVM_LOG_FILE:-<none>}"
 echo "MMDVM rotating glob: $MMDVM_LOG_GLOB"
@@ -563,6 +718,13 @@ LAST_GATEWAY_TEXT_KEY=""
 LAST_GATEWAY_TEXT_RAW=""
 LAST_GATEWAY_TEXT_AT=0
 LAST_MMDVM_TX_STARTED_AT=0
+ACTIVE_CONTEXT_TRACKING_KEY=""
+ACTIVE_CONTEXT_LAST_ERROR=""
+ACTIVE_CONTEXT_CACHE_UNTIL=0
+ACTIVE_CONTEXT_LAST_ERROR_LOG_AT=0
+LAST_ACTIVE_TRACKING_KEY=""
+LAST_POSTED_GATEWAY_TRACKING_KEY=""
+LAST_POSTED_MMDVM_TRACKING_KEY=""
 TAIL_PID=""
 TAIL_FD=""
 NEXT_SWITCH_CHECK_EPOCH=0
