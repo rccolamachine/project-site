@@ -59,7 +59,6 @@ export default function PagerPage() {
     attempts: 0,
     trackingKey: "",
     text: "",
-    timestamp: "",
   });
   const telemetrySnapshotRef = useRef({
     stages: {},
@@ -296,7 +295,6 @@ export default function PagerPage() {
           beginTelemetryPolling({
             trackingKey: payload.trackingKey,
             text: payload.text || session.text,
-            timestamp: payload.timestamp,
           });
           scheduleAutoRetryCheck();
         } catch (err) {
@@ -313,11 +311,10 @@ export default function PagerPage() {
     }, delayMs);
   };
 
-  const beginTelemetryPolling = ({ trackingKey, text: nextText, timestamp }) => {
+  const beginTelemetryPolling = ({ trackingKey, text: nextText }) => {
     const safeTrackingKey = String(trackingKey || "").trim();
     const safeText = String(nextText || "").trim();
-    const safeTimestamp = String(timestamp || "").trim();
-    if (!safeTrackingKey && (!safeText || !safeTimestamp)) {
+    if (!safeTrackingKey) {
       setTelemetry(null);
       return;
     }
@@ -327,7 +324,6 @@ export default function PagerPage() {
       attempts: 0,
       trackingKey: safeTrackingKey,
       text: safeText,
-      timestamp: safeTimestamp,
     };
     updateTelemetrySnapshot({}, safeText);
     setTelemetry({
@@ -347,8 +343,6 @@ export default function PagerPage() {
       try {
         const snapshot = await fetchPagerDeliveryStatus({
           trackingKey: current.trackingKey,
-          text: current.text,
-          timestamp: current.timestamp,
         });
 
         if (snapshot?.notFound) {
@@ -523,7 +517,6 @@ export default function PagerPage() {
       beginTelemetryPolling({
         trackingKey: payload.trackingKey,
         text: payload.text || trimmedText,
-        timestamp: payload.timestamp,
       });
       retrySessionRef.current = {
         active: true,
