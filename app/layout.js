@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pixel.variable}`}
       >
-        <div className="crtOverlay" aria-hidden="true" />{" "}
+        <div className="crtOverlay" aria-hidden="true" />
         <div className="shell">
           <SiteHeader />
           <main className="main">{children}</main>

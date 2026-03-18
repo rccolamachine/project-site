@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef } from "react";
+import Link from "next/link";
 import styles from "./resume.module.css";
 
 export default function ResumePage() {
@@ -258,6 +259,12 @@ export default function ResumePage() {
           </p>
         </Section>
       </article>
+
+      <div className={`${styles.noPrint} ${styles.resumeBottomLinkWrap}`}>
+        <Link className="btn" href="/publications" prefetch={false}>
+          View Publications
+        </Link>
+      </div>
     </section>
   );
 }

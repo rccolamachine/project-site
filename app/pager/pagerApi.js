@@ -29,17 +29,37 @@ export async function sendPagerMessage({ text, username, password, signal }) {
     ok: Boolean(json?.ok),
     text: String(json?.text || ""),
     timestamp: String(json?.timestamp || "").trim(),
+    trackingKey: String(json?.trackingKey || "").trim(),
   };
 }
 
-export async function fetchPagerDeliveryStatus({ text, timestamp, signal }) {
-  const res = await fetch(PAGER_STATUS_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, timestamp }),
-    signal,
-    cache: "no-store",
-  });
+export async function fetchPagerDeliveryStatus({
+  trackingKey,
+  text,
+  timestamp,
+  signal,
+}) {
+  const safeTrackingKey = String(trackingKey || "").trim();
+  const useGetByTrackingKey = Boolean(safeTrackingKey);
+  const requestUrl = useGetByTrackingKey
+    ? `${PAGER_STATUS_ENDPOINT}?trackingKey=${encodeURIComponent(safeTrackingKey)}`
+    : PAGER_STATUS_ENDPOINT;
+
+  const requestInit = useGetByTrackingKey
+    ? {
+        method: "GET",
+        signal,
+        cache: "no-store",
+      }
+    : {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, timestamp }),
+        signal,
+        cache: "no-store",
+      };
+
+  const res = await fetch(requestUrl, requestInit);
 
   const json = await res.json().catch(() => null);
   if (res.status === 404) {

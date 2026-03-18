@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getPagerStatus,
+  getPagerStatusByTrackingKey,
   getPagerStatusStoreBackend,
 } from "@/lib/pagerDeliveryStatusStore";
 import {
@@ -31,6 +32,56 @@ function buildPublicStages(stages) {
   };
 }
 
+function buildSuccessResponse(status) {
+  return NextResponse.json(
+    {
+      ok: true,
+      telemetryConfigured: hasTelemetrySecret(),
+      storeBackend: getPagerStatusStoreBackend(),
+      acceptedAt: status.acceptedAt || null,
+      updatedAt: status.updatedAt || null,
+      stages: buildPublicStages(status.stages),
+    },
+    { status: 200, headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+function buildNotFoundResponse() {
+  return NextResponse.json(
+    {
+      error: "No status found for this pager message.",
+      telemetryConfigured: hasTelemetrySecret(),
+      storeBackend: getPagerStatusStoreBackend(),
+    },
+    { status: 404 },
+  );
+}
+
+export async function GET(req) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const trackingKey = safeTrim(searchParams.get("trackingKey"));
+    if (!trackingKey) {
+      return NextResponse.json(
+        { error: "trackingKey query parameter is required." },
+        { status: 400 },
+      );
+    }
+
+    const status = await getPagerStatusByTrackingKey(trackingKey);
+    if (!status) {
+      return buildNotFoundResponse();
+    }
+
+    return buildSuccessResponse(status);
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Failed to load pager status.", detail: err?.message || String(err) },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => null);
@@ -38,38 +89,28 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
 
-    const text = safeTrim(body.text);
-    const timestamp = normalizeIsoTimestamp(body.timestamp);
-    if (!text || !timestamp) {
-      return NextResponse.json(
-        { error: "Text and timestamp are required." },
-        { status: 400 },
-      );
+    const trackingKey = safeTrim(body.trackingKey);
+    let status = null;
+
+    if (trackingKey) {
+      status = await getPagerStatusByTrackingKey(trackingKey);
+    } else {
+      const text = safeTrim(body.text);
+      const timestamp = normalizeIsoTimestamp(body.timestamp);
+      if (!text || !timestamp) {
+        return NextResponse.json(
+          { error: "Tracking key or text and timestamp are required." },
+          { status: 400 },
+        );
+      }
+      status = await getPagerStatus({ text, timestamp });
     }
 
-    const status = await getPagerStatus({ text, timestamp });
     if (!status) {
-      return NextResponse.json(
-        {
-          error: "No status found for this pager message.",
-          telemetryConfigured: hasTelemetrySecret(),
-          storeBackend: getPagerStatusStoreBackend(),
-        },
-        { status: 404 },
-      );
+      return buildNotFoundResponse();
     }
 
-    return NextResponse.json(
-      {
-        ok: true,
-        telemetryConfigured: hasTelemetrySecret(),
-        storeBackend: getPagerStatusStoreBackend(),
-        acceptedAt: status.acceptedAt || null,
-        updatedAt: status.updatedAt || null,
-        stages: buildPublicStages(status.stages),
-      },
-      { status: 200, headers: { "Cache-Control": "no-store" } },
-    );
+    return buildSuccessResponse(status);
   } catch (err) {
     return NextResponse.json(
       { error: "Failed to load pager status.", detail: err?.message || String(err) },

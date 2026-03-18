@@ -14,6 +14,10 @@ import {
 } from "./buttonUtils";
 import styles from "./button.module.css";
 
+const STATE_POLL_INTERVAL_MS = 60_000;
+const ACTIVE_PLAY_SYNC_INTERVAL_MS = 5_000;
+const ACTIVE_PLAY_SYNC_WINDOW_MS = 30_000;
+
 export default function ButtonGamePage() {
   const [value, setValue] = useState(0);
   const [max, setMax] = useState(0);
@@ -34,6 +38,7 @@ export default function ButtonGamePage() {
   const stateInFlightRef = useRef(null);
   const stateInFlightRangeRef = useRef("");
   const lastStateAtRef = useRef(0);
+  const activePlaySyncUntilRef = useRef(0);
 
   const displayValue = useMemo(() => value + pendingUi, [value, pendingUi]);
 
@@ -74,6 +79,13 @@ export default function ButtonGamePage() {
     );
     setLastClickAt(String(state?.lastClickAt ?? ""));
     setShame(normalizeShame(state?.shame));
+  }, []);
+
+  const markActivePlayWindow = useCallback((windowMs = ACTIVE_PLAY_SYNC_WINDOW_MS) => {
+    const horizon = Date.now() + Math.max(0, Number(windowMs) || 0);
+    if (horizon > activePlaySyncUntilRef.current) {
+      activePlaySyncUntilRef.current = horizon;
+    }
   }, []);
 
   const syncState = useCallback(
@@ -132,7 +144,7 @@ export default function ButtonGamePage() {
     const pollTimer = setInterval(() => {
       if (document.visibilityState !== "visible") return;
       load(false);
-    }, 15000);
+    }, STATE_POLL_INTERVAL_MS);
 
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -146,6 +158,30 @@ export default function ButtonGamePage() {
       alive = false;
       clearInterval(pollTimer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [activeValueSeriesRange, syncState]);
+
+  useEffect(() => {
+    let alive = true;
+
+    const load = async () => {
+      try {
+        if (!alive) return;
+        if (document.visibilityState !== "visible") return;
+        if (Date.now() >= activePlaySyncUntilRef.current) return;
+        await syncState({ force: false, minGapMs: 3000, range: activeValueSeriesRange });
+      } catch {
+        // Error is already persisted in component state.
+      }
+    };
+
+    const timer = setInterval(() => {
+      load();
+    }, ACTIVE_PLAY_SYNC_INTERVAL_MS);
+
+    return () => {
+      alive = false;
+      clearInterval(timer);
     };
   }, [activeValueSeriesRange, syncState]);
 
@@ -181,6 +217,15 @@ export default function ButtonGamePage() {
         ),
       );
       setErr("");
+      markActivePlayWindow();
+
+      // Reconcile against canonical shared state right after increment flush so
+      // concurrent players become visible quickly.
+      try {
+        await syncState({ force: true, minGapMs: 0, range: activeValueSeriesRange });
+      } catch {
+        // Keep current UI state if reconcile fails.
+      }
     } catch (error) {
       setErr(error?.message || String(error));
       try {
@@ -189,11 +234,12 @@ export default function ButtonGamePage() {
         // Keep latest error already set.
       }
     }
-  }, [syncState, valueSeriesMeta?.bucketMs]);
+  }, [activeValueSeriesRange, markActivePlayWindow, syncState, valueSeriesMeta?.bucketMs]);
 
   const handleIncrement = () => {
     setErr("");
     setLastClickAt(new Date().toISOString());
+    markActivePlayWindow();
 
     pendingRef.current += 1;
     setPendingUi((pending) => pending + 1);

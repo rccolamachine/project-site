@@ -50,6 +50,16 @@ export const SITE_TODO_ITEMS = [
     links: [{ label: "Open Guestbook", href: "/guestbook" }],
   },
   {
+    id: "publications-complete-assets",
+    title: "Publications: finish adding PDFs and preview images",
+    area: "Publications",
+    priority: "P2",
+    status: "todo",
+    notes:
+      "Add the remaining publication PDFs and abstract/graphical preview images so every publication card is complete.",
+    links: [{ label: "Open Publications", href: "/publications" }],
+  },
+  {
     id: "reactor-page-make-all-molecules",
     title: "Reactor: track first and last time each molecule was made",
     area: "Reactor",
@@ -118,6 +128,15 @@ export const SITE_TODO_ITEMS = [
     notes:
       "Need to add to backend-- separate endpoint for entire farm and for each user. Currently handling everything with local storage and encrypted JSON.",
     links: [{ label: "Open Farm", href: "/farm" }],
+  },
+  {
+    id: "eink-wifi-sticky-note",
+    title: "Build e-ink Wi-Fi sticky note project",
+    area: "Projects",
+    priority: "P2",
+    status: "todo",
+    notes:
+      "Create and document the e-ink Wi-Fi sticky note project: hardware + firmware setup, message delivery flow, and a simple site page/API to push notes to the display.",
   },
   {
     id: "standardize-page-headers",

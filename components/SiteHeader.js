@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HEADER_NAV_LINKS } from "@/data/siteNavigation";
 
 function singularizeForHeader(word) {
   const w = String(word || "")
@@ -22,6 +23,14 @@ function titleFromPath(pathname) {
     pathname.split("?")[0].split("#")[0].split("/").filter(Boolean)[0] ||
     "cola";
   return first.toLowerCase();
+}
+
+function isRouteActive(pathname, href) {
+  const safePathname = String(pathname || "");
+  const safeHref = String(href || "");
+  if (!safeHref) return false;
+  if (safeHref === "/") return safePathname === "/";
+  return safePathname === safeHref || safePathname.startsWith(`${safeHref}/`);
 }
 
 export default function SiteHeader() {
@@ -65,86 +74,16 @@ export default function SiteHeader() {
         </Link>
 
         <nav className="links" aria-label="Primary">
-          <Link className={pathname === "/" ? "active" : ""} href="/" prefetch={false}>
-            Home
-          </Link>
-          <Link
-            className={pathname.startsWith("/farm") ? "active" : ""}
-            href="/farm"
-            prefetch={false}
-          >
-            Farm
-          </Link>
-          <Link
-            className={pathname.startsWith("/pixelbooth") ? "active" : ""}
-            href="/pixelbooth"
-            prefetch={false}
-          >
-            Pixelbooth
-          </Link>
-          <Link
-            className={pathname.startsWith("/reactor") ? "active" : ""}
-            href="/reactor"
-            prefetch={false}
-          >
-            Reactor
-          </Link>
-          <Link
-            className={pathname.startsWith("/button") ? "active" : ""}
-            href="/button"
-            prefetch={false}
-          >
-            Button
-          </Link>
-          <Link
-            className={pathname.startsWith("/mixtape") ? "active" : ""}
-            href="/mixtape"
-            prefetch={false}
-          >
-            Mixtape
-          </Link>
-          <Link
-            className={pathname.startsWith("/pager") ? "active" : ""}
-            href="/pager"
-            prefetch={false}
-          >
-            Pager
-          </Link>
-          <Link
-            className={pathname.startsWith("/packet") ? "active" : ""}
-            href="/packet"
-            prefetch={false}
-          >
-            Packets
-          </Link>
-          <Link
-            className={pathname.startsWith("/about") ? "active" : ""}
-            href="/about"
-            prefetch={false}
-          >
-            About
-          </Link>
-          <Link
-            className={pathname.startsWith("/guestbook") ? "active" : ""}
-            href="/guestbook"
-            prefetch={false}
-          >
-            Guestbook
-          </Link>
-          <Link
-            className={pathname.startsWith("/resume") ? "active" : ""}
-            href="/resume"
-            prefetch={false}
-          >
-            Resume
-          </Link>
-          <Link
-            className={pathname.startsWith("/todo") ? "active" : ""}
-            href="/todo"
-            prefetch={false}
-          >
-            To-Do
-          </Link>
+          {HEADER_NAV_LINKS.map((route) => (
+            <Link
+              key={route.href}
+              className={isRouteActive(pathname, route.href) ? "active" : ""}
+              href={route.href}
+              prefetch={false}
+            >
+              {route.label}
+            </Link>
+          ))}
         </nav>
       </div>
     </header>

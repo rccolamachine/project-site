@@ -67,9 +67,9 @@ export default function PagerArchitectureDiagram() {
     x: LEFT_LANE_X,
     y: web3.y + web3.height + ARROW_GAP,
     width: BLOCK_WIDTH,
-    title: "4) Upstream API call",
+    title: "4) Upstream API call + fan-out",
     bodyLines:
-      "Server posts the message to DAPNET (hampager.de/api/calls) using secure upstream credentials.",
+      "Server posts to DAPNET using secure upstream credentials. After acceptance, it seeds status storage and prepares the browser response in parallel with radio delivery.",
   };
   web4.height = measureBlockHeight({
     width: web4.width,
@@ -83,7 +83,7 @@ export default function PagerArchitectureDiagram() {
     y: web4.y,
     width: BLOCK_WIDTH,
     title: "5) DAPNET network handoff",
-    bodyLines: "DAPNET dispatches the message to Rob's internet/Wi-Fi path.",
+    bodyLines: "DAPNET dispatches the message toward Rob's home network path.",
   };
   radio5.height = measureBlockHeight({
     width: radio5.width,
@@ -92,18 +92,18 @@ export default function PagerArchitectureDiagram() {
     minHeight: MIN_BLOCK_HEIGHT,
   });
 
-  const web8 = {
+  const web9 = {
     x: LEFT_LANE_X,
     y: web4.y + web4.height + ARROW_GAP,
     width: BLOCK_WIDTH,
-    title: "8) API response to browser",
+    title: "9) API response to browser",
     bodyLines:
-      "On success, the API returns ok/text/timestamp; on failure, it returns an error.",
+      "On success, the API returns ok/text/timestamp/trackingKey so the UI can poll status by tracking key.",
   };
-  web8.height = measureBlockHeight({
-    width: web8.width,
-    title: web8.title,
-    bodyLines: web8.bodyLines,
+  web9.height = measureBlockHeight({
+    width: web9.width,
+    title: web9.title,
+    bodyLines: web9.bodyLines,
     minHeight: MIN_BLOCK_HEIGHT,
   });
 
@@ -125,9 +125,9 @@ export default function PagerArchitectureDiagram() {
     x: RIGHT_LANE_X,
     y: radio6.y + radio6.height + ARROW_GAP,
     width: BLOCK_WIDTH,
-    title: "7) Pi-Star to RF to Pager",
+    title: "7) Pi-Star radio",
     bodyLines:
-      "Pi-Star MMDVM processes the incoming page and sends a radio/POCSAG signal to the pager in Rob's apartment.",
+      "Pi-Star MMDVM turns the inbound message into a local RF/POCSAG transmission.",
   };
   radio7.height = measureBlockHeight({
     width: radio7.width,
@@ -136,33 +136,62 @@ export default function PagerArchitectureDiagram() {
     minHeight: MIN_BLOCK_HEIGHT,
   });
 
-  const radio9 = {
+  const radio8 = {
     x: RIGHT_LANE_X,
     y: radio7.y + radio7.height + ARROW_GAP,
     width: BLOCK_WIDTH,
-    title: "9) Pi-Star telemetry bridge",
-    bodyLines:
-      "Service tails DAPNET/MMDVM logs on Pi-Star, detects gateway and TX events for each page, and pushes events to POST /api/pager/telemetry.",
+    title: "8) Pager",
+    bodyLines: "The pager receives and displays the message over RF.",
   };
-  radio9.height = measureBlockHeight({
-    width: radio9.width,
-    title: radio9.title,
-    bodyLines: radio9.bodyLines,
+  radio8.height = measureBlockHeight({
+    width: radio8.width,
+    title: radio8.title,
+    bodyLines: radio8.bodyLines,
     minHeight: MIN_BLOCK_HEIGHT,
   });
 
-  const web10 = {
-    x: LEFT_LANE_X,
-    y: radio9.y,
+  const radio10 = {
+    x: RIGHT_LANE_X,
+    y: radio8.y + radio8.height + ARROW_GAP,
     width: BLOCK_WIDTH,
-    title: "10) Status polling + UI updates",
+    title: "10) Pi-Star telemetry bridge",
     bodyLines:
-      "Browser polls POST /api/pager/status every few seconds, reads Pi-Star telemetry stages captured by the API, and updates the transmission timeline in the Pager UI.",
+      "A bridge tails DAPNET/MMDVM logs and posts telemetry events to POST /api/pager/telemetry using a shared secret.",
   };
-  web10.height = measureBlockHeight({
-    width: web10.width,
-    title: web10.title,
-    bodyLines: web10.bodyLines,
+  radio10.height = measureBlockHeight({
+    width: radio10.width,
+    title: radio10.title,
+    bodyLines: radio10.bodyLines,
+    minHeight: MIN_BLOCK_HEIGHT,
+  });
+
+  const web11 = {
+    x: LEFT_LANE_X,
+    y: radio10.y,
+    width: BLOCK_WIDTH,
+    title: "11) Database",
+    bodyLines:
+      "Status records live in database: seeded at send acceptance, then updated by telemetry stages.",
+  };
+  web11.height = measureBlockHeight({
+    width: web11.width,
+    title: web11.title,
+    bodyLines: web11.bodyLines,
+    minHeight: MIN_BLOCK_HEIGHT,
+  });
+
+  const web12 = {
+    x: LEFT_LANE_X,
+    y: web11.y + web11.height + ARROW_GAP,
+    width: BLOCK_WIDTH,
+    title: "12) Status polling",
+    bodyLines:
+      "Browser polls GET /api/pager/status?trackingKey and refreshes the timeline from database-backed status snapshots.",
+  };
+  web12.height = measureBlockHeight({
+    width: web12.width,
+    title: web12.title,
+    bodyLines: web12.bodyLines,
     minHeight: MIN_BLOCK_HEIGHT,
   });
 
@@ -171,31 +200,35 @@ export default function PagerArchitectureDiagram() {
     web2,
     web3,
     web4,
-    web8,
-    web10,
+    web9,
+    web11,
+    web12,
     radio5,
     radio6,
     radio7,
-    radio9,
+    radio8,
+    radio10,
   };
 
   const arrow12 = verticalArrowBetween(blocks.web1);
   const arrow23 = verticalArrowBetween(blocks.web2);
   const arrow34 = verticalArrowBetween(blocks.web3);
-  const arrow48 = verticalArrowBetween(blocks.web4);
+  const arrow49 = verticalArrowBetween(blocks.web4);
   const arrow56 = verticalArrowBetween(blocks.radio5);
   const arrow67 = verticalArrowBetween(blocks.radio6);
-  const arrow79 = verticalArrowBetween(blocks.radio7);
+  const arrow78 = verticalArrowBetween(blocks.radio7);
+  const arrow810 = verticalArrowBetween(blocks.radio8);
   const arrow45 = horizontalArrowLeftToRight(
     blocks.web4,
     blocks.radio5.y + blocks.radio5.height / 2,
   );
-  const arrow910 = horizontalArrowRightToLeft(
-    blocks.radio9,
-    blocks.web10.y + blocks.web10.height / 2,
+  const arrow1011 = horizontalArrowRightToLeft(
+    blocks.radio10,
+    blocks.web11.y + blocks.web11.height / 2,
   );
+  const arrow1112 = verticalArrowBetween(blocks.web11);
   const diagramHeight =
-    Math.max(web10.y + web10.height, radio9.y + radio9.height) + 24;
+    Math.max(web12.y + web12.height, radio10.y + radio10.height) + 24;
 
   return (
     <div className={diagramStyles.diagramWrap}>
@@ -306,39 +339,65 @@ export default function PagerArchitectureDiagram() {
 
         <DiagramBlock
           idPrefix="pager"
-          x={blocks.web8.x}
-          y={blocks.web8.y}
-          width={blocks.web8.width}
-          height={blocks.web8.height}
+          x={blocks.web9.x}
+          y={blocks.web9.y}
+          width={blocks.web9.width}
+          height={blocks.web9.height}
           boxClassName={diagramStyles.diagramBoxWeb}
-          title={blocks.web8.title}
-          bodyLines={blocks.web8.bodyLines}
+          title={blocks.web9.title}
+          bodyLines={blocks.web9.bodyLines}
           titleClassName={diagramStyles.diagramStepTitle}
           bodyClassName={diagramStyles.diagramStepBody}
         />
 
         <DiagramBlock
           idPrefix="pager"
-          x={blocks.radio9.x}
-          y={blocks.radio9.y}
-          width={blocks.radio9.width}
-          height={blocks.radio9.height}
+          x={blocks.radio8.x}
+          y={blocks.radio8.y}
+          width={blocks.radio8.width}
+          height={blocks.radio8.height}
           boxClassName={diagramStyles.diagramBoxRadio}
-          title={blocks.radio9.title}
-          bodyLines={blocks.radio9.bodyLines}
+          title={blocks.radio8.title}
+          bodyLines={blocks.radio8.bodyLines}
           titleClassName={diagramStyles.diagramStepTitle}
           bodyClassName={diagramStyles.diagramStepBody}
         />
 
         <DiagramBlock
           idPrefix="pager"
-          x={blocks.web10.x}
-          y={blocks.web10.y}
-          width={blocks.web10.width}
-          height={blocks.web10.height}
+          x={blocks.radio10.x}
+          y={blocks.radio10.y}
+          width={blocks.radio10.width}
+          height={blocks.radio10.height}
+          boxClassName={diagramStyles.diagramBoxRadio}
+          title={blocks.radio10.title}
+          bodyLines={blocks.radio10.bodyLines}
+          titleClassName={diagramStyles.diagramStepTitle}
+          bodyClassName={diagramStyles.diagramStepBody}
+        />
+
+        <DiagramBlock
+          idPrefix="pager"
+          x={blocks.web11.x}
+          y={blocks.web11.y}
+          width={blocks.web11.width}
+          height={blocks.web11.height}
           boxClassName={diagramStyles.diagramBoxWeb}
-          title={blocks.web10.title}
-          bodyLines={blocks.web10.bodyLines}
+          title={blocks.web11.title}
+          bodyLines={blocks.web11.bodyLines}
+          titleClassName={diagramStyles.diagramStepTitle}
+          bodyClassName={diagramStyles.diagramStepBody}
+        />
+
+        <DiagramBlock
+          idPrefix="pager"
+          x={blocks.web12.x}
+          y={blocks.web12.y}
+          width={blocks.web12.width}
+          height={blocks.web12.height}
+          boxClassName={diagramStyles.diagramBoxWeb}
+          title={blocks.web12.title}
+          bodyLines={blocks.web12.bodyLines}
           titleClassName={diagramStyles.diagramStepTitle}
           bodyClassName={diagramStyles.diagramStepBody}
         />
@@ -378,8 +437,8 @@ export default function PagerArchitectureDiagram() {
         />
         <image
           href="/pager/cyan-arrow-transparent.png"
-          x={arrow48.x}
-          y={arrow48.y}
+          x={arrow49.x}
+          y={arrow49.y}
           width={VERTICAL_ARROW.width}
           height={VERTICAL_ARROW.height}
           preserveAspectRatio="none"
@@ -402,20 +461,36 @@ export default function PagerArchitectureDiagram() {
         />
         <image
           href="/pager/pink-arrow-transparent.png"
-          x={arrow79.x}
-          y={arrow79.y}
+          x={arrow78.x}
+          y={arrow78.y}
+          width={VERTICAL_ARROW.width}
+          height={VERTICAL_ARROW.height}
+          preserveAspectRatio="none"
+        />
+        <image
+          href="/pager/pink-arrow-transparent.png"
+          x={arrow810.x}
+          y={arrow810.y}
           width={VERTICAL_ARROW.width}
           height={VERTICAL_ARROW.height}
           preserveAspectRatio="none"
         />
         <image
           href="/pager/cyan-arrow-transparent.png"
-          x={arrow910.x}
-          y={arrow910.y}
+          x={arrow1011.x}
+          y={arrow1011.y}
           width={HORIZONTAL_ARROW.width}
           height={HORIZONTAL_ARROW.height}
           preserveAspectRatio="none"
-          transform={arrow910.transform}
+          transform={arrow1011.transform}
+        />
+        <image
+          href="/pager/cyan-arrow-transparent.png"
+          x={arrow1112.x}
+          y={arrow1112.y}
+          width={VERTICAL_ARROW.width}
+          height={VERTICAL_ARROW.height}
+          preserveAspectRatio="none"
         />
       </svg>
     </div>

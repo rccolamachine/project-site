@@ -74,7 +74,7 @@ const THERMO_SAMPLE_MS = 1_000;
 const COLLECTION_PAGE_SIZE = 36;
 const FIRST_DISCOVERY_CALLOUT_MS = 5200;
 const FIRST_DISCOVERY_CALLOUT_FADE_MS = 1700;
-const WORLD_CATALOGUE_POLL_MS = 60_000;
+const WORLD_CATALOGUE_POLL_MS = 5 * 60_000;
 const REMOTE_CATALOGUE_FLUSH_MS = 20_000;
 const REMOTE_CATALOGUE_RETRY_MS = 45_000;
 const REMOTE_CATALOGUE_BATCH_MAX = 120;
@@ -1203,6 +1203,9 @@ export default function ReactorPage() {
     let cancelled = false;
 
     const refresh = async () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+        return;
+      }
       try {
         await loadWorldCatalogueStats();
       } catch {}
@@ -1213,10 +1216,17 @@ export default function ReactorPage() {
       if (cancelled) return;
       void refresh();
     }, WORLD_CATALOGUE_POLL_MS);
+    const onVisibilityChange = () => {
+      if (cancelled) return;
+      if (document.visibilityState !== "visible") return;
+      void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [loadWorldCatalogueStats]);
 

@@ -1,50 +1,11 @@
+import { SITEMAP_PATHS } from "@/data/siteNavigation";
+
 export default function sitemap() {
   const baseUrl = "https://rccolamachine.com";
+  const lastModified = new Date();
 
-  return [
-    {
-      url: `${baseUrl}/`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/resume`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/pixelbooth`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/guestbook`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/button`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/reactor`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/farm`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/todo`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/mixtape`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/packet`,
-      lastModified: new Date(),
-    },
-  ];
+  return SITEMAP_PATHS.map((path) => ({
+    url: `${baseUrl}${path}`,
+    lastModified,
+  }));
 }

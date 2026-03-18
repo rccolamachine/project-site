@@ -173,6 +173,12 @@
   text-decoration: underline;
 }
 
+.resumeBottomLinkWrap {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
 @media print {
   .screenOnly {
     display: none !important;

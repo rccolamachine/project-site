@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { limitRequest } from "@/lib/serverRateLimit";
-import { upsertPagerAcceptedStatus } from "@/lib/pagerDeliveryStatusStore";
+import {
+  buildPagerTrackingKey,
+  upsertPagerAcceptedStatus,
+} from "@/lib/pagerDeliveryStatusStore";
 
 export const runtime = "nodejs";
 
@@ -384,6 +387,10 @@ export async function POST(req) {
       upstreamJson?.timestamp || upstreamJson?.data?.timestamp,
     );
     const trackingTimestamp = upstreamTimestamp || payload.timestamp;
+    const trackingKey = buildPagerTrackingKey({
+      text,
+      timestamp: trackingTimestamp,
+    });
     await upsertPagerAcceptedStatus({
       text,
       timestamp: trackingTimestamp,
@@ -394,7 +401,8 @@ export async function POST(req) {
       {
         ok: true,
         text,
-        timestamp: upstreamTimestamp || null,
+        timestamp: trackingTimestamp || null,
+        trackingKey: trackingKey || null,
       },
       { status: 200 },
     );

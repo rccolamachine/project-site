@@ -10,22 +10,6 @@ import {
 } from "@/lib/guestbook";
 import styles from "./pixelbooth.module.css";
 
-/**
- * app/pixelbooth/page.js
- *
- * Adds requested email behavior:
- * - Always email the submission to: robert.chapleski@gmail.com
- * - Add checkbox in modal: if checked, ALSO email the submission to the user-provided email
- *
- * Client behavior:
- * - Adds lead.emailSelf checkbox
- * - Sends emailSelf=1/0 with the FormData
- *
- * Note: the server endpoint must implement:
- * - always email Rob
- * - if emailSelf=1, also email the submitter
- */
-
 function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v));
 }
@@ -127,7 +111,7 @@ export default function Page() {
 
   const [lead, setLead] = useState(() => ({
     ...EMPTY_GUESTBOOK_LEAD,
-    emailSelf: false, // ✅ NEW
+    emailSelf: false,
   }));
 
   // Lock displayed canvas height to avoid 1px strips (prefer overlap)
@@ -790,7 +774,7 @@ export default function Page() {
     const email = lead.email.trim();
     const linkedinUrl = lead.linkedinUrl.trim();
     const message = lead.message.trim();
-    const emailSelf = !!lead.emailSelf; // ✅ NEW
+    const emailSelf = !!lead.emailSelf;
 
     if (!name) return setSaveError("Name is required.");
     if (!email) return setSaveError("Email is required.");
@@ -818,9 +802,6 @@ export default function Page() {
       });
       fd.append("photo", blob, `pixelbooth-${Date.now()}.png`);
 
-
-      // ✅ NEW: server should always email Rob; and also email user if emailSelf=1
-
       fd.append(
         "pixelSize",
         String(snapPixelSizeRef.current ?? pixelSizeRef.current),
@@ -845,7 +826,6 @@ export default function Page() {
           "Saved to guestbook. Notification email sent.",
       });
 
-      // ✅ IMPORTANT FIX: only after success, revert to Live view
       setShowSaveModal(false);
       setSaving(false);
       handleBackToLive({ clearSaveResult: false });

@@ -57,6 +57,7 @@ export default function PagerPage() {
   const retryTimerRef = useRef(null);
   const telemetryPollRef = useRef({
     attempts: 0,
+    trackingKey: "",
     text: "",
     timestamp: "",
   });
@@ -293,6 +294,7 @@ export default function PagerPage() {
           }));
 
           beginTelemetryPolling({
+            trackingKey: payload.trackingKey,
             text: payload.text || session.text,
             timestamp: payload.timestamp,
           });
@@ -311,16 +313,22 @@ export default function PagerPage() {
     }, delayMs);
   };
 
-  const beginTelemetryPolling = ({ text: nextText, timestamp }) => {
+  const beginTelemetryPolling = ({ trackingKey, text: nextText, timestamp }) => {
+    const safeTrackingKey = String(trackingKey || "").trim();
     const safeText = String(nextText || "").trim();
     const safeTimestamp = String(timestamp || "").trim();
-    if (!safeText || !safeTimestamp) {
+    if (!safeTrackingKey && (!safeText || !safeTimestamp)) {
       setTelemetry(null);
       return;
     }
 
     stopTelemetryPolling();
-    telemetryPollRef.current = { attempts: 0, text: safeText, timestamp: safeTimestamp };
+    telemetryPollRef.current = {
+      attempts: 0,
+      trackingKey: safeTrackingKey,
+      text: safeText,
+      timestamp: safeTimestamp,
+    };
     updateTelemetrySnapshot({}, safeText);
     setTelemetry({
       expectedText: safeText,
@@ -338,6 +346,7 @@ export default function PagerPage() {
 
       try {
         const snapshot = await fetchPagerDeliveryStatus({
+          trackingKey: current.trackingKey,
           text: current.text,
           timestamp: current.timestamp,
         });
@@ -512,6 +521,7 @@ export default function PagerPage() {
         },
       }));
       beginTelemetryPolling({
+        trackingKey: payload.trackingKey,
         text: payload.text || trimmedText,
         timestamp: payload.timestamp,
       });
