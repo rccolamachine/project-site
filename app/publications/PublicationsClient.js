@@ -126,6 +126,9 @@ export default function PublicationsClient({ publications }) {
             {tag} x
           </button>
         )) : <span className={styles.showingAll}>Showing all tags</span>}
+        <span className={styles.selectionCount}>
+          {filteredPublications.length}/{publications.length} selected
+        </span>
       </div>
 
       <div className={styles.publicationsGrid}>

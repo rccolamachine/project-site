@@ -102,6 +102,17 @@
   color: rgba(243, 244, 255, 0.68);
 }
 
+.selectionCount {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: 10px;
+  line-height: 1.3;
+  color: rgba(243, 244, 255, 0.74);
+  white-space: nowrap;
+}
+
 .publicationCard {
   display: grid;
   grid-template-rows: auto auto auto 1fr;
