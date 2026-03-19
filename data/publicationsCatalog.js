@@ -6,7 +6,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.acs.org/doi/10.1021/acs.langmuir.1c03422",
     journal: "Langmuir",
     year: 2022,
-    tags: ["rare-earths", "catalysis"],
+    tags: ["rare-earths", "catalysis", "surface chemistry"],
   },
   {
     slug: "redoxBranchingPredictor",
@@ -24,7 +24,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2021/cp/d1cp03587h",
     journal: "Physical Chemistry Chemical Physics",
     year: 2021,
-    tags: ["catalysis"],
+    tags: ["catalysis", "surface chemistry"],
   },
   {
     slug: "lanthanideActinideSeparation",
@@ -52,7 +52,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://www.cell.com/iscience/fulltext/S2589-0042(20)30625-8",
     journal: "iScience",
     year: 2020,
-    tags: ["rare-earths", "catalysis"],
+    tags: ["rare-earths", "catalysis", "surface chemistry"],
   },
   {
     slug: "nickelCatalystMicrostructure",
@@ -73,7 +73,7 @@ export const publicationsCatalog = [
     tags: [
       "chemical warfare agents",
       "catalysis",
-      "gas-surface chemistry",
+      "surface chemistry",
     ],
   },
   {
@@ -87,7 +87,7 @@ export const publicationsCatalog = [
     pdfFileName: "dissertation.pdf",
     tags: [
       "chemical warfare agents",
-      "gas-surface chemistry",
+      "surface chemistry",
       "atmospheric chemistry",
     ],
   },
@@ -111,7 +111,7 @@ export const publicationsCatalog = [
     tags: [
       "chemical warfare agents",
       "catalysis",
-      "gas-surface chemistry",
+      "surface chemistry",
     ],
   },
   {
@@ -130,7 +130,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2016/cs/c5cs00375j",
     journal: "Chemical Society Reviews",
     year: 2016,
-    tags: ["review", "gas-surface chemistry", "atmospheric chemistry"],
+    tags: ["review", "surface chemistry", "atmospheric chemistry"],
   },
   {
     slug: "nitrateSurfaceReactions",
@@ -139,7 +139,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2014/cp/c4cp01982b",
     journal: "Physical Chemistry Chemical Physics",
     year: 2014,
-    tags: ["gas-surface chemistry", "atmospheric chemistry"],
+    tags: ["surface chemistry", "atmospheric chemistry"],
   },
   {
     slug: "c60OzonolysisMechanism",
@@ -148,6 +148,6 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2014/cp/c3cp55212h",
     journal: "Physical Chemistry Chemical Physics",
     year: 2014,
-    tags: ["atmospheric chemistry", "gas-surface chemistry"],
+    tags: ["atmospheric chemistry", "surface chemistry"],
   },
 ];
