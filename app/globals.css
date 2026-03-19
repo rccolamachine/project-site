@@ -128,13 +128,13 @@ a:hover {
 }
 
 .navInner {
-  width: min(1100px, 92vw);
+  width: min(1200px, 100%);
   margin: 0 auto;
-  padding: 12px 0;
+  padding: 12px clamp(12px, 2.2vw, 18px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap; /* allow wrap if needed */
 }
 
@@ -196,31 +196,100 @@ a:hover {
 .links {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  row-gap: 6px;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   align-items: center;
+  margin-left: auto;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
-.links a {
+.navControl {
   font-size: 10px;
-  letter-spacing: 0px; /* ✅ changed */
-  padding: 6px 8px;
+  letter-spacing: 0px;
+  padding: 6px 7px;
   border-radius: 12px;
   color: var(--muted);
   border: 1px solid transparent;
+  line-height: 1.2;
 }
-.links a:hover {
-  border-color: rgba(45, 226, 230, 0.38);
-  background: rgba(45, 226, 230, 0.08);
-  color: var(--text);
-}
-.links a.active {
+
+.navControl.active,
+.navDropdown.active > .navDropdownSummary {
   color: var(--text);
   border-color: rgba(255, 79, 216, 0.40);
   background: rgba(255, 79, 216, 0.11);
   box-shadow:
     inset 0 0 10px 1px rgba(255, 79, 216, 0.48),
     inset 0 0 18px 3px rgba(255, 79, 216, 0.26);
+}
+
+.navDropdown[open] > .navDropdownSummary,
+.navControl:hover,
+.navControl:focus-visible,
+.navControl:active {
+  color: var(--text);
+  border-color: rgba(45, 226, 230, 0.45);
+  background: rgba(45, 226, 230, 0.10);
+  box-shadow:
+    inset 0 0 10px 1px rgba(45, 226, 230, 0.45),
+    inset 0 0 18px 3px rgba(45, 226, 230, 0.22);
+}
+
+.navDropdown {
+  position: relative;
+}
+
+.navDropdownSummary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.navDropdownSummary::-webkit-details-marker {
+  display: none;
+}
+
+.navDropdownSummary::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg) translateY(-1px);
+  transition: transform 120ms ease;
+  opacity: 0.8;
+}
+
+.navDropdown[open] > .navDropdownSummary::after {
+  transform: rotate(225deg) translateY(-1px);
+}
+
+.navDropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(5, 4, 10, 0.96);
+  box-shadow: var(--shadow);
+  z-index: 60;
+}
+
+.navDropdown:not([open]) .navDropdownMenu {
+  display: none;
+}
+
+.navDropdownLink {
+  display: block;
 }
 
 /* Typography */
@@ -1325,11 +1394,27 @@ textarea::placeholder {
 
 /* Responsive */
 @media (max-width: 900px) {
+  .navInner {
+    align-items: center;
+    gap: 4px;
+  }
+  .links {
+    margin-left: auto;
+    gap: 4px;
+    row-gap: 4px;
+    justify-content: flex-end;
+  }
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .cardRow {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .brand {
+    gap: 7px;
+    padding: 6px 8px;
   }
 }
 @media (max-width: 520px) {
@@ -1371,9 +1456,6 @@ textarea::placeholder {
   .brandArt {
     width: 36px;
     height: 36px;
-  }
-  .links a {
-    padding: 6px 7px;
   }
 }
 
@@ -1417,3 +1499,4 @@ textarea::placeholder {
     padding: 0.6in !important;
   }
 }
+
