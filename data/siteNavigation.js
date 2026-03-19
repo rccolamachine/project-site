@@ -129,7 +129,7 @@ const ROUTE_CATALOG = [
       section: "Learn",
       title: "About",
       description:
-        "Systems builder, QA engineer, and former computational chemist.",
+        "Systems builder, QA engineer, and computational chemist.",
       cta: "Read more",
     },
     about: {

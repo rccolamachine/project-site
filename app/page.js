@@ -68,7 +68,7 @@ export default function Home() {
           <h1>Hi, I&apos;m Rob.</h1>
           <p className="lede">
             Personal site for photos, projects, and whatever I&apos;m building
-            next. Systems builder, QA engineer, and former computational
+            next. Systems builder, QA engineer, and computational
             chemist.
           </p>
         </div>
