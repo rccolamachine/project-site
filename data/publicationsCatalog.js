@@ -1,4 +1,4 @@
-﻿export const publicationsCatalog = [
+export const publicationsCatalog = [
   {
     slug: "rareEarthSeparation",
     title:
@@ -6,7 +6,7 @@
     sourceUrl: "https://pubs.acs.org/doi/10.1021/acs.langmuir.1c03422",
     journal: "Langmuir",
     year: 2022,
-    tags: ["rare-earths", "heterogeneous catalysis"],
+    tags: ["rare-earths", "catalysis"],
   },
   {
     slug: "redoxBranchingPredictor",
@@ -15,7 +15,7 @@
     sourceUrl: "https://pubs.acs.org/doi/10.1021/acscatal.1c03646",
     journal: "ACS Catalysis",
     year: 2021,
-    tags: ["heterogeneous catalysis", "polymers"],
+    tags: ["catalysis", "polymers"],
   },
   {
     slug: "titanateSurfaceAcidity",
@@ -24,7 +24,7 @@
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2021/cp/d1cp03587h",
     journal: "Physical Chemistry Chemical Physics",
     year: 2021,
-    tags: ["heterogeneous catalysis"],
+    tags: ["catalysis"],
   },
   {
     slug: "lanthanideActinideSeparation",
@@ -33,7 +33,7 @@
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2021/cp/d1cp02466c",
     journal: "Physical Chemistry Chemical Physics",
     year: 2021,
-    tags: ["rare-earths", "heterogeneous catalysis"],
+    tags: ["rare-earths", "catalysis"],
   },
   {
     slug: "trivalentFElementSeparations",
@@ -43,7 +43,7 @@
       "https://www.sciencedirect.com/science/chapter/handbook/abs/pii/S0168127321000040",
     journal: "Handbook on the Physics and Chemistry of Rare Earths",
     year: 2021,
-    tags: ["review", "rare-earths", "heterogeneous catalysis"],
+    tags: ["review", "rare-earths", "catalysis"],
   },
   {
     slug: "molecularBeneficiationApproach",
@@ -52,7 +52,7 @@
     sourceUrl: "https://www.cell.com/iscience/fulltext/S2589-0042(20)30625-8",
     journal: "iScience",
     year: 2020,
-    tags: ["rare-earths", "heterogeneous catalysis"],
+    tags: ["rare-earths", "catalysis"],
   },
   {
     slug: "nickelCatalystMicrostructure",
@@ -61,7 +61,7 @@
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2020/cy/c9cy02538c",
     journal: "Catalysis Science and Technology",
     year: 2020,
-    tags: ["heterogeneous catalysis", "polymers"],
+    tags: ["catalysis", "polymers"],
   },
   {
     slug: "polyoxoniobateDmmpDynamics",
@@ -72,7 +72,7 @@
     year: 2017,
     tags: [
       "chemical warfare agents",
-      "heterogeneous catalysis",
+      "catalysis",
       "gas-surface chemistry",
     ],
   },
@@ -99,7 +99,7 @@
       "https://www.sciencedirect.com/science/article/abs/pii/S1010603016308024",
     journal: "Journal of Photochemistry and Photobiology A: Chemistry",
     year: 2017,
-    tags: ["photochemistry", "heterogeneous catalysis"],
+    tags: ["photochemistry", "catalysis"],
   },
   {
     slug: "nerveAgentHydrolysis",
@@ -110,7 +110,7 @@
     year: 2016,
     tags: [
       "chemical warfare agents",
-      "heterogeneous catalysis",
+      "catalysis",
       "gas-surface chemistry",
     ],
   },
@@ -121,7 +121,7 @@
     sourceUrl: "https://pubs.acs.org/doi/10.1021/jacs.5b13317",
     journal: "Journal of the American Chemical Society",
     year: 2016,
-    tags: ["polymers", "heterogeneous catalysis"],
+    tags: ["polymers", "catalysis"],
   },
   {
     slug: "atmosphericOxidantSurfaces",
