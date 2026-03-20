@@ -204,6 +204,8 @@ const AUTOMATION_CONDITION_TARGET_OPTIONS = Object.freeze([
   "volume",
 ]);
 const AUTOMATION_DURATION_OPTIONS = Object.freeze([5, 10, 20, 30]);
+const AUTOMATION_DURATION_MIN_SEC = 1;
+const AUTOMATION_DURATION_MAX_SEC = 45;
 const AUTOMATION_ATOM_COUNT_OPTIONS = Object.freeze([1, 2, 3, 4, 5, 10, 20]);
 const AUTOMATION_ATOM_REMOVE_COUNT_OPTIONS = Object.freeze([
   1,
@@ -216,6 +218,8 @@ const AUTOMATION_ATOM_REMOVE_COUNT_OPTIONS = Object.freeze([
   "half",
   "all",
 ]);
+const AUTOMATION_ATOM_NUMERIC_COUNT_MIN = 1;
+const AUTOMATION_ATOM_NUMERIC_COUNT_MAX = 100;
 const AUTOMATION_TEMPERATURE_RATE_BY_SPEED = Object.freeze({
   slowly: 60,
   quickly: 150,
@@ -227,6 +231,20 @@ const AUTOMATION_VOLUME_RATE_BY_SPEED = Object.freeze({
 
 function normalizeAutomationBuilderAtomOperation(value) {
   return value === "remove" ? "remove" : "add";
+}
+
+function clampAutomationAtomNumericCount(value) {
+  const parsed = Math.floor(Number(value) || AUTOMATION_ATOM_NUMERIC_COUNT_MIN);
+  return clamp(
+    parsed,
+    AUTOMATION_ATOM_NUMERIC_COUNT_MIN,
+    AUTOMATION_ATOM_NUMERIC_COUNT_MAX,
+  );
+}
+
+function clampAutomationDurationSec(value) {
+  const parsed = Math.floor(Number(value) || AUTOMATION_DURATION_MIN_SEC);
+  return clamp(parsed, AUTOMATION_DURATION_MIN_SEC, AUTOMATION_DURATION_MAX_SEC);
 }
 
 function normalizeAutomationBuilderIncomingEdge(value) {
@@ -250,14 +268,11 @@ function normalizeAutomationBuilderAtomEntry(rawEntry, operation = "add") {
     const count =
       rawCount === "half" || rawCount === "all"
         ? rawCount
-        : Math.max(1, Math.floor(Number(rawCount) || 1));
+        : clampAutomationAtomNumericCount(rawCount);
     return { count, element };
   }
-  const numericCount = Number(rawEntry?.count);
   return {
-    count: Number.isFinite(numericCount)
-      ? Math.max(1, Math.floor(numericCount))
-      : 4,
+    count: clampAutomationAtomNumericCount(rawEntry?.count ?? 4),
     element,
   };
 }
@@ -774,6 +789,10 @@ export default function ReactorPage() {
     useState(AUTOMATION_ACTION_KIND.CONDITION);
   const [automationBuilderThenPickerForId, setAutomationBuilderThenPickerForId] =
     useState(null);
+  const [automationBuilderCountEditKey, setAutomationBuilderCountEditKey] =
+    useState(null);
+  const [automationBuilderDurationEditActionId, setAutomationBuilderDurationEditActionId] =
+    useState(null);
   const [automationBuilderThenAddKind, setAutomationBuilderThenAddKind] =
     useState(AUTOMATION_ACTION_KIND.CONDITION);
   const [automationBuilderRepeatCycle, setAutomationBuilderRepeatCycle] =
@@ -886,10 +905,7 @@ export default function ReactorPage() {
             id: String(rawAction?.id || ""),
             incomingEdge: normalizedIncomingEdge,
             kind: AUTOMATION_ACTION_KIND.WAIT,
-            durationSec: Math.max(
-              1,
-              Math.floor(Number(rawAction?.durationSec) || 5),
-            ),
+            durationSec: clampAutomationDurationSec(rawAction?.durationSec ?? 5),
             whileActions: keepChildren
               ? Array.isArray(rawAction?.whileActions)
                 ? rawAction.whileActions
@@ -918,6 +934,7 @@ export default function ReactorPage() {
           ...rawAction,
           incomingEdge: normalizedIncomingEdge,
           direction: normalizedConditionDirection,
+          durationSec: clampAutomationDurationSec(rawAction?.durationSec ?? 5),
           whileActions: keepChildren
             ? Array.isArray(rawAction?.whileActions)
               ? rawAction.whileActions
@@ -1028,10 +1045,28 @@ export default function ReactorPage() {
 
   useEffect(() => {
     const validActionIds = new Set();
+    const validAtomEntryKeys = new Set();
+    const validDurationActionIds = new Set();
     const visit = (nodes) => {
       for (const node of Array.isArray(nodes) ? nodes : []) {
         const id = String(node?.id || "");
         if (id) validActionIds.add(id);
+        if (
+          id &&
+          (String(node?.kind || "") === AUTOMATION_ACTION_KIND.CONDITION ||
+            String(node?.kind || "") === AUTOMATION_ACTION_KIND.WAIT)
+        ) {
+          validDurationActionIds.add(id);
+        }
+        if (
+          id &&
+          String(node?.kind || "") === AUTOMATION_ACTION_KIND.ATOMS &&
+          Array.isArray(node?.atomEntries)
+        ) {
+          for (let idx = 0; idx < node.atomEntries.length; idx += 1) {
+            validAtomEntryKeys.add(`${id}:${idx}`);
+          }
+        }
         visit(node?.whileActions);
         visit(node?.thenActions);
       }
@@ -1042,6 +1077,12 @@ export default function ReactorPage() {
     );
     setAutomationBuilderThenPickerForId((current) =>
       current && !validActionIds.has(current) ? null : current,
+    );
+    setAutomationBuilderCountEditKey((current) =>
+      current && !validAtomEntryKeys.has(current) ? null : current,
+    );
+    setAutomationBuilderDurationEditActionId((current) =>
+      current && !validDurationActionIds.has(current) ? null : current,
     );
   }, [automationBuilderActions]);
 
@@ -3526,6 +3567,8 @@ export default function ReactorPage() {
     setAutomationBuilderActions([]);
     setAutomationBuilderWhilePickerForId(null);
     setAutomationBuilderThenPickerForId(null);
+    setAutomationBuilderCountEditKey(null);
+    setAutomationBuilderDurationEditActionId(null);
   }, []);
 
   const stopAutomationBuilder = useCallback((message = "idle") => {
@@ -3678,66 +3721,74 @@ export default function ReactorPage() {
     const normalizedRoots = sourceActions.map((action) =>
       normalizeNodeForRun(action),
     );
-    const executionSteps = [];
-    const collectWhileCluster = (root, rootCode) => {
-      const actionEntries = [];
-      const thenRoots = [];
-      const visitWhileTree = (node, nodeCode) => {
-        actionEntries.push({
-          action: node,
-          stepCode: nodeCode,
-        });
-        const whileChildren = Array.isArray(node?.whileActions)
-          ? node.whileActions
-          : [];
-        whileChildren.forEach((child, childIndex) => {
-          visitWhileTree(
-            child,
-            `${nodeCode}.${getAutomationAlphabetSegment(childIndex)}`,
-          );
-        });
-        const thenChildren = Array.isArray(node?.thenActions)
-          ? node.thenActions
-          : [];
-        thenChildren.forEach((child, childIndex) => {
-          thenRoots.push({
-            root: child,
-            stepCode: `${nodeCode}.${childIndex + 1}`,
-          });
-        });
-      };
-      visitWhileTree(root, rootCode);
-      return { actionEntries, thenRoots };
+    const getActionDurationMs = (action) => {
+      if (action?.kind === AUTOMATION_ACTION_KIND.ATOMS) return 260;
+      return clampAutomationDurationSec(action?.durationSec ?? 5) * 1000;
     };
-    const visitSequential = (root, stepCode) => {
-      if (!root) return;
-      const { actionEntries, thenRoots } = collectWhileCluster(root, stepCode);
-      if (actionEntries.length > 0) {
-        executionSteps.push({
-          rootId: root.id,
-          actions: actionEntries.map((entry) => entry.action),
-          stepCodes: actionEntries.map((entry) => entry.stepCode),
-        });
-      }
-      for (const nextRoot of thenRoots) {
-        visitSequential(nextRoot.root, nextRoot.stepCode);
-      }
+    const scheduledEntries = [];
+    const scheduleNode = (node, nodeCode, startMs) => {
+      if (!node) return startMs;
+      const durationMs = getActionDurationMs(node);
+      const endMs = startMs + durationMs;
+      scheduledEntries.push({
+        id: node.id,
+        action: node,
+        stepCode: nodeCode,
+        startMs,
+        endMs,
+      });
+
+      let subtreeEndMs = endMs;
+
+      const whileChildren = Array.isArray(node?.whileActions)
+        ? node.whileActions
+        : [];
+      let previousSiblingEndMs = startMs;
+      whileChildren.forEach((child, childIndex) => {
+        const childCode = `${nodeCode}.${getAutomationAlphabetSegment(childIndex)}`;
+        const edge = String(child?.incomingEdge || "while");
+        const childStartMs =
+          edge === "then" ? previousSiblingEndMs : startMs;
+        const childEndMs = scheduleNode(child, childCode, childStartMs);
+        previousSiblingEndMs = childEndMs;
+        subtreeEndMs = Math.max(subtreeEndMs, childEndMs);
+      });
+
+      const thenChildren = Array.isArray(node?.thenActions)
+        ? node.thenActions
+        : [];
+      let thenCursorMs = endMs;
+      thenChildren.forEach((child, childIndex) => {
+        const childCode = `${nodeCode}.${childIndex + 1}`;
+        thenCursorMs = scheduleNode(child, childCode, thenCursorMs);
+        subtreeEndMs = Math.max(subtreeEndMs, thenCursorMs);
+      });
+
+      return subtreeEndMs;
     };
+
+    let totalDurationMs = 0;
     normalizedRoots.forEach((root, rootIndex) => {
-      visitSequential(root, String(rootIndex + 1));
+      totalDurationMs = scheduleNode(root, String(rootIndex + 1), totalDurationMs);
     });
-    if (executionSteps.length <= 0) {
+    if (scheduledEntries.length <= 0 || totalDurationMs <= 0) {
       setAutomationBuilderStatus("Add at least one action");
       setAutomationBuilderRunning(false);
       return undefined;
     }
+
+    scheduledEntries.sort((a, b) => {
+      if (a.startMs !== b.startMs) return a.startMs - b.startMs;
+      return String(a.stepCode || "").localeCompare(String(b.stepCode || ""));
+    });
+
     const now = performance.now();
     automationBuilderRunRef.current = {
       running: true,
-      steps: executionSteps,
-      index: 0,
-      actionStartedAtMs: now,
-      lastStepElapsedMs: 0,
+      entries: scheduledEntries,
+      totalDurationMs,
+      cycleStartedAtMs: now,
+      lastElapsedMs: 0,
       appliedAtomActionIds: new Set(),
     };
     setPaused(false);
@@ -3747,10 +3798,6 @@ export default function ReactorPage() {
     setAutomationBuilderActiveStepCodes([]);
     setAutomationBuilderRemainingMs(0);
 
-    const getActionDurationMs = (action) => {
-      if (action?.kind === AUTOMATION_ACTION_KIND.ATOMS) return 260;
-      return Math.max(1, Math.floor(Number(action?.durationSec) || 5)) * 1000;
-    };
     const applyConditionAction = (action, dtSeconds) => {
       if (!(dtSeconds > 0)) return;
       const speed =
@@ -3795,75 +3842,81 @@ export default function ReactorPage() {
     const tick = () => {
       const run = automationBuilderRunRef.current;
       if (!run.running) return;
-      const stepEntry = run.steps[run.index];
-      if (!stepEntry) {
-        stopAutomationBuilder("completed");
-        return;
-      }
-      const stepActions = Array.isArray(stepEntry.actions)
-        ? stepEntry.actions
-        : [];
-      if (stepActions.length <= 0) {
-        run.index += 1;
-        run.actionStartedAtMs = performance.now();
-        run.lastStepElapsedMs = 0;
-        run.appliedAtomActionIds = new Set();
-        setAutomationBuilderActiveStepCodes([]);
-        return;
-      }
-
       const nowMs = performance.now();
-      const elapsedMs = Math.max(0, nowMs - run.actionStartedAtMs);
-      const durationMs = Math.max(
-        1,
-        ...stepActions.map((action) => getActionDurationMs(action)),
-      );
-      const remainingMs = Math.max(0, durationMs - elapsedMs);
-      const stepCodes = Array.isArray(stepEntry.stepCodes)
-        ? stepEntry.stepCodes.filter((code) => typeof code === "string" && code)
-        : [];
-      const stepCodesLabel = stepCodes.length > 0 ? stepCodes.join(", ") : "Unknown";
-      setAutomationBuilderActiveIndex(run.index);
-      setAutomationBuilderActiveActionIds(stepActions.map((action) => action.id));
-      setAutomationBuilderActiveStepCodes(stepCodes);
-      setAutomationBuilderRemainingMs(remainingMs);
-      setAutomationBuilderStatus(`Running step ${stepCodesLabel}`);
-
-      for (const action of stepActions) {
-        const actionDurationMs = getActionDurationMs(action);
-        if (action.kind === AUTOMATION_ACTION_KIND.CONDITION) {
-          const prevElapsedMs = Math.min(run.lastStepElapsedMs, actionDurationMs);
-          const currElapsedMs = Math.min(elapsedMs, actionDurationMs);
-          const dtSeconds = Math.max(0, (currElapsedMs - prevElapsedMs) / 1000);
-          applyConditionAction(action, dtSeconds);
-          continue;
-        }
-        if (action.kind === AUTOMATION_ACTION_KIND.ATOMS) {
-          if (run.appliedAtomActionIds.has(action.id)) continue;
-          run.appliedAtomActionIds.add(action.id);
-          runAutomationBuilderAtomAction(action);
-        }
-      }
-      run.lastStepElapsedMs = elapsedMs;
-
-      if (elapsedMs < durationMs) return;
-      run.index += 1;
-      run.actionStartedAtMs = nowMs;
-      run.lastStepElapsedMs = 0;
-      run.appliedAtomActionIds = new Set();
-      if (run.index >= run.steps.length) {
-        if (automationBuilderRepeatCycle) {
-          run.index = 0;
-          run.actionStartedAtMs = nowMs;
-          run.lastStepElapsedMs = 0;
-          run.appliedAtomActionIds = new Set();
-          setAutomationBuilderStatus("running");
-          setAutomationBuilderActiveIndex(0);
-          setAutomationBuilderActiveStepCodes([]);
-          setAutomationBuilderRemainingMs(0);
+      let elapsedMs = Math.max(0, nowMs - run.cycleStartedAtMs);
+      if (elapsedMs >= run.totalDurationMs) {
+        if (!automationBuilderRepeatCycle) {
+          stopAutomationBuilder("completed");
           return;
         }
-        stopAutomationBuilder("completed");
+        run.cycleStartedAtMs = nowMs;
+        run.lastElapsedMs = 0;
+        run.appliedAtomActionIds = new Set();
+        elapsedMs = 0;
+        setAutomationBuilderStatus("running");
+      }
+
+      const previousElapsedMs = Math.max(0, Number(run.lastElapsedMs) || 0);
+      const activeEntries = [];
+      for (const entry of run.entries) {
+        if (!entry || !entry.action) continue;
+        const isActive = elapsedMs >= entry.startMs && elapsedMs < entry.endMs;
+        if (isActive) activeEntries.push(entry);
+
+        if (entry.action.kind === AUTOMATION_ACTION_KIND.CONDITION) {
+          const prevElapsedClamped = clamp(previousElapsedMs, entry.startMs, entry.endMs);
+          const currElapsedClamped = clamp(elapsedMs, entry.startMs, entry.endMs);
+          const dtSeconds = Math.max(
+            0,
+            (currElapsedClamped - prevElapsedClamped) / 1000,
+          );
+          applyConditionAction(entry.action, dtSeconds);
+          continue;
+        }
+        if (entry.action.kind === AUTOMATION_ACTION_KIND.ATOMS) {
+          if (elapsedMs < entry.startMs) continue;
+          if (run.appliedAtomActionIds.has(entry.id)) continue;
+          run.appliedAtomActionIds.add(entry.id);
+          runAutomationBuilderAtomAction(entry.action);
+        }
+      }
+      run.lastElapsedMs = elapsedMs;
+
+      const activeActionIds = activeEntries.map((entry) => entry.id);
+      const activeStepCodes = Array.from(
+        new Set(
+          activeEntries
+            .map((entry) => String(entry.stepCode || "").trim())
+            .filter(Boolean),
+        ),
+      );
+      const stepCodesLabel =
+        activeStepCodes.length > 0 ? activeStepCodes.join(", ") : "";
+      const nextEntry = run.entries.find((entry) => entry.startMs > elapsedMs);
+      const remainingMs =
+        activeEntries.length > 0
+          ? Math.max(
+              0,
+              Math.min(...activeEntries.map((entry) => entry.endMs - elapsedMs)),
+            )
+          : nextEntry
+            ? Math.max(0, nextEntry.startMs - elapsedMs)
+            : 0;
+
+      const firstStepCode = activeStepCodes[0] || "";
+      const firstTopLevelIndex = parseInt(String(firstStepCode).split(".")[0], 10);
+      setAutomationBuilderActiveIndex(
+        Number.isFinite(firstTopLevelIndex) && firstTopLevelIndex > 0
+          ? firstTopLevelIndex - 1
+          : -1,
+      );
+      setAutomationBuilderActiveActionIds(activeActionIds);
+      setAutomationBuilderActiveStepCodes(activeStepCodes);
+      setAutomationBuilderRemainingMs(remainingMs);
+      if (stepCodesLabel) {
+        setAutomationBuilderStatus(`Running step ${stepCodesLabel}`);
+      } else {
+        setAutomationBuilderStatus("running");
       }
     };
 
@@ -4219,10 +4272,12 @@ export default function ReactorPage() {
   const renderAutomationBuilderActionFields = (rowAction) => {
     const actionKind = String(rowAction.kind || "");
     if (actionKind === AUTOMATION_ACTION_KIND.CONDITION) {
-      const durationValue = Math.max(
-        1,
-        Math.floor(Number(rowAction.durationSec) || 5),
-      );
+      const durationValue = clampAutomationDurationSec(rowAction.durationSec ?? 5);
+      const isEditingDuration =
+        automationBuilderDurationEditActionId === rowAction.id;
+      const durationOptions = AUTOMATION_DURATION_OPTIONS.includes(durationValue)
+        ? AUTOMATION_DURATION_OPTIONS
+        : [...AUTOMATION_DURATION_OPTIONS, durationValue].sort((a, b) => a - b);
       return (
         <div className="reactor-automation-builder-line">
           <select
@@ -4274,22 +4329,54 @@ export default function ReactorPage() {
             ))}
           </select>
           <span className="reactor-text-10-muted">for</span>
-          <select
-            value={durationValue}
-            onChange={(e) =>
-              updateAutomationBuilderAction(rowAction.id, {
-                durationSec: parseInt(e.target.value, 10),
-              })
-            }
-            disabled={automationBuilderRunning}
-            className={ui.select}
-          >
-            {AUTOMATION_DURATION_OPTIONS.map((seconds) => (
-              <option key={seconds} value={seconds}>
-                {seconds}
-              </option>
-            ))}
-          </select>
+          {isEditingDuration ? (
+            <input
+              type="number"
+              min={AUTOMATION_DURATION_MIN_SEC}
+              max={AUTOMATION_DURATION_MAX_SEC}
+              step={1}
+              value={durationValue}
+              onChange={(e) =>
+                updateAutomationBuilderAction(rowAction.id, {
+                  durationSec: clampAutomationDurationSec(e.target.value),
+                })
+              }
+              onBlur={() => setAutomationBuilderDurationEditActionId(null)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === "Escape") {
+                  e.preventDefault();
+                  setAutomationBuilderDurationEditActionId(null);
+                }
+              }}
+              disabled={automationBuilderRunning}
+              className={ui.select}
+              title="Custom duration (1-45 seconds)."
+              aria-label="Custom duration in seconds"
+              autoFocus
+            />
+          ) : (
+            <select
+              value={String(durationValue)}
+              onDoubleClick={() => {
+                if (automationBuilderRunning) return;
+                setAutomationBuilderDurationEditActionId(rowAction.id);
+              }}
+              onChange={(e) =>
+                updateAutomationBuilderAction(rowAction.id, {
+                  durationSec: clampAutomationDurationSec(e.target.value),
+                })
+              }
+              disabled={automationBuilderRunning}
+              className={ui.select}
+              title="Double-click to enter a custom duration (1-45 seconds)."
+            >
+              {durationOptions.map((seconds) => (
+                <option key={seconds} value={String(seconds)}>
+                  {seconds}
+                </option>
+              ))}
+            </select>
+          )}
           <span className="reactor-text-10-muted">
             {durationValue === 1 ? "second" : "seconds"}
           </span>
@@ -4338,87 +4425,182 @@ export default function ReactorPage() {
             <option value="remove">remove</option>
           </select>
           {atomEntries.map((entry, entryIndex) => (
-            <div
-              key={`atom-entry-${entryIndex}`}
-              className="reactor-automation-builder-line reactor-automation-builder-atom-row"
-            >
-              {entryIndex > 0 ? (
-                <span className="reactor-text-10-muted">and</span>
-              ) : null}
-              <select
-                value={
-                  atomOperation === "remove"
-                    ? String(entry.count ?? "half")
-                    : Math.max(1, Math.floor(Number(entry.count) || 1))
+            (() => {
+              const countEditKey = `${rowAction.id}:${entryIndex}`;
+              const isEditingCount = automationBuilderCountEditKey === countEditKey;
+              const isSpecialRemoveCount =
+                atomOperation === "remove" &&
+                (entry?.count === "half" || entry?.count === "all");
+              const numericCountValue = clampAutomationAtomNumericCount(
+                entry?.count,
+              );
+              const normalizedCountDisplay = isSpecialRemoveCount
+                ? String(entry.count)
+                : String(numericCountValue);
+              const isSingleAtomCount = !isSpecialRemoveCount && numericCountValue === 1;
+              const addCountOptions = (() => {
+                if (AUTOMATION_ATOM_COUNT_OPTIONS.includes(numericCountValue)) {
+                  return AUTOMATION_ATOM_COUNT_OPTIONS;
                 }
-                onChange={(e) => {
-                  const rawValue = e.target.value;
-                  const nextCount =
-                    atomOperation === "remove" &&
-                    (rawValue === "half" || rawValue === "all")
-                      ? rawValue
-                      : parseInt(rawValue, 10);
-                  const nextEntries = atomEntries.map((candidate, idx) =>
-                    idx === entryIndex ? { ...candidate, count: nextCount } : candidate,
+                return [...AUTOMATION_ATOM_COUNT_OPTIONS, numericCountValue].sort(
+                  (a, b) => a - b,
+                );
+              })();
+              const removeNumericCountOptions = (() => {
+                const numericOptions =
+                  AUTOMATION_ATOM_REMOVE_COUNT_OPTIONS.filter(
+                    (countOption) => typeof countOption === "number",
                   );
-                  commitAtomEntries(nextEntries);
-                }}
-                disabled={automationBuilderRunning}
-                className={ui.select}
-              >
-                {atomOperation === "remove"
-                  ? AUTOMATION_ATOM_REMOVE_COUNT_OPTIONS.map((countOption) => (
-                      <option
-                        key={`remove-count-${entryIndex}-${countOption}`}
-                        value={String(countOption)}
-                      >
-                        {String(countOption)}
-                      </option>
-                    ))
-                  : AUTOMATION_ATOM_COUNT_OPTIONS.map((count) => (
-                      <option key={`${entryIndex}-${count}`} value={count}>
-                        {count}
+                if (numericOptions.includes(numericCountValue)) {
+                  return numericOptions;
+                }
+                return [...numericOptions, numericCountValue].sort((a, b) => a - b);
+              })();
+
+              return (
+                <div
+                  key={`atom-entry-${entryIndex}`}
+                  className="reactor-automation-builder-line reactor-automation-builder-atom-row"
+                >
+                  {entryIndex > 0 ? (
+                    <span className="reactor-text-10-muted">and</span>
+                  ) : null}
+                  {isEditingCount ? (
+                    <input
+                      type="number"
+                      min={AUTOMATION_ATOM_NUMERIC_COUNT_MIN}
+                      max={AUTOMATION_ATOM_NUMERIC_COUNT_MAX}
+                      step={1}
+                      value={numericCountValue}
+                      onChange={(e) => {
+                        const nextCount = clampAutomationAtomNumericCount(
+                          e.target.value,
+                        );
+                        const nextEntries = atomEntries.map((candidate, idx) =>
+                          idx === entryIndex
+                            ? { ...candidate, count: nextCount }
+                            : candidate,
+                        );
+                        commitAtomEntries(nextEntries);
+                      }}
+                      onBlur={() => setAutomationBuilderCountEditKey(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          setAutomationBuilderCountEditKey(null);
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          setAutomationBuilderCountEditKey(null);
+                        }
+                      }}
+                      disabled={automationBuilderRunning}
+                      className={ui.select}
+                      title="Custom atom count (1-100)."
+                      aria-label="Custom atom count"
+                      autoFocus
+                    />
+                  ) : (
+                    <select
+                      value={normalizedCountDisplay}
+                      onDoubleClick={() => {
+                        if (automationBuilderRunning) return;
+                        if (isSpecialRemoveCount) {
+                          const nextEntries = atomEntries.map((candidate, idx) =>
+                            idx === entryIndex
+                              ? {
+                                  ...candidate,
+                                  count: AUTOMATION_ATOM_NUMERIC_COUNT_MIN,
+                                }
+                              : candidate,
+                          );
+                          commitAtomEntries(nextEntries);
+                        }
+                        setAutomationBuilderCountEditKey(countEditKey);
+                      }}
+                      onChange={(e) => {
+                        const rawValue = e.target.value;
+                        const nextCount =
+                          atomOperation === "remove" &&
+                          (rawValue === "half" || rawValue === "all")
+                            ? rawValue
+                            : clampAutomationAtomNumericCount(rawValue);
+                        const nextEntries = atomEntries.map((candidate, idx) =>
+                          idx === entryIndex
+                            ? { ...candidate, count: nextCount }
+                            : candidate,
+                        );
+                        commitAtomEntries(nextEntries);
+                      }}
+                      disabled={automationBuilderRunning}
+                      className={ui.select}
+                      title="Double-click to enter a custom count (1-100)."
+                    >
+                      {atomOperation === "remove"
+                        ? removeNumericCountOptions.map((countOption) => (
+                            <option
+                              key={`remove-count-${entryIndex}-${countOption}`}
+                              value={String(countOption)}
+                            >
+                              {String(countOption)}
+                            </option>
+                          ))
+                        : addCountOptions.map((count) => (
+                            <option
+                              key={`${entryIndex}-${count}`}
+                              value={String(count)}
+                            >
+                              {count}
+                            </option>
+                          ))}
+                      {atomOperation === "remove" ? (
+                        <>
+                          <option value="half">half</option>
+                          <option value="all">all</option>
+                        </>
+                      ) : null}
+                    </select>
+                  )}
+                  <span className="reactor-text-10-muted">
+                    {isSingleAtomCount ? "atom of" : "atoms of"}
+                  </span>
+                  <select
+                    value={String(entry.element || "H")}
+                    onChange={(e) => {
+                      const nextEntries = atomEntries.map((candidate, idx) =>
+                        idx === entryIndex
+                          ? { ...candidate, element: e.target.value }
+                          : candidate,
+                      );
+                      commitAtomEntries(nextEntries);
+                    }}
+                    disabled={automationBuilderRunning}
+                    className={ui.select}
+                  >
+                    {ELEMENTS.map((el) => (
+                      <option key={el} value={el}>
+                        {String(ELEMENT_NAMES[el] || el).toLowerCase()}
                       </option>
                     ))}
-              </select>
-              <span className="reactor-text-10-muted">
-                {Number(entry?.count) === 1 ? "atom of" : "atoms of"}
-              </span>
-              <select
-                value={String(entry.element || "H")}
-                onChange={(e) => {
-                  const nextEntries = atomEntries.map((candidate, idx) =>
-                    idx === entryIndex
-                      ? { ...candidate, element: e.target.value }
-                      : candidate,
-                  );
-                  commitAtomEntries(nextEntries);
-                }}
-                disabled={automationBuilderRunning}
-                className={ui.select}
-              >
-                {ELEMENTS.map((el) => (
-                  <option key={el} value={el}>
-                    {String(ELEMENT_NAMES[el] || el).toLowerCase()}
-                  </option>
-                ))}
-              </select>
-              {entryIndex > 0 ? (
-                <button
-                  onClick={() => {
-                    const nextEntries = atomEntries.filter(
-                      (_, idx) => idx !== entryIndex,
-                    );
-                    commitAtomEntries(nextEntries);
-                  }}
-                  disabled={automationBuilderRunning}
-                  className={`${ui.btnLight} reactor-automation-builder-atom-entry-remove`}
-                  title="Remove this AND atom target."
-                >
-                  -
-                </button>
-              ) : null}
-            </div>
+                  </select>
+                  {entryIndex > 0 ? (
+                    <button
+                      onClick={() => {
+                        const nextEntries = atomEntries.filter(
+                          (_, idx) => idx !== entryIndex,
+                        );
+                        commitAtomEntries(nextEntries);
+                      }}
+                      disabled={automationBuilderRunning}
+                      className={`${ui.btnLight} reactor-automation-builder-atom-entry-remove`}
+                      title="Remove this AND atom target."
+                    >
+                      -
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })()
           ))}
           <div className="reactor-row-gap-8-wrap">
             <button
@@ -4438,29 +4620,63 @@ export default function ReactorPage() {
         </div>
       );
     }
-    const waitDurationValue = Math.max(
-      1,
-      Math.floor(Number(rowAction.durationSec) || 5),
-    );
+    const waitDurationValue = clampAutomationDurationSec(rowAction.durationSec ?? 5);
+    const isEditingWaitDuration =
+      automationBuilderDurationEditActionId === rowAction.id;
+    const waitDurationOptions = AUTOMATION_DURATION_OPTIONS.includes(waitDurationValue)
+      ? AUTOMATION_DURATION_OPTIONS
+      : [...AUTOMATION_DURATION_OPTIONS, waitDurationValue].sort((a, b) => a - b);
     return (
       <div className="reactor-automation-builder-line">
         <span className="reactor-text-10-muted">wait</span>
-        <select
-          value={waitDurationValue}
-          onChange={(e) =>
-            updateAutomationBuilderAction(rowAction.id, {
-              durationSec: parseInt(e.target.value, 10),
-            })
-          }
-          disabled={automationBuilderRunning}
-          className={ui.select}
-        >
-          {AUTOMATION_DURATION_OPTIONS.map((seconds) => (
-            <option key={seconds} value={seconds}>
-              {seconds}
-            </option>
-          ))}
-        </select>
+        {isEditingWaitDuration ? (
+          <input
+            type="number"
+            min={AUTOMATION_DURATION_MIN_SEC}
+            max={AUTOMATION_DURATION_MAX_SEC}
+            step={1}
+            value={waitDurationValue}
+            onChange={(e) =>
+              updateAutomationBuilderAction(rowAction.id, {
+                durationSec: clampAutomationDurationSec(e.target.value),
+              })
+            }
+            onBlur={() => setAutomationBuilderDurationEditActionId(null)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === "Escape") {
+                e.preventDefault();
+                setAutomationBuilderDurationEditActionId(null);
+              }
+            }}
+            disabled={automationBuilderRunning}
+            className={ui.select}
+            title="Custom duration (1-45 seconds)."
+            aria-label="Custom wait duration in seconds"
+            autoFocus
+          />
+        ) : (
+          <select
+            value={String(waitDurationValue)}
+            onDoubleClick={() => {
+              if (automationBuilderRunning) return;
+              setAutomationBuilderDurationEditActionId(rowAction.id);
+            }}
+            onChange={(e) =>
+              updateAutomationBuilderAction(rowAction.id, {
+                durationSec: clampAutomationDurationSec(e.target.value),
+              })
+            }
+            disabled={automationBuilderRunning}
+            className={ui.select}
+            title="Double-click to enter a custom duration (1-45 seconds)."
+          >
+            {waitDurationOptions.map((seconds) => (
+              <option key={seconds} value={String(seconds)}>
+                {seconds}
+              </option>
+            ))}
+          </select>
+        )}
         <span className="reactor-text-10-muted">
           {waitDurationValue === 1 ? "second" : "seconds"}
         </span>
@@ -4587,6 +4803,14 @@ export default function ReactorPage() {
                 >
                   Add
                 </button>
+                <button
+                  onClick={() => setAutomationBuilderWhilePickerForId(null)}
+                  disabled={automationBuilderRunning}
+                  className={ui.btnLight}
+                  title="Cancel adding a concurrent action."
+                >
+                  X
+                </button>
               </div>
             ) : null}
             {automationBuilderThenPickerForId === rowAction.id ? (
@@ -4613,6 +4837,14 @@ export default function ReactorPage() {
                   title="Insert next step."
                 >
                   Add
+                </button>
+                <button
+                  onClick={() => setAutomationBuilderThenPickerForId(null)}
+                  disabled={automationBuilderRunning}
+                  className={ui.btnLight}
+                  title="Cancel adding a next step."
+                >
+                  X
                 </button>
               </div>
             ) : null}

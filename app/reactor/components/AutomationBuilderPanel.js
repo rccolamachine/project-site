@@ -88,20 +88,59 @@ export default function AutomationBuilderPanel({
               </div>
             </div>
           ) : (
-            automationBuilderActions.map((action, idx) => (
-              <div key={action.id} className="reactor-automation-builder-root">
-                {action?.incomingEdge === "then" ? (
-                  <div className="reactor-automation-builder-branch is-then">
-                    <div className="reactor-automation-builder-branch-label is-then">
-                      Then
-                    </div>
-                    {renderAutomationBuilderNode(action, String(idx + 1), "then")}
+            <>
+              {automationBuilderActions.map((action, idx) => {
+                const isFirst = idx === 0;
+                const incomingEdge = String(action?.incomingEdge || "");
+                const label = isFirst
+                  ? "Start"
+                  : incomingEdge === "then"
+                    ? "Then"
+                    : incomingEdge === "while"
+                      ? "While"
+                      : null;
+                const branchKind = isFirst
+                  ? "root"
+                  : incomingEdge === "then"
+                    ? "then"
+                    : incomingEdge === "while"
+                      ? "while"
+                      : "root";
+                const showThenTone = label === "Then";
+
+                return (
+                  <div key={action.id} className="reactor-automation-builder-root">
+                    {label ? (
+                      <div
+                        className={`reactor-automation-builder-branch${
+                          showThenTone ? " is-then" : ""
+                        }`}
+                      >
+                        <div
+                          className={`reactor-automation-builder-branch-label${
+                            showThenTone ? " is-then" : ""
+                          }`}
+                        >
+                          {label}
+                        </div>
+                        {renderAutomationBuilderNode(
+                          action,
+                          String(idx + 1),
+                          branchKind,
+                        )}
+                      </div>
+                    ) : (
+                      renderAutomationBuilderNode(action, String(idx + 1), branchKind)
+                    )}
                   </div>
-                ) : (
-                  renderAutomationBuilderNode(action, String(idx + 1))
-                )}
+                );
+              })}
+              <div className="reactor-automation-builder-root">
+                <div className="reactor-automation-builder-branch">
+                  <div className="reactor-automation-builder-branch-label">End</div>
+                </div>
               </div>
-            ))
+            </>
           )}
         </div>
 
