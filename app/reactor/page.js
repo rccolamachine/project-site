@@ -229,6 +229,10 @@ function normalizeAutomationBuilderAtomOperation(value) {
   return value === "remove" ? "remove" : "add";
 }
 
+function normalizeAutomationBuilderIncomingEdge(value) {
+  return value === "while" || value === "then" ? value : null;
+}
+
 function createAutomationBuilderAtomEntry(operation = "add") {
   const op = normalizeAutomationBuilderAtomOperation(operation);
   return {
@@ -289,9 +293,14 @@ function createAutomationBuilderAtomEntriesFromCounts(counts = {}) {
   })).filter((entry) => entry.count > 0);
 }
 
-function createAutomationBuilderAction(id, kind = AUTOMATION_ACTION_KIND.CONDITION) {
+function createAutomationBuilderAction(
+  id,
+  kind = AUTOMATION_ACTION_KIND.CONDITION,
+  incomingEdge = null,
+) {
   const base = {
     id,
+    incomingEdge: normalizeAutomationBuilderIncomingEdge(incomingEdge),
     whileActions: [],
     thenActions: [],
   };
@@ -335,6 +344,7 @@ function createDefaultTrapBreakerAutomationBuilderActions() {
         ...createAutomationBuilderAction(
           "builder-action-2",
           AUTOMATION_ACTION_KIND.CONDITION,
+          "while",
         ),
         speed: "quickly",
         direction: "decrease",
@@ -344,11 +354,19 @@ function createDefaultTrapBreakerAutomationBuilderActions() {
     ],
   };
   const step2 = {
-    ...createAutomationBuilderAction("builder-action-3", AUTOMATION_ACTION_KIND.WAIT),
+    ...createAutomationBuilderAction(
+      "builder-action-3",
+      AUTOMATION_ACTION_KIND.WAIT,
+      "then",
+    ),
     durationSec: 10,
   };
   const step3 = {
-    ...createAutomationBuilderAction("builder-action-4", AUTOMATION_ACTION_KIND.CONDITION),
+    ...createAutomationBuilderAction(
+      "builder-action-4",
+      AUTOMATION_ACTION_KIND.CONDITION,
+      "then",
+    ),
     speed: "slowly",
     direction: "decrease",
     target: "temperature",
@@ -358,6 +376,7 @@ function createDefaultTrapBreakerAutomationBuilderActions() {
         ...createAutomationBuilderAction(
           "builder-action-5",
           AUTOMATION_ACTION_KIND.CONDITION,
+          "while",
         ),
         speed: "slowly",
         direction: "increase",
@@ -368,6 +387,7 @@ function createDefaultTrapBreakerAutomationBuilderActions() {
         ...createAutomationBuilderAction(
           "builder-action-6",
           AUTOMATION_ACTION_KIND.ATOMS,
+          "while",
         ),
         operation: "add",
         atomEntries: createAutomationBuilderAtomEntriesFromCounts(
@@ -376,9 +396,7 @@ function createDefaultTrapBreakerAutomationBuilderActions() {
       },
     ],
   };
-  step1.thenActions = [step2];
-  step2.thenActions = [step3];
-  return [step1];
+  return [step1, step2, step3];
 }
 
 function getAutomationBuilderNextActionSeq(actions) {
@@ -833,6 +851,12 @@ export default function ReactorPage() {
       };
       const normalizeAction = (rawAction, keepChildren = false) => {
         const kind = String(rawAction?.kind || "");
+        const normalizedIncomingEdge = normalizeAutomationBuilderIncomingEdge(
+          rawAction?.incomingEdge,
+        );
+        if (normalizedIncomingEdge !== (rawAction?.incomingEdge ?? null)) {
+          changed = true;
+        }
         const normalizedDirection = normalizeDirectionValue(rawAction?.direction);
         if (normalizedDirection !== rawAction?.direction) changed = true;
         const rawTargetKey = String(rawAction?.target || "temperature");
@@ -860,6 +884,7 @@ export default function ReactorPage() {
           changed = true;
           return {
             id: String(rawAction?.id || ""),
+            incomingEdge: normalizedIncomingEdge,
             kind: AUTOMATION_ACTION_KIND.WAIT,
             durationSec: Math.max(
               1,
@@ -883,10 +908,15 @@ export default function ReactorPage() {
           kind !== AUTOMATION_ACTION_KIND.WAIT
         ) {
           changed = true;
-          return createAutomationBuilderAction(String(rawAction?.id || ""));
+          return createAutomationBuilderAction(
+            String(rawAction?.id || ""),
+            AUTOMATION_ACTION_KIND.CONDITION,
+            normalizedIncomingEdge,
+          );
         }
         const normalizedAction = {
           ...rawAction,
+          incomingEdge: normalizedIncomingEdge,
           direction: normalizedConditionDirection,
           whileActions: keepChildren
             ? Array.isArray(rawAction?.whileActions)
@@ -928,8 +958,9 @@ export default function ReactorPage() {
         }
         return normalizedAction;
       };
-      const normalizeTree = (nodes) =>
-        nodes.map((raw) => {
+      const normalizeTree = (nodes) => {
+        const normalized = [];
+        for (const raw of Array.isArray(nodes) ? nodes : []) {
           const normalizedParent = normalizeAction(raw, true);
           const whileActionsRaw = Array.isArray(normalizedParent?.whileActions)
             ? normalizedParent.whileActions
@@ -939,14 +970,41 @@ export default function ReactorPage() {
             : [];
           if (!Array.isArray(raw?.whileActions)) changed = true;
           if (!Array.isArray(raw?.thenActions)) changed = true;
-          return {
+          const normalizedWhileChildren = normalizeTree(whileActionsRaw).map(
+            (child) => {
+              if (child?.incomingEdge) return child;
+              changed = true;
+              return { ...child, incomingEdge: "while" };
+            },
+          );
+          normalized.push({
             ...normalizedParent,
-            whileActions: normalizeTree(whileActionsRaw),
-            thenActions: normalizeTree(thenActionsRaw),
-          };
-        });
+            whileActions: normalizedWhileChildren,
+            thenActions: [],
+          });
+
+          const normalizedThenSiblings = normalizeTree(thenActionsRaw).map(
+            (sibling) => {
+              if (sibling?.incomingEdge === "then") return sibling;
+              changed = true;
+              return { ...sibling, incomingEdge: "then" };
+            },
+          );
+          if (normalizedThenSiblings.length > 0) {
+            changed = true;
+            normalized.push(...normalizedThenSiblings);
+          }
+        }
+        return normalized;
+      };
       const next = normalizeTree(prev);
-      return changed ? next : prev;
+      const nextWithRootThenEdges = next.map((node, index) => {
+        if (index <= 0) return node;
+        if (node?.incomingEdge === "then") return node;
+        changed = true;
+        return { ...node, incomingEdge: "then" };
+      });
+      return changed ? nextWithRootThenEdges : prev;
     });
     setAutomationBuilderAddKind((prev) =>
       prev === AUTOMATION_ACTION_KIND.ATOMS ||
@@ -3353,7 +3411,7 @@ export default function ReactorPage() {
               ...node,
               whileActions: [
                 ...(Array.isArray(node.whileActions) ? node.whileActions : []),
-                createAutomationBuilderAction(id, nextKind),
+                createAutomationBuilderAction(id, nextKind, "while"),
               ],
             };
           }
@@ -3372,33 +3430,52 @@ export default function ReactorPage() {
   }, []);
 
   const addAutomationBuilderThenAction = useCallback((afterStepId, kind) => {
+    if (!afterStepId) return;
     const nextKind = String(kind || AUTOMATION_ACTION_KIND.CONDITION);
     const id = `builder-action-${automationBuilderActionSeqRef.current++}`;
-    const nextAction = createAutomationBuilderAction(id, nextKind);
+    const nextAction = createAutomationBuilderAction(id, nextKind, "then");
     setAutomationBuilderActions((prev) => {
-      const appendThen = (nodes) =>
-        nodes.map((node) => {
-          if (node.id === afterStepId) {
-            return {
-              ...node,
-              thenActions: [
-                ...(Array.isArray(node.thenActions) ? node.thenActions : []),
-                nextAction,
-              ],
-            };
+      const appendThen = (nodes) => {
+        const source = Array.isArray(nodes) ? nodes : [];
+        const nextNodes = [];
+        let inserted = false;
+
+        for (const node of source) {
+          if (inserted) {
+            nextNodes.push(node);
+            continue;
           }
-          return {
-            ...node,
-            whileActions: appendThen(
-              Array.isArray(node.whileActions) ? node.whileActions : [],
-            ),
-            thenActions: appendThen(
-              Array.isArray(node.thenActions) ? node.thenActions : [],
-            ),
-          };
-        });
+
+          if (node.id === afterStepId) {
+            nextNodes.push(node, nextAction);
+            inserted = true;
+            continue;
+          }
+
+          const [nextWhile, insertedInWhile] = appendThen(
+            Array.isArray(node.whileActions) ? node.whileActions : [],
+          );
+          const [nextThen, insertedInThen] = appendThen(
+            Array.isArray(node.thenActions) ? node.thenActions : [],
+          );
+          if (insertedInWhile || insertedInThen) {
+            nextNodes.push({
+              ...node,
+              whileActions: nextWhile,
+              thenActions: nextThen,
+            });
+            inserted = true;
+            continue;
+          }
+
+          nextNodes.push(node);
+        }
+
+        return [nextNodes, inserted];
+      };
       const base = Array.isArray(prev) ? prev : [];
-      return appendThen(base);
+      const [next, inserted] = appendThen(base);
+      return inserted ? next : base;
     });
   }, []);
 
@@ -4414,9 +4491,6 @@ export default function ReactorPage() {
     const whileChildren = Array.isArray(rowAction?.whileActions)
       ? rowAction.whileActions
       : [];
-    const thenChildren = Array.isArray(rowAction?.thenActions)
-      ? rowAction.thenActions
-      : [];
     const isActive =
       automationBuilderRunning &&
       automationBuilderActiveActionIds.includes(rowAction.id);
@@ -4547,28 +4621,23 @@ export default function ReactorPage() {
         {whileChildren.length > 0 ? (
           <div className="reactor-automation-builder-children reactor-automation-builder-children-while">
             {whileChildren.map((child, childIndex) => (
-              <div key={child.id} className="reactor-automation-builder-branch">
-                <div className="reactor-automation-builder-branch-label">While</div>
-                {renderAutomationBuilderNode(
-                  child,
-                  `${stepCode}.${getAutomationAlphabetSegment(childIndex)}`,
-                  "while",
-                )}
-              </div>
-            ))}
-          </div>
-        ) : null}
-        {thenChildren.length > 0 ? (
-          <div className="reactor-automation-builder-children reactor-automation-builder-children-then">
-            {thenChildren.map((child, childIndex) => (
-              <div key={child.id} className="reactor-automation-builder-branch is-then">
-                <div className="reactor-automation-builder-branch-label is-then">
-                  -&gt;Then
+              <div
+                key={child.id}
+                className={`reactor-automation-builder-branch${
+                  child?.incomingEdge === "then" ? " is-then" : ""
+                }`}
+              >
+                <div
+                  className={`reactor-automation-builder-branch-label${
+                    child?.incomingEdge === "then" ? " is-then" : ""
+                  }`}
+                >
+                  {child?.incomingEdge === "then" ? "Then" : "While"}
                 </div>
                 {renderAutomationBuilderNode(
                   child,
-                  `${stepCode}.${childIndex + 1}`,
-                  "then",
+                  `${stepCode}.${getAutomationAlphabetSegment(childIndex)}`,
+                  child?.incomingEdge === "then" ? "then" : "while",
                 )}
               </div>
             ))}

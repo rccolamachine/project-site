@@ -90,7 +90,16 @@ export default function AutomationBuilderPanel({
           ) : (
             automationBuilderActions.map((action, idx) => (
               <div key={action.id} className="reactor-automation-builder-root">
-                {renderAutomationBuilderNode(action, String(idx + 1))}
+                {action?.incomingEdge === "then" ? (
+                  <div className="reactor-automation-builder-branch is-then">
+                    <div className="reactor-automation-builder-branch-label is-then">
+                      Then
+                    </div>
+                    {renderAutomationBuilderNode(action, String(idx + 1), "then")}
+                  </div>
+                ) : (
+                  renderAutomationBuilderNode(action, String(idx + 1))
+                )}
               </div>
             ))
           )}
@@ -129,4 +138,3 @@ export default function AutomationBuilderPanel({
     </div>
   );
 }
-
