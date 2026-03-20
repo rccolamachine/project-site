@@ -312,18 +312,28 @@
 
 .tableWrap {
   width: 100%;
-  overflow: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -ms-overflow-style: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 226, 230, 0.55) rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.2);
 }
 
 .tableWrap::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
+  width: 10px;
+  height: 10px;
+}
+
+.tableWrap::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tableWrap::-webkit-scrollbar-thumb {
+  background: rgba(45, 226, 230, 0.55);
+  border-radius: 999px;
 }
 
 .resultsTable {

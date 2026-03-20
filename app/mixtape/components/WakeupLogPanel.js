@@ -68,7 +68,9 @@ export default function WakeupLogPanel({
               tabIndex={0}
               title="Click for info | Double-click to delete"
             >
-              <span className="ui-logDate">{formatSongDate(song.date)}</span>
+              <span className={`ui-logDate ${styles.trackDateCell}`}>
+                {formatSongDate(song.date)}
+              </span>
               <button
                 type="button"
                 onClick={(event) => onRowPlay(song, event)}

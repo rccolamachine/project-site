@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getReactorCatalogueRecord,
+  isReactorCatalogueGlobalBackendReady,
   listReactorCatalogueRecords,
   updateReactorCatalogueCreationEvents,
 } from "@/lib/reactorCatalogueStore";
@@ -15,8 +16,32 @@ function parseIdsParam(value) {
     .filter(Boolean);
 }
 
+function parseBodyIds(body) {
+  const rawIds = Array.isArray(body?.ids)
+    ? body.ids
+    : Array.isArray(body?.events)
+      ? body.events.map((event) =>
+          typeof event === "string" ? event : event?.id,
+        )
+      : [];
+  return rawIds
+    .map((id) => String(id || "").trim())
+    .filter(Boolean);
+}
+
 export async function GET(req) {
   try {
+    if (!isReactorCatalogueGlobalBackendReady()) {
+      return NextResponse.json(
+        {
+          error: "world_catalogue_unavailable",
+          message:
+            "Global world catalogue backend is not configured. Configure Vercel KV for production.",
+        },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
     const rl = await limitRequest(req, "reactor-catalogue:get", 60, 60);
     if (!rl.ok) {
       return new NextResponse("Too many requests.", {
@@ -60,6 +85,17 @@ export async function GET(req) {
 
 export async function PUT(req) {
   try {
+    if (!isReactorCatalogueGlobalBackendReady()) {
+      return NextResponse.json(
+        {
+          error: "world_catalogue_unavailable",
+          message:
+            "Global world catalogue backend is not configured. Configure Vercel KV for production.",
+        },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
     const rl = await limitRequest(req, "reactor-catalogue:put", 24, 60);
     if (!rl.ok) {
       return new NextResponse("Too many requests.", {
@@ -75,16 +111,15 @@ export async function PUT(req) {
       body = {};
     }
 
-    const events = Array.isArray(body?.events) ? body.events : [];
-    if (events.length <= 0) {
+    const ids = parseBodyIds(body).slice(0, 250);
+    if (ids.length <= 0) {
       return NextResponse.json(
         { updated: 0, items: [] },
         { headers: { "Cache-Control": "no-store" } },
       );
     }
 
-    const limitedEvents = events.slice(0, 250);
-    const items = await updateReactorCatalogueCreationEvents(limitedEvents);
+    const items = await updateReactorCatalogueCreationEvents(ids);
 
     return NextResponse.json(
       {

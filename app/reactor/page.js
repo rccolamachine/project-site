@@ -10,8 +10,10 @@ import React, {
   useState,
 } from "react";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import DesktopBadge from "../../components/DesktopBadge";
+import { useReactorWorldSync } from "./hooks/useReactorWorldSync";
+import { useReactorSimulationLoop } from "./hooks/useReactorSimulationLoop";
+import AutomationBuilderPanel from "./components/AutomationBuilderPanel";
 
 import {
   DEFAULT_ELEMENTS_3D,
@@ -19,13 +21,10 @@ import {
   addAtom3D,
   clearSim3D,
   createSim3D,
-  ljPotential,
-  mixLorentzBerthelot,
   nudgeAll,
   removeAtom3D,
   setGrab,
   setGrabTarget,
-  stepSim3D,
   DEFAULT_CHARGES,
 } from "@/lib/sim/physics3d";
 import MOLECULE_CATALOG from "@/data/reactor_molecules.json";
@@ -45,6 +44,8 @@ import {
   MoleculeRotatingPreview,
 } from "./reactorPreviews";
 import discovererMedal from "./assets/discoverer_medal.png";
+import tempBathLeftIcon from "./assets/left.png";
+import tempBathRightIcon from "./assets/right.png";
 import "./reactor.css";
 
 const ELEMENTS = ["S", "P", "O", "N", "C", "H"];
@@ -64,6 +65,8 @@ const FIXED_CUTOFF = 4.2;
 const DEFAULT_TEMPERATURE_K = 520;
 const DEFAULT_DAMPING = 0.993;
 const DEFAULT_BOND_SCALE = 3.5;
+const DEFAULT_ALLOW_MULTIPLE_BONDS = true;
+const DEFAULT_ADAPTIVE_FORCE_FIELD = true;
 const DEFAULT_BOX_HALF_SIZE = 4.8;
 const PERIODIC_REPEAT_MARGIN = 1.6;
 const CATALOGUE_STORAGE_KEY = "reactor-molecule-catalogue-v1";
@@ -74,7 +77,7 @@ const THERMO_SAMPLE_MS = 1_000;
 const COLLECTION_PAGE_SIZE = 36;
 const FIRST_DISCOVERY_CALLOUT_MS = 5200;
 const FIRST_DISCOVERY_CALLOUT_FADE_MS = 1700;
-const WORLD_CATALOGUE_POLL_MS = 5 * 60_000;
+const WORLD_CATALOGUE_POLL_MS = 20_000;
 const REMOTE_CATALOGUE_FLUSH_MS = 20_000;
 const REMOTE_CATALOGUE_RETRY_MS = 45_000;
 const REMOTE_CATALOGUE_BATCH_MAX = 120;
@@ -144,36 +147,270 @@ const TOOL = {
   ROTATE: "rotate",
   SAVE: "save",
 };
-
-const CONTROL_PROTOCOLS = Object.freeze([
-  {
-    id: "trap-cycle",
-    name: "Trap breaker",
-    label: "Trap breaker: compress, mix, then step-expand",
-    description:
-      "Repeated pressure pulses to force collisions, then controlled expansion to preserve useful bonds.",
-  },
-  {
-    id: "scaffold-then-cap",
-    name: "Scaffold then cap",
-    label: "Scaffold then cap: heavy framework then hydrogenation",
-    description:
-      "Build heavy-atom skeletons first, then cap open valences in a cooler consolidation stage.",
-  },
-  {
-    id: "gentle-anneal",
-    name: "Gentle anneal",
-    label: "Gentle anneal: slow cool and settle",
-    description:
-      "A low-shock stabilization sweep that gradually cools and strengthens existing structures.",
-  },
-]);
-
-const CONTROL_PROTOCOL_DURATION_MS = Object.freeze({
-  "trap-cycle": 32_000,
-  "scaffold-then-cap": 42_000,
-  "gentle-anneal": 36_000,
+const TEMP_BATH_MODE = Object.freeze({
+  FAST_COOL: "fast-cool",
+  SLOW_COOL: "slow-cool",
+  OFF: "off",
+  SLOW_HEAT: "slow-heat",
+  FAST_HEAT: "fast-heat",
 });
+const TEMP_BATH_RATE_K_PER_SEC = Object.freeze({
+  [TEMP_BATH_MODE.FAST_COOL]: -150,
+  [TEMP_BATH_MODE.SLOW_COOL]: -60,
+  [TEMP_BATH_MODE.OFF]: 0,
+  [TEMP_BATH_MODE.SLOW_HEAT]: 60,
+  [TEMP_BATH_MODE.FAST_HEAT]: 150,
+});
+const TEMP_BATH_PULSE = Object.freeze({
+  COOL: "cool",
+  HEAT: "heat",
+});
+const TEMP_BATH_PULSE_RATE_K_PER_SEC = 220;
+const TEMP_CONTROL_MIN_K = 0;
+const TEMP_CONTROL_MAX_K = 1800;
+const PRESSURE_BATH_MODE = Object.freeze({
+  FAST_EXPAND: "fast-expand",
+  SLOW_EXPAND: "slow-expand",
+  OFF: "off",
+  SLOW_CONTRACT: "slow-contract",
+  FAST_CONTRACT: "fast-contract",
+});
+const PRESSURE_BATH_RATE_BOX_PER_SEC = Object.freeze({
+  [PRESSURE_BATH_MODE.FAST_EXPAND]: 1.2,
+  [PRESSURE_BATH_MODE.SLOW_EXPAND]: 0.45,
+  [PRESSURE_BATH_MODE.OFF]: 0,
+  [PRESSURE_BATH_MODE.SLOW_CONTRACT]: -0.45,
+  [PRESSURE_BATH_MODE.FAST_CONTRACT]: -1.2,
+});
+const PRESSURE_BATH_PULSE = Object.freeze({
+  EXPAND: "expand",
+  CONTRACT: "contract",
+});
+const PRESSURE_BATH_PULSE_RATE_BOX_PER_SEC = 1.8;
+const PRESSURE_CONTROL_MIN_BOX_HALF_SIZE = 2.0;
+const PRESSURE_CONTROL_MAX_BOX_HALF_SIZE = 14;
+const AUTOMATION_ACTION_KIND = Object.freeze({
+  CONDITION: "condition",
+  ATOMS: "atoms",
+  WAIT: "wait",
+});
+const AUTOMATION_SPEED_OPTIONS = Object.freeze(["slowly", "quickly"]);
+const AUTOMATION_DIRECTION_OPTIONS = Object.freeze([
+  "increase",
+  "decrease",
+]);
+const AUTOMATION_CONDITION_TARGET_OPTIONS = Object.freeze([
+  "temperature",
+  "volume",
+]);
+const AUTOMATION_DURATION_OPTIONS = Object.freeze([5, 10, 20, 30]);
+const AUTOMATION_ATOM_COUNT_OPTIONS = Object.freeze([1, 2, 3, 4, 5, 10, 20]);
+const AUTOMATION_ATOM_REMOVE_COUNT_OPTIONS = Object.freeze([
+  1,
+  2,
+  3,
+  4,
+  5,
+  10,
+  20,
+  "half",
+  "all",
+]);
+const AUTOMATION_TEMPERATURE_RATE_BY_SPEED = Object.freeze({
+  slowly: 60,
+  quickly: 150,
+});
+const AUTOMATION_VOLUME_RATE_BY_SPEED = Object.freeze({
+  slowly: 0.45,
+  quickly: 1.2,
+});
+
+function normalizeAutomationBuilderAtomOperation(value) {
+  return value === "remove" ? "remove" : "add";
+}
+
+function createAutomationBuilderAtomEntry(operation = "add") {
+  const op = normalizeAutomationBuilderAtomOperation(operation);
+  return {
+    count: op === "remove" ? "half" : 4,
+    element: "H",
+  };
+}
+
+function normalizeAutomationBuilderAtomEntry(rawEntry, operation = "add") {
+  const op = normalizeAutomationBuilderAtomOperation(operation);
+  const rawElement = String(rawEntry?.element || "H");
+  const element = ELEMENTS.includes(rawElement) ? rawElement : "H";
+  if (op === "remove") {
+    const rawCount = rawEntry?.count;
+    const count =
+      rawCount === "half" || rawCount === "all"
+        ? rawCount
+        : Math.max(1, Math.floor(Number(rawCount) || 1));
+    return { count, element };
+  }
+  const numericCount = Number(rawEntry?.count);
+  return {
+    count: Number.isFinite(numericCount)
+      ? Math.max(1, Math.floor(numericCount))
+      : 4,
+    element,
+  };
+}
+
+function normalizeAutomationBuilderAtomEntries(rawAction, operation = "add") {
+  const entriesSource =
+    Array.isArray(rawAction?.atomEntries) && rawAction.atomEntries.length > 0
+      ? rawAction.atomEntries
+      : [{ count: rawAction?.count, element: rawAction?.element }];
+  const normalizedEntries = entriesSource
+    .map((entry) => normalizeAutomationBuilderAtomEntry(entry, operation))
+    .filter(Boolean);
+  return normalizedEntries.length > 0
+    ? normalizedEntries
+    : [createAutomationBuilderAtomEntry(operation)];
+}
+
+function areAutomationBuilderAtomEntriesEqual(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i += 1) {
+    if (String(a[i]?.element || "") !== String(b[i]?.element || "")) return false;
+    if (String(a[i]?.count ?? "") !== String(b[i]?.count ?? "")) return false;
+  }
+  return true;
+}
+
+function createAutomationBuilderAtomEntriesFromCounts(counts = {}) {
+  return ELEMENTS.map((el) => ({
+    element: el,
+    count: Math.max(0, Math.floor(Number(counts?.[el]) || 0)),
+  })).filter((entry) => entry.count > 0);
+}
+
+function createAutomationBuilderAction(id, kind = AUTOMATION_ACTION_KIND.CONDITION) {
+  const base = {
+    id,
+    whileActions: [],
+    thenActions: [],
+  };
+  if (kind === AUTOMATION_ACTION_KIND.WAIT) {
+    return {
+      ...base,
+      kind,
+      durationSec: 5,
+    };
+  }
+  if (kind === AUTOMATION_ACTION_KIND.ATOMS) {
+    const atomEntries = [createAutomationBuilderAtomEntry("add")];
+    return {
+      ...base,
+      kind,
+      operation: "add",
+      count: atomEntries[0].count,
+      element: atomEntries[0].element,
+      atomEntries,
+    };
+  }
+  return {
+    ...base,
+    kind: AUTOMATION_ACTION_KIND.CONDITION,
+    speed: "slowly",
+    direction: "increase",
+    target: "temperature",
+    durationSec: 5,
+  };
+}
+
+function createDefaultTrapBreakerAutomationBuilderActions() {
+  const step1 = {
+    ...createAutomationBuilderAction("builder-action-1", AUTOMATION_ACTION_KIND.CONDITION),
+    speed: "quickly",
+    direction: "increase",
+    target: "temperature",
+    durationSec: 10,
+    whileActions: [
+      {
+        ...createAutomationBuilderAction(
+          "builder-action-2",
+          AUTOMATION_ACTION_KIND.CONDITION,
+        ),
+        speed: "quickly",
+        direction: "decrease",
+        target: "volume",
+        durationSec: 10,
+      },
+    ],
+  };
+  const step2 = {
+    ...createAutomationBuilderAction("builder-action-3", AUTOMATION_ACTION_KIND.WAIT),
+    durationSec: 10,
+  };
+  const step3 = {
+    ...createAutomationBuilderAction("builder-action-4", AUTOMATION_ACTION_KIND.CONDITION),
+    speed: "slowly",
+    direction: "decrease",
+    target: "temperature",
+    durationSec: 10,
+    whileActions: [
+      {
+        ...createAutomationBuilderAction(
+          "builder-action-5",
+          AUTOMATION_ACTION_KIND.CONDITION,
+        ),
+        speed: "slowly",
+        direction: "increase",
+        target: "volume",
+        durationSec: 10,
+      },
+      {
+        ...createAutomationBuilderAction(
+          "builder-action-6",
+          AUTOMATION_ACTION_KIND.ATOMS,
+        ),
+        operation: "add",
+        atomEntries: createAutomationBuilderAtomEntriesFromCounts(
+          AUTOMATION_FEEDS.trapBalanced.counts,
+        ),
+      },
+    ],
+  };
+  step1.thenActions = [step2];
+  step2.thenActions = [step3];
+  return [step1];
+}
+
+function getAutomationBuilderNextActionSeq(actions) {
+  let maxId = 0;
+  const visit = (nodes) => {
+    for (const node of Array.isArray(nodes) ? nodes : []) {
+      const id = String(node?.id || "");
+      const match = id.match(/^builder-action-(\d+)$/);
+      if (match) maxId = Math.max(maxId, parseInt(match[1], 10) || 0);
+      visit(node?.whileActions);
+      visit(node?.thenActions);
+    }
+  };
+  visit(actions);
+  return Math.max(1, maxId + 1);
+}
+
+function computeBondScaleFromTemperature(temperatureK) {
+  const t = Math.max(0, Number(temperatureK) || 0);
+  if (t >= DEFAULT_TEMPERATURE_K) {
+    const highDelta = t - DEFAULT_TEMPERATURE_K;
+    return clamp(DEFAULT_BOND_SCALE - highDelta * 0.0009, 2.1, 5.4);
+  }
+  const lowDelta = DEFAULT_TEMPERATURE_K - t;
+  return clamp(DEFAULT_BOND_SCALE + lowDelta * 0.0018, 2.1, 5.4);
+}
+
+function computeDampingFromTemperature(temperatureK) {
+  const t = Math.max(0, Number(temperatureK) || 0);
+  const delta = Math.max(0, t - DEFAULT_TEMPERATURE_K);
+  return clamp(DEFAULT_DAMPING + delta * 0.0000053, DEFAULT_DAMPING, 0.9995);
+}
 
 const AUTOMATION_FEEDS = Object.freeze({
   trapBalanced: {
@@ -196,27 +433,14 @@ const AUTOMATION_FEEDS = Object.freeze({
   },
 });
 
-function formatFeedAtomBreakdown(counts = {}) {
-  const parts = ELEMENTS.map((el) => ({
-    el,
-    count: Math.max(0, Math.floor(Number(counts?.[el]) || 0)),
-  }))
-    .filter((row) => row.count > 0)
-    .map((row) => `${row.el}:${row.count}`);
-  return parts.join(" ");
-}
-
-function getProtocolDurationMs(preset) {
-  const duration = CONTROL_PROTOCOL_DURATION_MS[String(preset || "")];
-  if (!Number.isFinite(duration) || duration <= 0) return 0;
-  return duration;
-}
-
-function formatProtocolCountdown(remainingMs) {
-  const safeRemainingMs = Number.isFinite(remainingMs)
-    ? Math.max(0, remainingMs)
-    : 0;
-  return `${(safeRemainingMs / 1000).toFixed(1)}s`;
+function getAutomationAlphabetSegment(index) {
+  let cursor = Math.max(0, Math.floor(Number(index) || 0));
+  let suffix = "";
+  while (cursor >= 0) {
+    suffix = String.fromCharCode(97 + (cursor % 26)) + suffix;
+    cursor = Math.floor(cursor / 26) - 1;
+  }
+  return suffix;
 }
 
 const CATALOG_ID_SET = new Set(MOLECULE_CATALOG.map((entry) => entry.id));
@@ -349,19 +573,6 @@ function formatCatalogueTimeOnly(value) {
   return CATALOGUE_TIME_ONLY_FORMATTER.format(new Date(iso));
 }
 
-function buildWorldCatalogueStatsMap(items) {
-  const next = {};
-  for (const item of Array.isArray(items) ? items : []) {
-    if (!item?.id) continue;
-    next[item.id] = {
-      firstCreatedAt: normalizeCatalogueTimestamp(item.firstCreatedAt),
-      lastCreatedAt: normalizeCatalogueTimestamp(item.lastCreatedAt),
-      createdCount: Math.max(0, Math.floor(Number(item.createdCount) || 0)),
-    };
-  }
-  return next;
-}
-
 function compareOptionalIsoTimestamps(a, b) {
   const aHas = Boolean(a);
   const bHas = Boolean(b);
@@ -470,23 +681,6 @@ function chooseLastCreatedCatalogueId(collectedIds, moleculeStatsById) {
   return bestId || (collectedIds?.[collectedIds.length - 1] ?? null);
 }
 
-async function putRemoteCatalogueEvents(events, { keepalive = false } = {}) {
-  const response = await fetch("/api/reactor/catalogue", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ events }),
-    cache: "no-store",
-    keepalive,
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(text || `HTTP ${response.status}`);
-  }
-
-  return response.json();
-}
-
 export default function ReactorPage() {
   const MAX_ATOMS = 200;
 
@@ -503,12 +697,8 @@ export default function ReactorPage() {
   const showBondsRef = useRef(true);
   useEffect(() => void (showBondsRef.current = showBonds), [showBonds]);
 
-  const [allowMultipleBonds, setAllowMultipleBonds] = useState(true);
-  const allowMultipleBondsRef = useRef(true);
-  useEffect(
-    () => void (allowMultipleBondsRef.current = allowMultipleBonds),
-    [allowMultipleBonds],
-  );
+  const allowMultipleBonds = DEFAULT_ALLOW_MULTIPLE_BONDS;
+  const allowMultipleBondsRef = useRef(DEFAULT_ALLOW_MULTIPLE_BONDS);
 
   // sim toggles
   const [paused, setPaused] = useState(false);
@@ -517,8 +707,25 @@ export default function ReactorPage() {
 
   // temperature control
   const [temperatureK, setTemperatureK] = useState(DEFAULT_TEMPERATURE_K);
-  const [damping, setDamping] = useState(DEFAULT_DAMPING);
-  const [bondScale, setBondScale] = useState(DEFAULT_BOND_SCALE);
+  const [tempBathMode, setTempBathMode] = useState(TEMP_BATH_MODE.OFF);
+  const [tempBathPulse, setTempBathPulse] = useState(null);
+  const [automationTempVisualMode, setAutomationTempVisualMode] = useState(
+    TEMP_BATH_MODE.OFF,
+  );
+  const [pressureBathMode, setPressureBathMode] = useState(
+    PRESSURE_BATH_MODE.OFF,
+  );
+  const [pressureBathPulse, setPressureBathPulse] = useState(null);
+  const [automationPressureVisualMode, setAutomationPressureVisualMode] =
+    useState(PRESSURE_BATH_MODE.OFF);
+  const damping = useMemo(
+    () => computeDampingFromTemperature(temperatureK),
+    [temperatureK],
+  );
+  const bondScale = useMemo(
+    () => computeBondScaleFromTemperature(temperatureK),
+    [temperatureK],
+  );
 
   // box size (half-size)
   const [boxHalfSize, setBoxHalfSize] = useState(DEFAULT_BOX_HALF_SIZE);
@@ -529,31 +736,44 @@ export default function ReactorPage() {
     () => void (showPeriodicRepeatsRef.current = showPeriodicRepeats),
     [showPeriodicRepeats],
   );
-  const [adaptiveForceField, setAdaptiveForceField] = useState(true);
+  const adaptiveForceField = DEFAULT_ADAPTIVE_FORCE_FIELD;
 
-  // per-element LJ
-  const [lj, setLj] = useState(() => structuredClone(DEFAULT_LJ));
-
-  // LJ editor element (separate from placement element)
-  const [ljElement, setLjElement] = useState("C");
+  // per-element LJ defaults are fixed (no UI editor)
+  const lj = useMemo(() => structuredClone(DEFAULT_LJ), []);
 
   // overlays (controls hidden by default for mobile friendliness)
   const [controlsOpen, setControlsOpen] = useState(false);
-  const [automationOpen, setAutomationOpen] = useState(false);
-  const [wellsOpen, setWellsOpen] = useState(false);
   const [spawnElementCount, setSpawnElementCount] = useState(5);
-  const [spawnFeedType, setSpawnFeedType] = useState("trapBalanced");
-  const [spawnFeedSelectOpen, setSpawnFeedSelectOpen] = useState(false);
-  const [protocolPreset, setProtocolPreset] = useState("trap-cycle");
-  const [protocolSelectOpen, setProtocolSelectOpen] = useState(false);
-  const [protocolAutoRun, setProtocolAutoRun] = useState(false);
-  const [protocolIncludeDosing, setProtocolIncludeDosing] = useState(true);
-  const [protocolRunning, setProtocolRunning] = useState(false);
-  const [protocolStatus, setProtocolStatus] = useState("idle");
-  const [protocolTrendTags, setProtocolTrendTags] = useState("");
-  const [protocolElapsedMs, setProtocolElapsedMs] = useState(0);
-  const [controlDeltaTags, setControlDeltaTags] = useState([]);
-  const [actionReadoutTags, setActionReadoutTags] = useState([]);
+  const [automationBuilderActions, setAutomationBuilderActions] = useState(() => [
+    ...createDefaultTrapBreakerAutomationBuilderActions(),
+  ]);
+  const [automationBuilderAddKind, setAutomationBuilderAddKind] = useState(
+    AUTOMATION_ACTION_KIND.CONDITION,
+  );
+  const [automationBuilderWhilePickerForId, setAutomationBuilderWhilePickerForId] =
+    useState(null);
+  const [automationBuilderWhileAddKind, setAutomationBuilderWhileAddKind] =
+    useState(AUTOMATION_ACTION_KIND.CONDITION);
+  const [automationBuilderThenPickerForId, setAutomationBuilderThenPickerForId] =
+    useState(null);
+  const [automationBuilderThenAddKind, setAutomationBuilderThenAddKind] =
+    useState(AUTOMATION_ACTION_KIND.CONDITION);
+  const [automationBuilderRepeatCycle, setAutomationBuilderRepeatCycle] =
+    useState(false);
+  const [automationBuilderRunning, setAutomationBuilderRunning] =
+    useState(false);
+  const [automationBuilderStatus, setAutomationBuilderStatus] =
+    useState("idle");
+  const [automationBuilderActiveIndex, setAutomationBuilderActiveIndex] =
+    useState(-1);
+  const [automationBuilderActiveActionIds, setAutomationBuilderActiveActionIds] =
+    useState([]);
+  const [automationBuilderActiveStepCodes, setAutomationBuilderActiveStepCodes] =
+    useState([]);
+  const [automationBuilderRemainingMs, setAutomationBuilderRemainingMs] =
+    useState(0);
+  const [elementCountDeltaByElement, setElementCountDeltaByElement] =
+    useState({});
   const [modeOpen, setModeOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [hasEverLocalSave, setHasEverLocalSave] = useState(false);
@@ -570,7 +790,6 @@ export default function ReactorPage() {
   const [collectionPage, setCollectionPage] = useState(1);
   const [collectedIds, setCollectedIds] = useState([]);
   const [localCatalogueStatsById, setLocalCatalogueStatsById] = useState({});
-  const [worldCatalogueStatsById, setWorldCatalogueStatsById] = useState({});
   const [lastCataloguedId, setLastCataloguedId] = useState(null);
   const [selectedLiveIds, setSelectedLiveIds] = useState([]);
   const [liveMoleculeSummary, setLiveMoleculeSummary] = useState([]);
@@ -599,8 +818,174 @@ export default function ReactorPage() {
   const [expandedSnapshot, setExpandedSnapshot] = useState(null);
   const [expandedAngles, setExpandedAngles] = useState({ x: 0, y: 0, z: 0 });
   const [expandedZoom, setExpandedZoom] = useState(1);
-  const [worldCatalogueBadgeVisible, setWorldCatalogueBadgeVisible] =
-    useState(false);
+
+  useEffect(() => {
+    setAutomationBuilderActions((prev) => {
+      if (!Array.isArray(prev)) {
+        return createDefaultTrapBreakerAutomationBuilderActions();
+      }
+      if (prev.length <= 0) return prev;
+      let changed = false;
+      const normalizeDirectionValue = (value) => {
+        const key = String(value || "increase");
+        if (key === "hold") return "wait";
+        return key;
+      };
+      const normalizeAction = (rawAction, keepChildren = false) => {
+        const kind = String(rawAction?.kind || "");
+        const normalizedDirection = normalizeDirectionValue(rawAction?.direction);
+        if (normalizedDirection !== rawAction?.direction) changed = true;
+        const rawTargetKey = String(rawAction?.target || "temperature");
+        let normalizedTargetKey = rawTargetKey;
+        let normalizedConditionDirection = normalizedDirection;
+        if (kind === AUTOMATION_ACTION_KIND.CONDITION) {
+          if (rawTargetKey === "pressure") {
+            normalizedTargetKey = "volume";
+            if (normalizedDirection === "increase") {
+              normalizedConditionDirection = "decrease";
+            } else if (normalizedDirection === "decrease") {
+              normalizedConditionDirection = "increase";
+            }
+          } else if (rawTargetKey !== "temperature" && rawTargetKey !== "volume") {
+            normalizedTargetKey = "temperature";
+          }
+        }
+        if (normalizedTargetKey !== rawTargetKey) changed = true;
+        if (normalizedConditionDirection !== normalizedDirection) changed = true;
+        const shouldConvertConditionToWait =
+          kind === AUTOMATION_ACTION_KIND.CONDITION &&
+          (normalizedConditionDirection === "wait" ||
+            normalizedConditionDirection === "hold");
+        if (shouldConvertConditionToWait) {
+          changed = true;
+          return {
+            id: String(rawAction?.id || ""),
+            kind: AUTOMATION_ACTION_KIND.WAIT,
+            durationSec: Math.max(
+              1,
+              Math.floor(Number(rawAction?.durationSec) || 5),
+            ),
+            whileActions: keepChildren
+              ? Array.isArray(rawAction?.whileActions)
+                ? rawAction.whileActions
+                : []
+              : [],
+            thenActions: keepChildren
+              ? Array.isArray(rawAction?.thenActions)
+                ? rawAction.thenActions
+                : []
+              : [],
+          };
+        }
+        if (
+          kind !== AUTOMATION_ACTION_KIND.CONDITION &&
+          kind !== AUTOMATION_ACTION_KIND.ATOMS &&
+          kind !== AUTOMATION_ACTION_KIND.WAIT
+        ) {
+          changed = true;
+          return createAutomationBuilderAction(String(rawAction?.id || ""));
+        }
+        const normalizedAction = {
+          ...rawAction,
+          direction: normalizedConditionDirection,
+          whileActions: keepChildren
+            ? Array.isArray(rawAction?.whileActions)
+              ? rawAction.whileActions
+              : []
+            : [],
+          thenActions: keepChildren
+            ? Array.isArray(rawAction?.thenActions)
+              ? rawAction.thenActions
+              : []
+            : [],
+        };
+        if (kind === AUTOMATION_ACTION_KIND.CONDITION) {
+          normalizedAction.target = normalizedTargetKey;
+        }
+        if (kind === AUTOMATION_ACTION_KIND.ATOMS) {
+          const normalizedOperation = normalizeAutomationBuilderAtomOperation(
+            rawAction?.operation,
+          );
+          if (normalizedOperation !== rawAction?.operation) changed = true;
+          const normalizedEntries = normalizeAutomationBuilderAtomEntries(
+            rawAction,
+            normalizedOperation,
+          );
+          if (!Array.isArray(rawAction?.atomEntries)) changed = true;
+          if (
+            !areAutomationBuilderAtomEntriesEqual(
+              rawAction?.atomEntries,
+              normalizedEntries,
+            )
+          ) {
+            changed = true;
+          }
+          const primaryEntry = normalizedEntries[0];
+          normalizedAction.operation = normalizedOperation;
+          normalizedAction.atomEntries = normalizedEntries;
+          normalizedAction.count = primaryEntry.count;
+          normalizedAction.element = primaryEntry.element;
+        }
+        return normalizedAction;
+      };
+      const normalizeTree = (nodes) =>
+        nodes.map((raw) => {
+          const normalizedParent = normalizeAction(raw, true);
+          const whileActionsRaw = Array.isArray(normalizedParent?.whileActions)
+            ? normalizedParent.whileActions
+            : [];
+          const thenActionsRaw = Array.isArray(normalizedParent?.thenActions)
+            ? normalizedParent.thenActions
+            : [];
+          if (!Array.isArray(raw?.whileActions)) changed = true;
+          if (!Array.isArray(raw?.thenActions)) changed = true;
+          return {
+            ...normalizedParent,
+            whileActions: normalizeTree(whileActionsRaw),
+            thenActions: normalizeTree(thenActionsRaw),
+          };
+        });
+      const next = normalizeTree(prev);
+      return changed ? next : prev;
+    });
+    setAutomationBuilderAddKind((prev) =>
+      prev === AUTOMATION_ACTION_KIND.ATOMS ||
+      prev === AUTOMATION_ACTION_KIND.WAIT
+        ? prev
+        : AUTOMATION_ACTION_KIND.CONDITION,
+    );
+    setAutomationBuilderWhileAddKind((prev) =>
+      prev === AUTOMATION_ACTION_KIND.ATOMS ||
+      prev === AUTOMATION_ACTION_KIND.WAIT
+        ? prev
+        : AUTOMATION_ACTION_KIND.CONDITION,
+    );
+    setAutomationBuilderThenAddKind((prev) =>
+      prev === AUTOMATION_ACTION_KIND.ATOMS ||
+      prev === AUTOMATION_ACTION_KIND.WAIT
+        ? prev
+        : AUTOMATION_ACTION_KIND.CONDITION,
+    );
+  }, [automationBuilderActions]);
+
+  useEffect(() => {
+    const validActionIds = new Set();
+    const visit = (nodes) => {
+      for (const node of Array.isArray(nodes) ? nodes : []) {
+        const id = String(node?.id || "");
+        if (id) validActionIds.add(id);
+        visit(node?.whileActions);
+        visit(node?.thenActions);
+      }
+    };
+    visit(automationBuilderActions);
+    setAutomationBuilderWhilePickerForId((current) =>
+      current && !validActionIds.has(current) ? null : current,
+    );
+    setAutomationBuilderThenPickerForId((current) =>
+      current && !validActionIds.has(current) ? null : current,
+    );
+  }, [automationBuilderActions]);
 
   const canvasCardRef = useRef(null);
   const mountRef = useRef(null);
@@ -639,15 +1024,21 @@ export default function ReactorPage() {
     startY: 0,
     startAngles: { x: 0, y: 0, z: 0 },
   });
-  const protocolRunRef = useRef({
+  const automationVisualSampleRef = useRef({
+    atMs: 0,
+    temperatureK: DEFAULT_TEMPERATURE_K,
+    boxHalfSize: DEFAULT_BOX_HALF_SIZE,
+  });
+  const automationBuilderActionSeqRef = useRef(
+    getAutomationBuilderNextActionSeq(automationBuilderActions),
+  );
+  const automationBuilderRunRef = useRef({
     running: false,
-    preset: "trap-cycle",
-    startedAtMs: 0,
-    base: null,
-    currentCycle: 1,
-    lastTrapDoseCycle: -1,
-    lastScaffoldDoseStep: -1,
-    lastHydrogenDoseStep: -1,
+    steps: [],
+    index: 0,
+    actionStartedAtMs: 0,
+    lastStepElapsedMs: 0,
+    appliedAtomActionIds: new Set(),
   });
   const controlValuesRef = useRef({
     temperatureK: DEFAULT_TEMPERATURE_K,
@@ -655,24 +1046,22 @@ export default function ReactorPage() {
     bondScale: DEFAULT_BOND_SCALE,
     boxHalfSize: DEFAULT_BOX_HALF_SIZE,
   });
-  const protocolAutoRunRef = useRef(protocolAutoRun);
-  const protocolIncludeDosingRef = useRef(protocolIncludeDosing);
-  const prevControlReadoutRef = useRef({
-    temperatureK: DEFAULT_TEMPERATURE_K,
-    bondScale: DEFAULT_BOND_SCALE,
-    damping: DEFAULT_DAMPING,
-    boxHalfSize: DEFAULT_BOX_HALF_SIZE,
-  });
-  const controlDeltaClearTimerRef = useRef(null);
-  const actionReadoutClearTimerRef = useRef(null);
-  const worldCatalogueBadgeTimerRef = useRef(null);
+  const elementCountDeltaTimersRef = useRef({});
   const queuedScanTimerRef = useRef(null);
   const queuedScanPendingRef = useRef(false);
   const localCatalogueStatsRef = useRef({});
-  const remoteCatalogueSeenLiveRef = useRef(new Set());
-  const remoteCataloguePendingRef = useRef(new Map());
-  const remoteCatalogueFlushTimerRef = useRef(null);
-  const remoteCatalogueFlushInFlightRef = useRef(false);
+  const remoteCatalogueLiveCountsRef = useRef(new Map());
+  const {
+    worldCatalogueStatsById,
+    worldCatalogueBadgeVisible,
+    queueRemoteCatalogueEvents,
+  } = useReactorWorldSync({
+    catalogueOpen,
+    pollMs: WORLD_CATALOGUE_POLL_MS,
+    flushMs: REMOTE_CATALOGUE_FLUSH_MS,
+    retryMs: REMOTE_CATALOGUE_RETRY_MS,
+    batchMax: REMOTE_CATALOGUE_BATCH_MAX,
+  });
 
   const threeRef = useRef({
     renderer: null,
@@ -848,8 +1237,10 @@ export default function ReactorPage() {
       ELEMENTS.map((el) => ({
         el,
         count: Math.max(0, Math.floor(Number(liveElementCounts?.[el]) || 0)),
-      })).filter((row) => row.count > 0),
-    [liveElementCounts],
+      })).filter(
+        (row) => row.count > 0 || Boolean(elementCountDeltaByElement[row.el]),
+      ),
+    [liveElementCounts, elementCountDeltaByElement],
   );
   const liveElementTotal = useMemo(
     () =>
@@ -990,71 +1381,49 @@ export default function ReactorPage() {
     MIN_CATALOGUE_VISIBLE_ROWS - visibleCollection.length,
   );
 
-  const showActionReadout = useCallback((label) => {
-    const text = String(label || "").trim();
-    if (!text) return;
-    if (actionReadoutClearTimerRef.current) {
-      window.clearTimeout(actionReadoutClearTimerRef.current);
-      actionReadoutClearTimerRef.current = null;
+  const showElementCountDelta = useCallback((counts, direction) => {
+    const marker = direction === "-" ? "-" : "+";
+    const touchedElements = ELEMENTS.filter(
+      (el) => Math.max(0, Math.floor(Number(counts?.[el]) || 0)) > 0,
+    );
+    if (touchedElements.length <= 0) return;
+
+    setElementCountDeltaByElement((prev) => {
+      const next = { ...prev };
+      for (const el of touchedElements) {
+        next[el] = marker;
+      }
+      return next;
+    });
+
+    for (const el of touchedElements) {
+      if (elementCountDeltaTimersRef.current[el]) {
+        window.clearTimeout(elementCountDeltaTimersRef.current[el]);
+      }
+      elementCountDeltaTimersRef.current[el] = window.setTimeout(() => {
+        delete elementCountDeltaTimersRef.current[el];
+        setElementCountDeltaByElement((prev) => {
+          if (!Object.hasOwn(prev, el)) return prev;
+          const next = { ...prev };
+          delete next[el];
+          return next;
+        });
+      }, 520);
     }
-    setActionReadoutTags([text]);
-    actionReadoutClearTimerRef.current = window.setTimeout(() => {
-      actionReadoutClearTimerRef.current = null;
-      setActionReadoutTags([]);
-    }, 650);
   }, []);
 
   const showSpawnReadout = useCallback(
     (counts) => {
-      const rows = ELEMENTS.map((el) => ({
-        el,
-        count: Math.max(0, Math.floor(Number(counts?.[el]) || 0)),
-      })).filter((row) => row.count > 0);
-      if (rows.length <= 0) return;
-      if (rows.length === 1) {
-        const only = rows[0];
-        if (only.count === 1) {
-          showActionReadout(`Spawned ${only.el}`);
-          return;
-        }
-        showActionReadout(`Spawned [${only.el}:${only.count}]`);
-        return;
-      }
-      showActionReadout(
-        `Spawned [${rows.map((row) => `${row.el}:${row.count}`).join(" ")}]`,
-      );
+      showElementCountDelta(counts, "+");
     },
-    [showActionReadout],
+    [showElementCountDelta],
   );
 
-  const showWorldCatalogueUpdatedReadout = useCallback(() => {
-    if (worldCatalogueBadgeTimerRef.current) {
-      window.clearTimeout(worldCatalogueBadgeTimerRef.current);
-      worldCatalogueBadgeTimerRef.current = null;
-    }
-    setWorldCatalogueBadgeVisible(true);
-    worldCatalogueBadgeTimerRef.current = window.setTimeout(() => {
-      worldCatalogueBadgeTimerRef.current = null;
-      setWorldCatalogueBadgeVisible(false);
-    }, 1400);
-  }, []);
-
   const showDeletedReadout = useCallback(
-    (counts, forceBracket = false) => {
-      const rows = ELEMENTS.map((el) => ({
-        el,
-        count: Math.max(0, Math.floor(Number(counts?.[el]) || 0)),
-      })).filter((row) => row.count > 0);
-      if (rows.length <= 0) return;
-      if (!forceBracket && rows.length === 1 && rows[0].count === 1) {
-        showActionReadout(`Deleted ${rows[0].el}`);
-        return;
-      }
-      showActionReadout(
-        `Deleted [${rows.map((row) => `${row.el}:${row.count}`).join(" ")}]`,
-      );
+    (counts) => {
+      showElementCountDelta(counts, "-");
     },
-    [showActionReadout],
+    [showElementCountDelta],
   );
 
   useEffect(() => {
@@ -1099,184 +1468,6 @@ export default function ReactorPage() {
   }, [collectedIds]);
 
   useEffect(() => {
-    return () => {
-      if (worldCatalogueBadgeTimerRef.current) {
-        window.clearTimeout(worldCatalogueBadgeTimerRef.current);
-        worldCatalogueBadgeTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  const flushRemoteCatalogueEvents = useCallback(
-    async ({
-      keepalive = false,
-      retryDelayMs = REMOTE_CATALOGUE_RETRY_MS,
-    } = {}) => {
-      const pendingSnapshot = Array.from(
-        remoteCataloguePendingRef.current.values(),
-      )
-        .sort((a, b) => String(a.id).localeCompare(String(b.id)))
-        .slice(0, REMOTE_CATALOGUE_BATCH_MAX);
-
-      if (pendingSnapshot.length <= 0) return;
-      if (remoteCatalogueFlushInFlightRef.current) return;
-
-      if (remoteCatalogueFlushTimerRef.current) {
-        window.clearTimeout(remoteCatalogueFlushTimerRef.current);
-        remoteCatalogueFlushTimerRef.current = null;
-      }
-
-      remoteCatalogueFlushInFlightRef.current = true;
-      try {
-        const result = await putRemoteCatalogueEvents(pendingSnapshot, {
-          keepalive,
-        });
-        if (Array.isArray(result?.items) && result.items.length > 0) {
-          const updated = buildWorldCatalogueStatsMap(result.items);
-          setWorldCatalogueStatsById((prev) => ({ ...prev, ...updated }));
-          showWorldCatalogueUpdatedReadout();
-        }
-        for (const sent of pendingSnapshot) {
-          const current = remoteCataloguePendingRef.current.get(sent.id);
-          if (!current) continue;
-          if (
-            current.firstCreatedAt === sent.firstCreatedAt &&
-            current.lastCreatedAt === sent.lastCreatedAt &&
-            current.count === sent.count
-          ) {
-            remoteCataloguePendingRef.current.delete(sent.id);
-          }
-        }
-      } catch {
-        if (
-          typeof window !== "undefined" &&
-          !remoteCatalogueFlushTimerRef.current
-        ) {
-          remoteCatalogueFlushTimerRef.current = window.setTimeout(() => {
-            remoteCatalogueFlushTimerRef.current = null;
-            void flushRemoteCatalogueEvents();
-          }, retryDelayMs);
-        }
-      } finally {
-        remoteCatalogueFlushInFlightRef.current = false;
-        if (
-          typeof window !== "undefined" &&
-          remoteCataloguePendingRef.current.size > 0 &&
-          !remoteCatalogueFlushTimerRef.current
-        ) {
-          remoteCatalogueFlushTimerRef.current = window.setTimeout(() => {
-            remoteCatalogueFlushTimerRef.current = null;
-            void flushRemoteCatalogueEvents();
-          }, REMOTE_CATALOGUE_FLUSH_MS);
-        }
-      }
-    },
-    [showWorldCatalogueUpdatedReadout],
-  );
-
-  const scheduleRemoteCatalogueFlush = useCallback(
-    (delayMs = REMOTE_CATALOGUE_FLUSH_MS) => {
-      if (typeof window === "undefined") return;
-      if (remoteCatalogueFlushTimerRef.current) return;
-      remoteCatalogueFlushTimerRef.current = window.setTimeout(
-        () => {
-          remoteCatalogueFlushTimerRef.current = null;
-          void flushRemoteCatalogueEvents();
-        },
-        Math.max(250, Math.floor(Number(delayMs) || REMOTE_CATALOGUE_FLUSH_MS)),
-      );
-    },
-    [flushRemoteCatalogueEvents],
-  );
-
-  const loadWorldCatalogueStats = useCallback(async () => {
-    const response = await fetch("/api/reactor/catalogue", {
-      method: "GET",
-      cache: "no-store",
-    });
-    if (!response.ok) return;
-    const payload = await response.json();
-    setWorldCatalogueStatsById(buildWorldCatalogueStatsMap(payload?.items));
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const refresh = async () => {
-      if (typeof document !== "undefined" && document.visibilityState !== "visible") {
-        return;
-      }
-      try {
-        await loadWorldCatalogueStats();
-      } catch {}
-    };
-
-    void refresh();
-    const intervalId = window.setInterval(() => {
-      if (cancelled) return;
-      void refresh();
-    }, WORLD_CATALOGUE_POLL_MS);
-    const onVisibilityChange = () => {
-      if (cancelled) return;
-      if (document.visibilityState !== "visible") return;
-      void refresh();
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [loadWorldCatalogueStats]);
-
-  const queueRemoteCatalogueEvents = useCallback(
-    (ids, observedAt = new Date().toISOString()) => {
-      const normalizedIds = [
-        ...new Set(
-          (Array.isArray(ids) ? ids : [])
-            .map((id) => String(id).trim())
-            .filter(Boolean),
-        ),
-      ];
-      if (normalizedIds.length <= 0) return;
-
-      for (const id of normalizedIds) {
-        const existing = remoteCataloguePendingRef.current.get(id);
-        if (!existing) {
-          remoteCataloguePendingRef.current.set(id, {
-            id,
-            firstCreatedAt: observedAt,
-            lastCreatedAt: observedAt,
-            count: 1,
-          });
-          continue;
-        }
-
-        existing.firstCreatedAt =
-          observedAt < existing.firstCreatedAt
-            ? observedAt
-            : existing.firstCreatedAt;
-        existing.lastCreatedAt =
-          observedAt > existing.lastCreatedAt
-            ? observedAt
-            : existing.lastCreatedAt;
-        existing.count += 1;
-      }
-
-      if (
-        remoteCataloguePendingRef.current.size >= REMOTE_CATALOGUE_BATCH_MAX
-      ) {
-        void flushRemoteCatalogueEvents();
-        return;
-      }
-
-      scheduleRemoteCatalogueFlush();
-    },
-    [flushRemoteCatalogueEvents, scheduleRemoteCatalogueFlush],
-  );
-
-  useEffect(() => {
     collectedSetRef.current = new Set(collectedIds);
   }, [collectedIds]);
 
@@ -1296,28 +1487,6 @@ export default function ReactorPage() {
       return next.length === prev.length ? prev : next;
     });
   }, [liveMatchedIds]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    const flushNow = () => {
-      void flushRemoteCatalogueEvents({
-        keepalive: true,
-        retryDelayMs: REMOTE_CATALOGUE_RETRY_MS,
-      });
-    };
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "hidden") flushNow();
-    };
-
-    window.addEventListener("pagehide", flushNow);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => {
-      window.removeEventListener("pagehide", flushNow);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [flushRemoteCatalogueEvents]);
 
   useEffect(() => {
     if (!(catalogCountGlowUntilMs > 0)) return undefined;
@@ -1611,7 +1780,7 @@ export default function ReactorPage() {
       temperature: tempFactor,
       damping,
       tempVelKick: 4.2,
-      useLangevin: true,
+      useLangevin: automationBuilderRunning || tempBathMode !== TEMP_BATH_MODE.OFF,
       langevinGamma: 2.4,
 
       boxHalfSize,
@@ -1656,7 +1825,163 @@ export default function ReactorPage() {
     allowMultipleBonds,
     boxHalfSize,
     adaptiveForceField,
+    automationBuilderRunning,
+    tempBathMode,
   ]);
+
+  useEffect(() => {
+    if (automationBuilderRunning) return undefined;
+    const baseRateKPerSecond = TEMP_BATH_RATE_K_PER_SEC[tempBathMode] ?? 0;
+    const pulseRateKPerSecond =
+      tempBathPulse === TEMP_BATH_PULSE.COOL
+        ? -TEMP_BATH_PULSE_RATE_K_PER_SEC
+        : tempBathPulse === TEMP_BATH_PULSE.HEAT
+          ? TEMP_BATH_PULSE_RATE_K_PER_SEC
+          : 0;
+    const rateKPerSecond = baseRateKPerSecond + pulseRateKPerSecond;
+    if (!Number.isFinite(rateKPerSecond) || Math.abs(rateKPerSecond) < 1e-9) {
+      return undefined;
+    }
+    let lastMs = performance.now();
+    const intervalId = window.setInterval(() => {
+      const nowMs = performance.now();
+      const deltaSeconds = Math.max(0, (nowMs - lastMs) / 1000);
+      lastMs = nowMs;
+      const deltaK = rateKPerSecond * deltaSeconds;
+      if (Math.abs(deltaK) < 1e-6) return;
+      setTemperatureK((prev) =>
+        clamp(prev + deltaK, TEMP_CONTROL_MIN_K, TEMP_CONTROL_MAX_K),
+      );
+    }, 120);
+    return () => window.clearInterval(intervalId);
+  }, [automationBuilderRunning, tempBathMode, tempBathPulse]);
+
+  useEffect(() => {
+    if (!tempBathPulse) return undefined;
+    if (typeof window === "undefined") return undefined;
+    const stopPulse = () => setTempBathPulse(null);
+    window.addEventListener("pointerup", stopPulse);
+    window.addEventListener("pointercancel", stopPulse);
+    window.addEventListener("mouseup", stopPulse);
+    window.addEventListener("touchend", stopPulse);
+    window.addEventListener("blur", stopPulse);
+    return () => {
+      window.removeEventListener("pointerup", stopPulse);
+      window.removeEventListener("pointercancel", stopPulse);
+      window.removeEventListener("mouseup", stopPulse);
+      window.removeEventListener("touchend", stopPulse);
+      window.removeEventListener("blur", stopPulse);
+    };
+  }, [tempBathPulse]);
+
+  useEffect(() => {
+    if (automationBuilderRunning) return undefined;
+    const baseRateBoxPerSecond =
+      PRESSURE_BATH_RATE_BOX_PER_SEC[pressureBathMode] ?? 0;
+    const pulseRateBoxPerSecond =
+      pressureBathPulse === PRESSURE_BATH_PULSE.EXPAND
+        ? PRESSURE_BATH_PULSE_RATE_BOX_PER_SEC
+        : pressureBathPulse === PRESSURE_BATH_PULSE.CONTRACT
+          ? -PRESSURE_BATH_PULSE_RATE_BOX_PER_SEC
+          : 0;
+    const rateBoxPerSecond = baseRateBoxPerSecond + pulseRateBoxPerSecond;
+    if (!Number.isFinite(rateBoxPerSecond) || Math.abs(rateBoxPerSecond) < 1e-9) {
+      return undefined;
+    }
+    let lastMs = performance.now();
+    const intervalId = window.setInterval(() => {
+      const nowMs = performance.now();
+      const deltaSeconds = Math.max(0, (nowMs - lastMs) / 1000);
+      lastMs = nowMs;
+      const deltaBox = rateBoxPerSecond * deltaSeconds;
+      if (Math.abs(deltaBox) < 1e-6) return;
+      setBoxHalfSize((prev) =>
+        clamp(
+          prev + deltaBox,
+          PRESSURE_CONTROL_MIN_BOX_HALF_SIZE,
+          PRESSURE_CONTROL_MAX_BOX_HALF_SIZE,
+        ),
+      );
+    }, 120);
+    return () => window.clearInterval(intervalId);
+  }, [
+    automationBuilderRunning,
+    pressureBathMode,
+    pressureBathPulse,
+  ]);
+
+  useEffect(() => {
+    if (!pressureBathPulse) return undefined;
+    if (typeof window === "undefined") return undefined;
+    const stopPulse = () => setPressureBathPulse(null);
+    window.addEventListener("pointerup", stopPulse);
+    window.addEventListener("pointercancel", stopPulse);
+    window.addEventListener("mouseup", stopPulse);
+    window.addEventListener("touchend", stopPulse);
+    window.addEventListener("blur", stopPulse);
+    return () => {
+      window.removeEventListener("pointerup", stopPulse);
+      window.removeEventListener("pointercancel", stopPulse);
+      window.removeEventListener("mouseup", stopPulse);
+      window.removeEventListener("touchend", stopPulse);
+      window.removeEventListener("blur", stopPulse);
+    };
+  }, [pressureBathPulse]);
+
+  useEffect(() => {
+    const automationActive = automationBuilderRunning;
+    const nowMs = performance.now();
+    if (!automationActive) {
+      automationVisualSampleRef.current = {
+        atMs: nowMs,
+        temperatureK,
+        boxHalfSize,
+      };
+      setAutomationTempVisualMode(TEMP_BATH_MODE.OFF);
+      setAutomationPressureVisualMode(PRESSURE_BATH_MODE.OFF);
+      return;
+    }
+
+    const prev = automationVisualSampleRef.current;
+    const dtSeconds = Math.max(1e-3, (nowMs - (prev.atMs || nowMs)) / 1000);
+    const tempRate = (temperatureK - (Number(prev.temperatureK) || 0)) / dtSeconds;
+    const boxRate = (boxHalfSize - (Number(prev.boxHalfSize) || 0)) / dtSeconds;
+    automationVisualSampleRef.current = {
+      atMs: nowMs,
+      temperatureK,
+      boxHalfSize,
+    };
+
+    const absTempRate = Math.abs(tempRate);
+    const nextTempMode =
+      absTempRate < 4
+        ? TEMP_BATH_MODE.OFF
+        : tempRate > 0
+          ? absTempRate >= 105
+            ? TEMP_BATH_MODE.FAST_HEAT
+            : TEMP_BATH_MODE.SLOW_HEAT
+          : absTempRate >= 105
+            ? TEMP_BATH_MODE.FAST_COOL
+            : TEMP_BATH_MODE.SLOW_COOL;
+    setAutomationTempVisualMode((current) =>
+      current === nextTempMode ? current : nextTempMode,
+    );
+
+    const absBoxRate = Math.abs(boxRate);
+    const nextPressureMode =
+      absBoxRate < 0.03
+        ? PRESSURE_BATH_MODE.OFF
+        : boxRate > 0
+          ? absBoxRate >= 0.825
+            ? PRESSURE_BATH_MODE.FAST_EXPAND
+            : PRESSURE_BATH_MODE.SLOW_EXPAND
+          : absBoxRate >= 0.825
+            ? PRESSURE_BATH_MODE.FAST_CONTRACT
+            : PRESSURE_BATH_MODE.SLOW_CONTRACT;
+    setAutomationPressureVisualMode((current) =>
+      current === nextPressureMode ? current : nextPressureMode,
+    );
+  }, [automationBuilderRunning, boxHalfSize, temperatureK]);
 
   // Approximate volume change by scaling coordinates with box size.
   useEffect(() => {
@@ -1764,7 +2089,6 @@ export default function ReactorPage() {
       hintTitle: "reactor-ui-hint-title",
       hintText: "reactor-ui-hint-text",
       floatingShow: "reactor-ui-floating-show",
-      trendTagShow: "reactor-ui-trend-tag-show",
       instructionsShow: "reactor-ui-instructions-show",
       tutorial: "reactor-ui-tutorial",
       tutorialShow: "reactor-ui-tutorial-show",
@@ -1780,7 +2104,7 @@ export default function ReactorPage() {
   );
 
   // ---------- sprites ----------
-  function makePixelSphereTexture(hex, label) {
+  const makePixelSphereTexture = useCallback((hex, label) => {
     const size = 48;
     const c = document.createElement("canvas");
     c.width = size;
@@ -1846,9 +2170,9 @@ export default function ReactorPage() {
     tex.generateMipmaps = false;
     tex.needsUpdate = true;
     return tex;
-  }
+  }, []);
 
-  function makeGlowTexture() {
+  const makeGlowTexture = useCallback(() => {
     const size = 96;
     const c = document.createElement("canvas");
     c.width = size;
@@ -1880,9 +2204,9 @@ export default function ReactorPage() {
     tex.generateMipmaps = false;
     tex.needsUpdate = true;
     return tex;
-  }
+  }, []);
 
-  function getSpriteMaterial(el) {
+  const getSpriteMaterial = useCallback((el) => {
     const t = threeRef.current;
     if (t.spriteMaterials.has(el)) return t.spriteMaterials.get(el);
 
@@ -1903,16 +2227,16 @@ export default function ReactorPage() {
     });
     t.spriteMaterials.set(el, mat);
     return mat;
-  }
+  }, [makePixelSphereTexture]);
 
-  function getGlowTexture() {
+  const getGlowTexture = useCallback(() => {
     const t = threeRef.current;
     if (t.glowTexture) return t.glowTexture;
     t.glowTexture = makeGlowTexture();
     return t.glowTexture;
-  }
+  }, [makeGlowTexture]);
 
-  function createGlowMaterial() {
+  const createGlowMaterial = useCallback(() => {
     return new THREE.SpriteMaterial({
       map: getGlowTexture(),
       color: "#fde68a",
@@ -1922,18 +2246,18 @@ export default function ReactorPage() {
       depthTest: true,
       blending: THREE.AdditiveBlending,
     });
-  }
+  }, [getGlowTexture]);
 
-  function getDiscoveryGlowFactor(catalogId, nowMs = Date.now()) {
+  const getDiscoveryGlowFactor = useCallback((catalogId, nowMs = Date.now()) => {
     if (!catalogId) return 0;
     const until = discoveryGlowUntilRef.current.get(catalogId) ?? 0;
     if (until <= nowMs) return 0;
     const left = until - nowMs;
     if (left >= FIRST_DISCOVERY_CALLOUT_FADE_MS) return 1;
     return clamp01(left / FIRST_DISCOVERY_CALLOUT_FADE_MS);
-  }
+  }, []);
 
-  function ensureSpriteForAtom(atom) {
+  const ensureSpriteForAtom = useCallback((atom) => {
     const map = atomSpritesRef.current;
     const t = threeRef.current;
     if (map.has(atom.id)) return map.get(atom.id);
@@ -1947,9 +2271,9 @@ export default function ReactorPage() {
     t.atomGroup.add(spr);
     map.set(atom.id, spr);
     return spr;
-  }
+  }, [getSpriteMaterial]);
 
-  function ensureRepeatSprite(idx, atomEl) {
+  const ensureRepeatSprite = useCallback((idx, atomEl) => {
     const t = threeRef.current;
     while (t.repeatAtomSprites.length <= idx) {
       const mat = new THREE.SpriteMaterial({
@@ -1973,9 +2297,9 @@ export default function ReactorPage() {
       spr.userData.atomEl = atomEl;
     }
     return spr;
-  }
+  }, [getSpriteMaterial]);
 
-  function syncPeriodicRepeatSprites() {
+  const syncPeriodicRepeatSprites = useCallback(() => {
     const t = threeRef.current;
     const sim = simRef.current;
     const params = paramsRef.current;
@@ -1990,7 +2314,9 @@ export default function ReactorPage() {
     }
 
     t.repeatAtomGroup.visible = true;
-    const halfBox = params?.boxHalfSize ?? boxHalfSize;
+    const halfBox =
+      params?.boxHalfSize ??
+      Number(controlValuesRef.current?.boxHalfSize ?? DEFAULT_BOX_HALF_SIZE);
     const boxSize = halfBox * 2;
     const margin = Math.min(PERIODIC_REPEAT_MARGIN, halfBox);
     let idx = 0;
@@ -2028,9 +2354,9 @@ export default function ReactorPage() {
     for (; idx < t.repeatAtomSprites.length; idx += 1) {
       t.repeatAtomSprites[idx].visible = false;
     }
-  }
+  }, [ensureRepeatSprite]);
 
-  function removeMissingSprites() {
+  const removeMissingSprites = useCallback(() => {
     const sim = simRef.current;
     const map = atomSpritesRef.current;
     const t = threeRef.current;
@@ -2049,9 +2375,9 @@ export default function ReactorPage() {
         t.glowSprites.delete(id);
       }
     }
-  }
+  }, []);
 
-  function syncLiveAtomGlow(nowMs) {
+  const syncLiveAtomGlow = useCallback((nowMs) => {
     const sim = simRef.current;
     const t = threeRef.current;
     const liveIds = liveHighlightAtomIdsRef.current;
@@ -2118,15 +2444,17 @@ export default function ReactorPage() {
       spr.scale.set(s, s, 1);
       spr.visible = true;
     }
-  }
+  }, [createGlowMaterial, getDiscoveryGlowFactor]);
 
   // ---------- bonds ----------
-  function syncBondCylinders() {
+  const syncBondCylinders = useCallback(() => {
     const t = threeRef.current;
     const sim = simRef.current;
     const params = paramsRef.current;
     const usePeriodic = Boolean(params?.usePeriodicBoundary);
-    const halfBox = params?.boxHalfSize ?? boxHalfSize;
+    const halfBox =
+      params?.boxHalfSize ??
+      Number(controlValuesRef.current?.boxHalfSize ?? DEFAULT_BOX_HALF_SIZE);
     const boxSize = halfBox * 2;
 
     if (!showBondsRef.current) {
@@ -2280,7 +2608,7 @@ export default function ReactorPage() {
         mesh.scale.set(thickness, len, thickness);
       }
     }
-  }
+  }, [getDiscoveryGlowFactor]);
 
   const scanCollectionProgress = useCallback(
     (sim) => {
@@ -2571,16 +2899,27 @@ export default function ReactorPage() {
       }
 
       const matchedIdsOrdered = Array.from(matchedIds).sort();
-      const prevMatchedLive = remoteCatalogueSeenLiveRef.current;
-      const newlySeenMatchedIds = matchedIdsOrdered.filter(
-        (id) => !prevMatchedLive.has(id),
-      );
-      remoteCatalogueSeenLiveRef.current = new Set(matchedIdsOrdered);
-      if (newlySeenMatchedIds.length > 0) {
+      const nextLiveCounts = new Map();
+      for (const comp of matchedComponents) {
+        nextLiveCounts.set(comp.id, (nextLiveCounts.get(comp.id) || 0) + 1);
+      }
+      const prevLiveCounts = remoteCatalogueLiveCountsRef.current;
+      const newlyCreatedCountsById = new Map();
+      for (const [id, nextCount] of nextLiveCounts.entries()) {
+        const prevCount = Math.max(
+          0,
+          Math.floor(Number(prevLiveCounts.get(id)) || 0),
+        );
+        if (nextCount > prevCount) {
+          newlyCreatedCountsById.set(id, nextCount - prevCount);
+        }
+      }
+      remoteCatalogueLiveCountsRef.current = nextLiveCounts;
+      if (newlyCreatedCountsById.size > 0) {
         const observedAtIso = new Date(nowMs).toISOString();
         setLocalCatalogueStatsById((prev) => {
           const next = { ...prev };
-          for (const id of newlySeenMatchedIds) {
+          for (const [id, deltaCount] of newlyCreatedCountsById.entries()) {
             const existing = next[id];
             const firstCreatedAt = existing?.firstCreatedAt || observedAtIso;
             next[id] = {
@@ -2588,13 +2927,17 @@ export default function ReactorPage() {
               lastCreatedAt: observedAtIso,
               createdCount: Math.max(
                 1,
-                Math.floor(Number(existing?.createdCount) || 0) + 1,
+                Math.floor(Number(existing?.createdCount) || 0) + deltaCount,
               ),
             };
           }
           return next;
         });
-        queueRemoteCatalogueEvents(newlySeenMatchedIds, observedAtIso);
+        const newlyCreatedIds = [];
+        for (const [id, deltaCount] of newlyCreatedCountsById.entries()) {
+          for (let i = 0; i < deltaCount; i += 1) newlyCreatedIds.push(id);
+        }
+        queueRemoteCatalogueEvents(newlyCreatedIds);
       }
       const matchedIdsKey = matchedIdsOrdered.join("|");
       if (matchedIdsKey !== liveMatchedIdsKeyRef.current) {
@@ -2626,7 +2969,12 @@ export default function ReactorPage() {
         return Array.from(next).sort();
       });
     },
-    [catalogByFingerprint, catalogById, queueRemoteCatalogueEvents],
+    [
+      catalogByFingerprint,
+      catalogById,
+      getDiscoveryGlowFactor,
+      queueRemoteCatalogueEvents,
+    ],
   );
 
   const queueCollectionScan = useCallback(() => {
@@ -2640,87 +2988,15 @@ export default function ReactorPage() {
     }, 0);
   }, [scanCollectionProgress]);
 
-  // ---------- init ----------
-  useEffect(() => {
-    const mount = mountRef.current;
-    if (!mount) return;
-
-    const renderer = new THREE.WebGLRenderer({
-      antialias: false,
-      alpha: true,
-      powerPreference: "high-performance",
-    });
-    renderer.setClearColor(0x000000, 0);
-    renderer.setPixelRatio(1);
-    mount.appendChild(renderer.domElement);
-
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 200);
-    camera.position.set(0, 0.6, 14);
-    camera.lookAt(0, 0, 0);
-
-    const atomGroup = new THREE.Group();
-    scene.add(atomGroup);
-
-    const repeatAtomGroup = new THREE.Group();
-    scene.add(repeatAtomGroup);
-
-    const bondGroup = new THREE.Group();
-    scene.add(bondGroup);
-
-    const raycaster = new THREE.Raycaster();
-    raycaster.params.Sprite.threshold = 0.35;
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.rotateSpeed = 0.6;
-    controls.panSpeed = 0.6;
-    controls.zoomSpeed = 0.8;
-    controls.enabled = toolRef.current === TOOL.ROTATE;
-    controls.target.set(0, 0, 0);
-    controls.update();
-
-    const three = threeRef.current;
-    three.renderer = renderer;
-    three.scene = scene;
-    three.camera = camera;
-    three.controls = controls;
-    three.raycaster = raycaster;
-    three.atomGroup = atomGroup;
-    three.repeatAtomGroup = repeatAtomGroup;
-    three.repeatAtomSprites = [];
-    three.bondGroup = bondGroup;
-    three.bondMeshes = [];
-    refreshBoxVisuals();
-
-    const resize = () => {
-      const rect = mount.getBoundingClientRect();
-      const w = Math.max(320, Math.floor(rect.width));
-      const h = Math.max(240, Math.floor(rect.height)); // use container height too
-      renderer.setSize(w, h, false);
-      camera.aspect = w / h; // rectangle aspect
-      camera.updateProjectionMatrix();
-    };
-
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(mount);
-
-    const sim = simRef.current;
-    clearSim3D(sim);
-    const hasSavedCatalogueAtInit =
-      readSavedCatalogueIdsFromStorage().length > 0;
-    if (hasSavedCatalogueAtInit) {
+  const seedInitialAtoms = useCallback(
+    (sim) => {
+      if (readSavedCatalogueIdsFromStorage().length <= 0) return;
       const initialCounts = [
         ["O", 4],
         ["H", 8],
       ];
-      const actualSeedCounts = {};
       for (const [el, count] of initialCounts) {
         for (let i = 0; i < count; i += 1) {
-          const beforeCount = sim.atoms.length;
           addAtom3D(
             sim,
             (Math.random() - 0.5) * 4,
@@ -2730,115 +3006,34 @@ export default function ReactorPage() {
             elements,
             MAX_ATOMS,
           );
-          if (sim.atoms.length > beforeCount) {
-            actualSeedCounts[el] = (actualSeedCounts[el] || 0) + 1;
-          }
         }
       }
-      showSpawnReadout(actualSeedCounts);
-    }
-    scanCollectionProgress(sim);
+    },
+    [elements, MAX_ATOMS],
+  );
 
-    // loop
-    let last = performance.now();
-    let acc = 0;
-    const FIXED_DT = 1 / 60;
-    const MAX_SUBSTEPS = 6;
-    let scanStepAccumulator = 0;
-
-    const tick = (now) => {
-      rafRef.current = requestAnimationFrame(tick);
-
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      acc += dt;
-
-      const params = paramsRef.current;
-      if (!params) return;
-
-      if (!pausedRef.current) {
-        let steps = 0;
-        while (acc >= FIXED_DT && steps < MAX_SUBSTEPS) {
-          stepSim3D(simRef.current, params, FIXED_DT);
-
-          acc -= FIXED_DT;
-          steps++;
-        }
-        if (steps > 0) {
-          scanStepAccumulator += steps;
-          if (scanStepAccumulator >= COLLECTION_SCAN_INTERVAL_STEPS) {
-            scanStepAccumulator = 0;
-            queueCollectionScan();
-          }
-        }
-      } else {
-        acc = 0;
-      }
-
-      three.controls?.update?.();
-
-      const simNow = simRef.current;
-      for (const a of simNow.atoms) {
-        const spr = ensureSpriteForAtom(a);
-        spr.position.set(a.x, a.y, a.z);
-        const depth = 1 + a.z * 0.02;
-        const s = a.r * 2.2 * depth;
-        spr.scale.set(s, s, 1);
-      }
-      removeMissingSprites();
-      syncLiveAtomGlow(now);
-      syncPeriodicRepeatSprites();
-
-      syncBondCylinders();
-      renderer.render(scene, camera);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (queuedScanTimerRef.current) {
-        clearTimeout(queuedScanTimerRef.current);
-        queuedScanTimerRef.current = null;
-      }
-      if (remoteCatalogueFlushTimerRef.current) {
-        clearTimeout(remoteCatalogueFlushTimerRef.current);
-        remoteCatalogueFlushTimerRef.current = null;
-      }
-      queuedScanPendingRef.current = false;
-      ro.disconnect();
-      mount.removeChild(renderer.domElement);
-
-      controls.dispose();
-      renderer.dispose();
-
-      for (const mat of three.spriteMaterials.values()) {
-        mat.map?.dispose?.();
-        mat.dispose?.();
-      }
-      three.spriteMaterials.clear();
-      for (const spr of three.repeatAtomSprites) {
-        three.repeatAtomGroup?.remove(spr);
-        spr.material?.dispose?.();
-      }
-      three.repeatAtomSprites = [];
-
-      for (const mesh of three.bondMeshes) {
-        mesh.geometry?.dispose?.();
-        mesh.material?.dispose?.();
-      }
-      three.bondMeshes = [];
-
-      for (const glow of three.glowSprites.values()) {
-        three.atomGroup?.remove(glow);
-        glow.material?.dispose?.();
-      }
-      three.glowSprites.clear();
-      three.glowTexture?.dispose?.();
-      three.glowTexture = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useReactorSimulationLoop({
+    mountRef,
+    rafRef,
+    threeRef,
+    simRef,
+    paramsRef,
+    toolRef,
+    rotateToolValue: TOOL.ROTATE,
+    refreshBoxVisuals,
+    seedInitialAtoms,
+    scanCollectionProgress,
+    queueCollectionScan,
+    ensureSpriteForAtom,
+    removeMissingSprites,
+    syncLiveAtomGlow,
+    syncPeriodicRepeatSprites,
+    syncBondCylinders,
+    pausedRef,
+    queuedScanTimerRef,
+    queuedScanPendingRef,
+    collectionScanIntervalSteps: COLLECTION_SCAN_INTERVAL_STEPS,
+  });
 
   // pointer handling
   useEffect(() => {
@@ -2965,7 +3160,7 @@ export default function ReactorPage() {
         const beforeCount = sim.atoms.length;
         addAtom3D(sim, p.x, p.y, p.z, placeElement, elements, MAX_ATOMS);
         if (sim.atoms.length > beforeCount) {
-          showActionReadout(`Added ${placeElement}`);
+          showSpawnReadout({ [placeElement]: 1 });
         }
         scanCollectionProgress(sim);
       }
@@ -3002,15 +3197,9 @@ export default function ReactorPage() {
     scanCollectionProgress,
     catalogById,
     toggleLiveSelection,
-    showActionReadout,
+    showSpawnReadout,
     showDeletedReadout,
   ]);
-
-  useEffect(() => {
-    return () => {
-      protocolRunRef.current.running = false;
-    };
-  }, []);
 
   // actions
   function clearAll() {
@@ -3106,34 +3295,209 @@ export default function ReactorPage() {
     [elements, scanCollectionProgress, showSpawnReadout],
   );
 
-  const spawnAutomationFeed = useCallback(
-    (feedKey, doses = 1) => {
-      const feed = AUTOMATION_FEEDS[feedKey];
-      if (!feed) return;
-      const n = clamp(Math.floor(Number(doses) || 0), 0, 24);
-      if (n <= 0) return;
-
-      const scaledCounts = {};
-      for (const el of ELEMENTS) {
-        scaledCounts[el] = Math.max(
-          0,
-          Math.floor(Number(feed.counts?.[el]) || 0) * n,
-        );
+  const removeElementCounts = useCallback(
+    (element, countSpec) => {
+      const el = String(element || "").trim();
+      if (!el) return 0;
+      const sim = simRef.current;
+      const candidateIds = [];
+      for (const atom of sim.atoms) {
+        if (atom?.el === el) candidateIds.push(atom.id);
       }
-      spawnElementCounts(scaledCounts, feed.jitter, true);
+      if (candidateIds.length <= 0) return 0;
+
+      let maxToRemove = 0;
+      if (countSpec === "all") {
+        maxToRemove = candidateIds.length;
+      } else if (countSpec === "half") {
+        maxToRemove = Math.max(1, Math.floor(candidateIds.length / 2));
+      } else {
+        maxToRemove = Math.max(0, Math.floor(Number(countSpec) || 0));
+      }
+      if (maxToRemove <= 0) return 0;
+
+      let removed = 0;
+      while (removed < maxToRemove && candidateIds.length > 0) {
+        const idx = Math.floor(Math.random() * candidateIds.length);
+        const [id] = candidateIds.splice(idx, 1);
+        removeAtom3D(sim, id);
+        removed += 1;
+      }
+      if (removed > 0) {
+        showDeletedReadout({ [el]: removed });
+        scanCollectionProgress(sim);
+      }
+      return removed;
     },
-    [spawnElementCounts],
+    [scanCollectionProgress, showDeletedReadout],
   );
 
-  function spawnAtoms(count, mode = "selected") {
+  const addAutomationBuilderAction = useCallback((kind) => {
+    const nextKind = String(kind || AUTOMATION_ACTION_KIND.CONDITION);
+    const id = `builder-action-${automationBuilderActionSeqRef.current++}`;
+    setAutomationBuilderActions((prev) => [
+      ...prev,
+      createAutomationBuilderAction(id, nextKind),
+    ]);
+  }, []);
+
+  const addAutomationBuilderWhileAction = useCallback((stepId, kind) => {
+    if (!stepId) return;
+    const nextKind = String(kind || AUTOMATION_ACTION_KIND.CONDITION);
+    const id = `builder-action-${automationBuilderActionSeqRef.current++}`;
+    setAutomationBuilderActions((prev) => {
+      const appendWhile = (nodes) =>
+        nodes.map((node) => {
+          if (node.id === stepId) {
+            return {
+              ...node,
+              whileActions: [
+                ...(Array.isArray(node.whileActions) ? node.whileActions : []),
+                createAutomationBuilderAction(id, nextKind),
+              ],
+            };
+          }
+          return {
+            ...node,
+            whileActions: appendWhile(
+              Array.isArray(node.whileActions) ? node.whileActions : [],
+            ),
+            thenActions: appendWhile(
+              Array.isArray(node.thenActions) ? node.thenActions : [],
+            ),
+          };
+        });
+      return appendWhile(Array.isArray(prev) ? prev : []);
+    });
+  }, []);
+
+  const addAutomationBuilderThenAction = useCallback((afterStepId, kind) => {
+    const nextKind = String(kind || AUTOMATION_ACTION_KIND.CONDITION);
+    const id = `builder-action-${automationBuilderActionSeqRef.current++}`;
+    const nextAction = createAutomationBuilderAction(id, nextKind);
+    setAutomationBuilderActions((prev) => {
+      const appendThen = (nodes) =>
+        nodes.map((node) => {
+          if (node.id === afterStepId) {
+            return {
+              ...node,
+              thenActions: [
+                ...(Array.isArray(node.thenActions) ? node.thenActions : []),
+                nextAction,
+              ],
+            };
+          }
+          return {
+            ...node,
+            whileActions: appendThen(
+              Array.isArray(node.whileActions) ? node.whileActions : [],
+            ),
+            thenActions: appendThen(
+              Array.isArray(node.thenActions) ? node.thenActions : [],
+            ),
+          };
+        });
+      const base = Array.isArray(prev) ? prev : [];
+      return appendThen(base);
+    });
+  }, []);
+
+  const updateAutomationBuilderAction = useCallback((id, patch) => {
+    if (!id || !patch || typeof patch !== "object") return;
+    setAutomationBuilderActions((prev) => {
+      const updateTree = (nodes) =>
+        nodes.map((node) => {
+          if (node.id === id) return { ...node, ...patch };
+          return {
+            ...node,
+            whileActions: updateTree(
+              Array.isArray(node.whileActions) ? node.whileActions : [],
+            ),
+            thenActions: updateTree(
+              Array.isArray(node.thenActions) ? node.thenActions : [],
+            ),
+          };
+        });
+      return updateTree(Array.isArray(prev) ? prev : []);
+    });
+  }, []);
+
+  const removeAutomationBuilderAction = useCallback((id) => {
+    if (!id) return;
+    setAutomationBuilderActions((prev) => {
+      const removeFromTree = (nodes) =>
+        nodes
+          .filter((node) => node.id !== id)
+          .map((node) => ({
+            ...node,
+            whileActions: removeFromTree(
+              Array.isArray(node.whileActions) ? node.whileActions : [],
+            ),
+            thenActions: removeFromTree(
+              Array.isArray(node.thenActions) ? node.thenActions : [],
+            ),
+          }));
+      return removeFromTree(Array.isArray(prev) ? prev : []);
+    });
+  }, []);
+
+  const clearAutomationBuilder = useCallback(() => {
+    const shouldClear = window.confirm(
+      "Clear all steps? This will delete the entire automation builder.",
+    );
+    if (!shouldClear) return;
+    setAutomationBuilderActions([]);
+    setAutomationBuilderWhilePickerForId(null);
+    setAutomationBuilderThenPickerForId(null);
+  }, []);
+
+  const stopAutomationBuilder = useCallback((message = "idle") => {
+    automationBuilderRunRef.current.running = false;
+    setAutomationBuilderRunning(false);
+    setAutomationBuilderStatus(message);
+    setAutomationBuilderActiveIndex(-1);
+    setAutomationBuilderActiveActionIds([]);
+    setAutomationBuilderActiveStepCodes([]);
+    setAutomationBuilderRemainingMs(0);
+  }, []);
+
+  const startAutomationBuilder = useCallback(() => {
+    if (!Array.isArray(automationBuilderActions) || automationBuilderActions.length <= 0) {
+      setAutomationBuilderStatus("Add at least one action");
+      return;
+    }
+    setAutomationBuilderRunning(true);
+  }, [automationBuilderActions]);
+
+  const runAutomationBuilderAtomAction = useCallback(
+    (action) => {
+      const op = normalizeAutomationBuilderAtomOperation(action?.operation);
+      const entries = normalizeAutomationBuilderAtomEntries(action, op);
+      if (op === "remove") {
+        for (const entry of entries) {
+          removeElementCounts(entry.element, entry.count);
+        }
+        return;
+      }
+      const addCounts = {};
+      for (const entry of entries) {
+        const count = Math.max(0, Math.floor(Number(entry?.count) || 0));
+        if (count <= 0) continue;
+        const el = String(entry?.element || "H");
+        addCounts[el] = (addCounts[el] || 0) + count;
+      }
+      if (Object.keys(addCounts).length <= 0) return;
+      spawnElementCounts(addCounts, 1.35, true);
+    },
+    [removeElementCounts, spawnElementCounts],
+  );
+
+  function spawnAtoms(count) {
     const sim = simRef.current;
     const n = Math.max(1, Math.floor(Number(count) || 1));
     const spawnedCounts = {};
     for (let i = 0; i < n; i++) {
-      const el =
-        mode === "random"
-          ? ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)]
-          : placeElement;
+      const el = placeElement;
       const beforeCount = sim.atoms.length;
       addAtom3D(
         sim,
@@ -3153,208 +3517,6 @@ export default function ReactorPage() {
     scanCollectionProgress(sim);
   }
 
-  const runAutomationDosing = useCallback(
-    (preset, elapsedMs, run) => {
-      if (!protocolIncludeDosingRef.current) return;
-
-      if (preset === "trap-cycle") {
-        const cycleMs = 32000;
-        const cycleIndex = Math.floor(elapsedMs / cycleMs);
-        const phase = (elapsedMs % cycleMs) / cycleMs;
-        if (phase >= 0.62 && run.lastTrapDoseCycle !== cycleIndex) {
-          spawnAutomationFeed("trapBalanced", 1);
-          run.lastTrapDoseCycle = cycleIndex;
-        }
-        return;
-      }
-
-      if (preset === "scaffold-then-cap") {
-        const totalMs = 42000;
-        const t = clamp(elapsedMs / totalMs, 0, 1);
-
-        if (t < 0.4) {
-          const scaffoldStep = Math.floor(elapsedMs / 9000);
-          if (run.lastScaffoldDoseStep !== scaffoldStep) {
-            spawnAutomationFeed("scaffoldBuild", 1);
-            run.lastScaffoldDoseStep = scaffoldStep;
-          }
-        }
-
-        if (t >= 0.4 && t < 0.8) {
-          const capElapsedMs = elapsedMs - totalMs * 0.4;
-          const hydrogenStep = Math.floor(capElapsedMs / 4500);
-          if (run.lastHydrogenDoseStep !== hydrogenStep) {
-            spawnAutomationFeed("hydrogenPulse", 1);
-            run.lastHydrogenDoseStep = hydrogenStep;
-          }
-        }
-      }
-    },
-    [spawnAutomationFeed],
-  );
-
-  function computeProtocolTargets(
-    preset,
-    elapsedMs,
-    base,
-    autoRun = true,
-    cycleIndex = 1,
-  ) {
-    const mix = (a, b, t) => a + (b - a) * t;
-    if (preset === "trap-cycle") {
-      const cycleMs = 32000;
-      const phase = autoRun
-        ? (elapsedMs % cycleMs) / cycleMs
-        : clamp(elapsedMs / cycleMs, 0, 1);
-      const compressedBox = clamp(base.boxHalfSize * 0.75, 2.8, 10.5);
-      const expandedBox = clamp(compressedBox * 1.5, 3.2, 12);
-
-      if (phase < 0.22) {
-        const t = phase / 0.22;
-        return {
-          temperatureK: mix(base.temperatureK, 1400, t),
-          damping: mix(base.damping, 0.9995, t),
-          bondScale: mix(
-            base.bondScale,
-            Math.max(2.1, base.bondScale - 0.5),
-            t,
-          ),
-          boxHalfSize: mix(base.boxHalfSize, compressedBox, t),
-          status: "Step 1: compress + energize",
-          done: false,
-        };
-      }
-      if (phase < 0.56) {
-        return {
-          temperatureK: 1400,
-          damping: 0.9995,
-          bondScale: Math.max(2.1, base.bondScale - 0.5),
-          boxHalfSize: compressedBox,
-          status: "Step 2: collision mixing",
-          done: false,
-        };
-      }
-
-      const t = (phase - 0.56) / 0.44;
-      const step = Math.min(4, Math.floor(t * 5));
-      const steppedBox = clamp(
-        compressedBox * (1 + step * 0.15),
-        compressedBox,
-        expandedBox,
-      );
-      return {
-        temperatureK: mix(1300, 640, t),
-        damping: mix(0.9993, 0.995, t),
-        bondScale: mix(
-          Math.max(2.0, base.bondScale - 0.35),
-          Math.min(5.6, base.bondScale + 0.95),
-          t,
-        ),
-        boxHalfSize: steppedBox,
-        status: "Step 3: expand in 15% steps",
-        done: !autoRun && elapsedMs >= cycleMs,
-      };
-    }
-
-    if (preset === "scaffold-then-cap") {
-      const totalMs = 42000;
-      const t = clamp(elapsedMs / totalMs, 0, 1);
-      const cyclePrefix = autoRun ? `Cycle ${cycleIndex}: ` : "";
-      if (t < 0.4) {
-        const p = t / 0.4;
-        return {
-          temperatureK: mix(base.temperatureK, 1280, p),
-          damping: mix(base.damping, 0.9993, p),
-          bondScale: mix(
-            base.bondScale,
-            Math.max(2.2, base.bondScale - 0.45),
-            p,
-          ),
-          boxHalfSize: mix(
-            base.boxHalfSize,
-            clamp(base.boxHalfSize * 0.78, 2.9, 10.0),
-            p,
-          ),
-          status: `${cyclePrefix}Scaffold stage: heavy-atom growth`,
-          done: false,
-        };
-      }
-      if (t < 0.8) {
-        const p = (t - 0.4) / 0.4;
-        return {
-          temperatureK: mix(1240, 780, p),
-          damping: mix(0.9992, 0.9965, p),
-          bondScale: mix(
-            Math.max(2.2, base.bondScale - 0.35),
-            Math.min(5.4, base.bondScale + 0.8),
-            p,
-          ),
-          boxHalfSize: mix(
-            clamp(base.boxHalfSize * 0.78, 2.9, 10.0),
-            clamp(base.boxHalfSize * 1.08, 3.2, 12),
-            p,
-          ),
-          status: `${cyclePrefix}Cap stage: controlled hydrogenation`,
-          done: false,
-        };
-      }
-      return {
-        temperatureK: mix(780, base.temperatureK, (t - 0.8) / 0.2),
-        damping: mix(0.9965, base.damping, (t - 0.8) / 0.2),
-        bondScale: mix(
-          Math.min(5.4, base.bondScale + 0.8),
-          base.bondScale,
-          (t - 0.8) / 0.2,
-        ),
-        boxHalfSize: mix(
-          clamp(base.boxHalfSize * 1.08, 3.2, 12),
-          base.boxHalfSize,
-          (t - 0.8) / 0.2,
-        ),
-        status: `${cyclePrefix}Scaffold protocol complete`,
-        done: t >= 1,
-      };
-    }
-
-    // gentle-anneal
-    const totalMs = 36000;
-    const t = clamp(elapsedMs / totalMs, 0, 1);
-    const cyclePrefix = autoRun ? `Cycle ${cycleIndex}: ` : "";
-    return {
-      temperatureK: mix(base.temperatureK, 520, t),
-      damping: mix(base.damping, 0.9988, t),
-      bondScale: mix(base.bondScale, Math.min(5.0, base.bondScale + 0.65), t),
-      boxHalfSize: mix(
-        base.boxHalfSize,
-        clamp(base.boxHalfSize * 1.12, 3.2, 12),
-        t,
-      ),
-      status:
-        t >= 1 ? `${cyclePrefix}Anneal complete` : `${cyclePrefix}Annealing`,
-      done: t >= 1,
-    };
-  }
-
-  function stopControlProtocol(message = "idle") {
-    protocolRunRef.current.running = false;
-    setProtocolRunning(false);
-    setProtocolStatus(message);
-    setProtocolTrendTags("");
-  }
-
-  function buildProtocolTrendTags(current, next) {
-    const tags = [];
-    const pushTag = (code, delta, threshold) => {
-      if (delta > threshold) tags.push(`+${code}`);
-      else if (delta < -threshold) tags.push(`-${code}`);
-    };
-    pushTag("T", (next.temperatureK ?? 0) - (current.temperatureK ?? 0), 0.5);
-    pushTag("B", (next.bondScale ?? 0) - (current.bondScale ?? 0), 0.01);
-    pushTag("V", (next.boxHalfSize ?? 0) - (current.boxHalfSize ?? 0), 0.01);
-    pushTag("D", (next.damping ?? 0) - (current.damping ?? 0), 1e-4);
-    return tags.join(" ");
-  }
-
   useEffect(() => {
     controlValuesRef.current = {
       temperatureK,
@@ -3365,63 +3527,13 @@ export default function ReactorPage() {
   }, [temperatureK, damping, bondScale, boxHalfSize]);
 
   useEffect(() => {
-    const prev = prevControlReadoutRef.current;
-    const tags = [];
-    const pushTag = (code, delta, threshold) => {
-      if (delta > threshold) tags.push(`+${code}`);
-      else if (delta < -threshold) tags.push(`-${code}`);
-    };
-
-    pushTag("T", temperatureK - prev.temperatureK, 0.01);
-    pushTag("B", bondScale - prev.bondScale, 0.0005);
-    pushTag("D", damping - prev.damping, 0.00001);
-    pushTag("V", boxHalfSize - prev.boxHalfSize, 0.0005);
-
-    prevControlReadoutRef.current = {
-      temperatureK,
-      bondScale,
-      damping,
-      boxHalfSize,
-    };
-
-    setControlDeltaTags((current) => {
-      const currentKey = Array.isArray(current) ? current.join("|") : "";
-      const nextKey = tags.join("|");
-      return currentKey === nextKey ? current : tags;
-    });
-
-    if (controlDeltaClearTimerRef.current) {
-      window.clearTimeout(controlDeltaClearTimerRef.current);
-      controlDeltaClearTimerRef.current = null;
-    }
-    if (tags.length > 0) {
-      controlDeltaClearTimerRef.current = window.setTimeout(() => {
-        controlDeltaClearTimerRef.current = null;
-        setControlDeltaTags([]);
-      }, 320);
-    }
-  }, [temperatureK, bondScale, damping, boxHalfSize]);
-
-  useEffect(() => {
     return () => {
-      if (controlDeltaClearTimerRef.current) {
-        window.clearTimeout(controlDeltaClearTimerRef.current);
-        controlDeltaClearTimerRef.current = null;
+      for (const timerId of Object.values(elementCountDeltaTimersRef.current)) {
+        window.clearTimeout(timerId);
       }
-      if (actionReadoutClearTimerRef.current) {
-        window.clearTimeout(actionReadoutClearTimerRef.current);
-        actionReadoutClearTimerRef.current = null;
-      }
+      elementCountDeltaTimersRef.current = {};
     };
   }, []);
-
-  useEffect(() => {
-    protocolAutoRunRef.current = protocolAutoRun;
-  }, [protocolAutoRun]);
-
-  useEffect(() => {
-    protocolIncludeDosingRef.current = protocolIncludeDosing;
-  }, [protocolIncludeDosing]);
 
   useEffect(() => {
     liveThermoEstimateRef.current = liveThermoEstimate;
@@ -3467,72 +3579,227 @@ export default function ReactorPage() {
   }, []);
 
   useEffect(() => {
-    if (!protocolRunning) return undefined;
+    if (!automationBuilderRunning) return undefined;
+    const sourceActions = Array.isArray(automationBuilderActions)
+      ? automationBuilderActions
+      : [];
+    if (sourceActions.length <= 0) {
+      setAutomationBuilderStatus("Add at least one action");
+      setAutomationBuilderRunning(false);
+      return undefined;
+    }
 
-    const startedAtMs = performance.now();
-    protocolRunRef.current = {
-      running: true,
-      preset: protocolPreset,
-      startedAtMs,
-      base: { ...controlValuesRef.current },
-      currentCycle: 1,
-      lastTrapDoseCycle: -1,
-      lastScaffoldDoseStep: -1,
-      lastHydrogenDoseStep: -1,
+    const normalizeNodeForRun = (node) => ({
+      ...node,
+      whileActions: Array.isArray(node?.whileActions)
+        ? node.whileActions.map((child) => normalizeNodeForRun(child))
+        : [],
+      thenActions: Array.isArray(node?.thenActions)
+        ? node.thenActions.map((child) => normalizeNodeForRun(child))
+        : [],
+    });
+    const normalizedRoots = sourceActions.map((action) =>
+      normalizeNodeForRun(action),
+    );
+    const executionSteps = [];
+    const collectWhileCluster = (root, rootCode) => {
+      const actionEntries = [];
+      const thenRoots = [];
+      const visitWhileTree = (node, nodeCode) => {
+        actionEntries.push({
+          action: node,
+          stepCode: nodeCode,
+        });
+        const whileChildren = Array.isArray(node?.whileActions)
+          ? node.whileActions
+          : [];
+        whileChildren.forEach((child, childIndex) => {
+          visitWhileTree(
+            child,
+            `${nodeCode}.${getAutomationAlphabetSegment(childIndex)}`,
+          );
+        });
+        const thenChildren = Array.isArray(node?.thenActions)
+          ? node.thenActions
+          : [];
+        thenChildren.forEach((child, childIndex) => {
+          thenRoots.push({
+            root: child,
+            stepCode: `${nodeCode}.${childIndex + 1}`,
+          });
+        });
+      };
+      visitWhileTree(root, rootCode);
+      return { actionEntries, thenRoots };
     };
-    setProtocolElapsedMs(0);
-    setProtocolStatus("running");
-    setProtocolTrendTags("");
+    const visitSequential = (root, stepCode) => {
+      if (!root) return;
+      const { actionEntries, thenRoots } = collectWhileCluster(root, stepCode);
+      if (actionEntries.length > 0) {
+        executionSteps.push({
+          rootId: root.id,
+          actions: actionEntries.map((entry) => entry.action),
+          stepCodes: actionEntries.map((entry) => entry.stepCode),
+        });
+      }
+      for (const nextRoot of thenRoots) {
+        visitSequential(nextRoot.root, nextRoot.stepCode);
+      }
+    };
+    normalizedRoots.forEach((root, rootIndex) => {
+      visitSequential(root, String(rootIndex + 1));
+    });
+    if (executionSteps.length <= 0) {
+      setAutomationBuilderStatus("Add at least one action");
+      setAutomationBuilderRunning(false);
+      return undefined;
+    }
+    const now = performance.now();
+    automationBuilderRunRef.current = {
+      running: true,
+      steps: executionSteps,
+      index: 0,
+      actionStartedAtMs: now,
+      lastStepElapsedMs: 0,
+      appliedAtomActionIds: new Set(),
+    };
     setPaused(false);
+    setAutomationBuilderStatus("running");
+    setAutomationBuilderActiveIndex(0);
+    setAutomationBuilderActiveActionIds([]);
+    setAutomationBuilderActiveStepCodes([]);
+    setAutomationBuilderRemainingMs(0);
+
+    const getActionDurationMs = (action) => {
+      if (action?.kind === AUTOMATION_ACTION_KIND.ATOMS) return 260;
+      return Math.max(1, Math.floor(Number(action?.durationSec) || 5)) * 1000;
+    };
+    const applyConditionAction = (action, dtSeconds) => {
+      if (!(dtSeconds > 0)) return;
+      const speed =
+        String(action?.speed || "slowly") === "quickly" ? "quickly" : "slowly";
+      const directionKey = String(action?.direction || "increase");
+      const direction =
+        directionKey === "decrease"
+          ? "decrease"
+          : directionKey === "hold" || directionKey === "wait"
+            ? "wait"
+            : "increase";
+      const target =
+        String(action?.target || "temperature") === "volume" ||
+        String(action?.target || "temperature") === "pressure"
+          ? "volume"
+          : "temperature";
+      if (direction === "wait") return;
+      if (target === "temperature") {
+        const rate = AUTOMATION_TEMPERATURE_RATE_BY_SPEED[speed] ?? 60;
+        const sign = direction === "increase" ? 1 : -1;
+        setTemperatureK((prev) =>
+          clamp(
+            prev + sign * rate * dtSeconds,
+            TEMP_CONTROL_MIN_K,
+            TEMP_CONTROL_MAX_K,
+          ),
+        );
+        return;
+      }
+      const volumeRate = AUTOMATION_VOLUME_RATE_BY_SPEED[speed] ?? 0.45;
+      const volumeSign = direction === "increase" ? 1 : -1;
+      const deltaBox = volumeSign * volumeRate * dtSeconds;
+      setBoxHalfSize((prev) =>
+        clamp(
+          prev + deltaBox,
+          PRESSURE_CONTROL_MIN_BOX_HALF_SIZE,
+          PRESSURE_CONTROL_MAX_BOX_HALF_SIZE,
+        ),
+      );
+    };
 
     const tick = () => {
-      const run = protocolRunRef.current;
-      if (!run.running || !run.base) return;
-      const elapsedMs = Math.max(0, performance.now() - run.startedAtMs);
-      const next = computeProtocolTargets(
-        run.preset,
-        elapsedMs,
-        run.base,
-        protocolAutoRunRef.current,
-        run.currentCycle || 1,
+      const run = automationBuilderRunRef.current;
+      if (!run.running) return;
+      const stepEntry = run.steps[run.index];
+      if (!stepEntry) {
+        stopAutomationBuilder("completed");
+        return;
+      }
+      const stepActions = Array.isArray(stepEntry.actions)
+        ? stepEntry.actions
+        : [];
+      if (stepActions.length <= 0) {
+        run.index += 1;
+        run.actionStartedAtMs = performance.now();
+        run.lastStepElapsedMs = 0;
+        run.appliedAtomActionIds = new Set();
+        setAutomationBuilderActiveStepCodes([]);
+        return;
+      }
+
+      const nowMs = performance.now();
+      const elapsedMs = Math.max(0, nowMs - run.actionStartedAtMs);
+      const durationMs = Math.max(
+        1,
+        ...stepActions.map((action) => getActionDurationMs(action)),
       );
-      runAutomationDosing(run.preset, elapsedMs, run);
-      const curr = controlValuesRef.current;
-      setProtocolTrendTags(buildProtocolTrendTags(curr, next));
-      setProtocolElapsedMs(elapsedMs);
-      setTemperatureK((prev) =>
-        Math.abs(prev - next.temperatureK) < 0.5 ? prev : next.temperatureK,
-      );
-      setDamping((prev) =>
-        Math.abs(prev - next.damping) < 1e-4 ? prev : next.damping,
-      );
-      setBondScale((prev) =>
-        Math.abs(prev - next.bondScale) < 0.01 ? prev : next.bondScale,
-      );
-      setBoxHalfSize((prev) =>
-        Math.abs(prev - next.boxHalfSize) < 0.01 ? prev : next.boxHalfSize,
-      );
-      setProtocolStatus(next.status);
-      if (next.done) {
-        if (protocolAutoRunRef.current) {
-          run.startedAtMs = performance.now();
-          run.base = { ...controlValuesRef.current };
-          run.currentCycle = (run.currentCycle || 1) + 1;
-          run.lastTrapDoseCycle = -1;
-          run.lastScaffoldDoseStep = -1;
-          run.lastHydrogenDoseStep = -1;
-          setProtocolElapsedMs(0);
-          setProtocolStatus("running");
+      const remainingMs = Math.max(0, durationMs - elapsedMs);
+      const stepCodes = Array.isArray(stepEntry.stepCodes)
+        ? stepEntry.stepCodes.filter((code) => typeof code === "string" && code)
+        : [];
+      const stepCodesLabel = stepCodes.length > 0 ? stepCodes.join(", ") : "Unknown";
+      setAutomationBuilderActiveIndex(run.index);
+      setAutomationBuilderActiveActionIds(stepActions.map((action) => action.id));
+      setAutomationBuilderActiveStepCodes(stepCodes);
+      setAutomationBuilderRemainingMs(remainingMs);
+      setAutomationBuilderStatus(`Running step ${stepCodesLabel}`);
+
+      for (const action of stepActions) {
+        const actionDurationMs = getActionDurationMs(action);
+        if (action.kind === AUTOMATION_ACTION_KIND.CONDITION) {
+          const prevElapsedMs = Math.min(run.lastStepElapsedMs, actionDurationMs);
+          const currElapsedMs = Math.min(elapsedMs, actionDurationMs);
+          const dtSeconds = Math.max(0, (currElapsedMs - prevElapsedMs) / 1000);
+          applyConditionAction(action, dtSeconds);
+          continue;
+        }
+        if (action.kind === AUTOMATION_ACTION_KIND.ATOMS) {
+          if (run.appliedAtomActionIds.has(action.id)) continue;
+          run.appliedAtomActionIds.add(action.id);
+          runAutomationBuilderAtomAction(action);
+        }
+      }
+      run.lastStepElapsedMs = elapsedMs;
+
+      if (elapsedMs < durationMs) return;
+      run.index += 1;
+      run.actionStartedAtMs = nowMs;
+      run.lastStepElapsedMs = 0;
+      run.appliedAtomActionIds = new Set();
+      if (run.index >= run.steps.length) {
+        if (automationBuilderRepeatCycle) {
+          run.index = 0;
+          run.actionStartedAtMs = nowMs;
+          run.lastStepElapsedMs = 0;
+          run.appliedAtomActionIds = new Set();
+          setAutomationBuilderStatus("running");
+          setAutomationBuilderActiveIndex(0);
+          setAutomationBuilderActiveStepCodes([]);
+          setAutomationBuilderRemainingMs(0);
           return;
         }
-        stopControlProtocol("completed");
+        stopAutomationBuilder("completed");
       }
     };
 
     tick();
-    const intervalId = window.setInterval(tick, 180);
+    const intervalId = window.setInterval(tick, 90);
     return () => window.clearInterval(intervalId);
-  }, [protocolRunning, protocolPreset, runAutomationDosing]);
+  }, [
+    automationBuilderActions,
+    automationBuilderRepeatCycle,
+    automationBuilderRunning,
+    runAutomationBuilderAtomAction,
+    stopAutomationBuilder,
+  ]);
 
   function normalizeCatalogueIds(candidate) {
     if (!Array.isArray(candidate)) return [];
@@ -3675,48 +3942,25 @@ export default function ReactorPage() {
 
   // Reset ALL controls EXCEPT the currently-selected tool mode
   function resetAllControls() {
-    stopControlProtocol("idle");
+    stopAutomationBuilder("idle");
     setPaused(false);
     setTemperatureK(DEFAULT_TEMPERATURE_K);
-    setDamping(DEFAULT_DAMPING);
-    setBondScale(DEFAULT_BOND_SCALE);
+    setTempBathMode(TEMP_BATH_MODE.OFF);
+    setTempBathPulse(null);
+    setPressureBathMode(PRESSURE_BATH_MODE.OFF);
+    setPressureBathPulse(null);
 
     setBoxHalfSize(DEFAULT_BOX_HALF_SIZE);
     setShowBoxEdges(true);
     setShowPeriodicRepeats(false);
-    setAdaptiveForceField(true);
 
     setShowBonds(true);
-    setAllowMultipleBonds(true);
     setSpawnElementCount(5);
-    setSpawnFeedType("trapBalanced");
-    setSpawnFeedSelectOpen(false);
-    setProtocolPreset("trap-cycle");
-    setProtocolAutoRun(false);
-    setProtocolIncludeDosing(true);
-    setProtocolElapsedMs(0);
 
     // DO NOT change tool
     setPlaceElement("C");
 
-    setLj(structuredClone(DEFAULT_LJ));
-    setLjElement("C");
-
     // leave controlsOpen as-is (don't force open on mobile)
-    setAutomationOpen(false);
-    setWellsOpen(false);
-  }
-
-  // LJ sliders edit ljElement
-  const selectedSigma = lj[ljElement]?.sigma ?? 1.1;
-  const selectedEpsilon = lj[ljElement]?.epsilon ?? 1.0;
-
-  function updateSelectedLJ(field, v) {
-    setLj((prev) => {
-      const next = structuredClone(prev);
-      next[ljElement][field] = v;
-      return next;
-    });
   }
 
   function toggleCollectionSort(nextKey) {
@@ -3796,73 +4040,7 @@ export default function ReactorPage() {
     );
   }
 
-  const activeProtocolMeta =
-    CONTROL_PROTOCOLS.find((item) => item.id === protocolPreset) ||
-    CONTROL_PROTOCOLS[0];
   const placeElementLabel = ELEMENT_NAMES[placeElement] || placeElement;
-  const protocolStatusKey = String(protocolStatus || "")
-    .trim()
-    .toLowerCase();
-  const protocolStatusIsActive =
-    protocolStatusKey !== "idle" && protocolStatusKey !== "stopped";
-  const activeProtocolDurationMs = useMemo(
-    () => getProtocolDurationMs(protocolPreset),
-    [protocolPreset],
-  );
-  const protocolCycleIndex = useMemo(() => {
-    if (!protocolRunning || activeProtocolDurationMs <= 0) return 1;
-    if (!protocolAutoRun) return 1;
-    return Math.floor(protocolElapsedMs / activeProtocolDurationMs) + 1;
-  }, [
-    activeProtocolDurationMs,
-    protocolAutoRun,
-    protocolElapsedMs,
-    protocolRunning,
-  ]);
-  const protocolCountdownRowText = useMemo(() => {
-    if (!protocolRunning || activeProtocolDurationMs <= 0) return "";
-    const cycleElapsedMs = protocolAutoRun
-      ? protocolElapsedMs % activeProtocolDurationMs
-      : Math.min(protocolElapsedMs, activeProtocolDurationMs);
-    const remainingMs = Math.max(0, activeProtocolDurationMs - cycleElapsedMs);
-    const baseText = `${formatProtocolCountdown(remainingMs)} remaining`;
-    return protocolAutoRun
-      ? `${baseText} in Cycle ${protocolCycleIndex}`
-      : baseText;
-  }, [
-    activeProtocolDurationMs,
-    protocolCycleIndex,
-    protocolAutoRun,
-    protocolElapsedMs,
-    protocolRunning,
-  ]);
-  const protocolCountdownRowHasContent = protocolCountdownRowText.length > 0;
-  const protocolTrendRowText = protocolRunning
-    ? String(protocolTrendTags || "").trim()
-    : "";
-  const protocolTrendRowHasContent = protocolTrendRowText.length > 0;
-  const statusReadoutRows = useMemo(
-    () => [...actionReadoutTags, ...controlDeltaTags],
-    [actionReadoutTags, controlDeltaTags],
-  );
-  const activeProtocolDosingPanelText = useMemo(() => {
-    if (!protocolIncludeDosing) {
-      return "Dosing profile: disabled for automation cycles.";
-    }
-    if (protocolPreset === "scaffold-then-cap") {
-      return `Dosing profile: scaffold feed during build stage [${formatFeedAtomBreakdown(
-        AUTOMATION_FEEDS.scaffoldBuild.counts,
-      )}], then hydrogen pulses during cap stage [${formatFeedAtomBreakdown(
-        AUTOMATION_FEEDS.hydrogenPulse.counts,
-      )}].`;
-    }
-    if (protocolPreset === "trap-cycle") {
-      return `Dosing profile: one balanced feed pulse each trap-breaker cycle [${formatFeedAtomBreakdown(
-        AUTOMATION_FEEDS.trapBalanced.counts,
-      )}].`;
-    }
-    return "Dosing profile: no auto-dosing events for this cycle.";
-  }, [protocolIncludeDosing, protocolPreset]);
 
   const instructionText = useMemo(() => {
     if (tool === TOOL.ROTATE) {
@@ -3919,6 +4097,490 @@ export default function ReactorPage() {
       "Click live molecule: select/deselect it",
     ];
   }, [tool, placeElement]);
+  const automationVisualActive = automationBuilderRunning;
+  const effectiveTempBathMode = automationVisualActive
+    ? automationTempVisualMode
+    : tempBathMode;
+  const effectivePressureBathMode = automationVisualActive
+    ? automationPressureVisualMode
+    : pressureBathMode;
+  const tempBathCenterLabel = useMemo(() => {
+    if (effectiveTempBathMode === TEMP_BATH_MODE.OFF) return "OFF";
+    const atMin = temperatureK <= TEMP_CONTROL_MIN_K + 1e-6;
+    const atMax = temperatureK >= TEMP_CONTROL_MAX_K - 1e-6;
+    const cooling =
+      effectiveTempBathMode === TEMP_BATH_MODE.FAST_COOL ||
+      effectiveTempBathMode === TEMP_BATH_MODE.SLOW_COOL;
+    const heating =
+      effectiveTempBathMode === TEMP_BATH_MODE.FAST_HEAT ||
+      effectiveTempBathMode === TEMP_BATH_MODE.SLOW_HEAT;
+    if (cooling && atMin) return "MIN";
+    if (heating && atMax) return "MAX";
+    return "";
+  }, [effectiveTempBathMode, temperatureK]);
+  const pressureBathCenterLabel = useMemo(() => {
+    if (effectivePressureBathMode === PRESSURE_BATH_MODE.OFF) return "OFF";
+    const atMin = boxHalfSize <= PRESSURE_CONTROL_MIN_BOX_HALF_SIZE + 1e-6;
+    const atMax = boxHalfSize >= PRESSURE_CONTROL_MAX_BOX_HALF_SIZE - 1e-6;
+    const contracting =
+      effectivePressureBathMode === PRESSURE_BATH_MODE.FAST_CONTRACT ||
+      effectivePressureBathMode === PRESSURE_BATH_MODE.SLOW_CONTRACT;
+    const expanding =
+      effectivePressureBathMode === PRESSURE_BATH_MODE.FAST_EXPAND ||
+      effectivePressureBathMode === PRESSURE_BATH_MODE.SLOW_EXPAND;
+    if (contracting && atMin) return "MIN";
+    if (expanding && atMax) return "MAX";
+    return "";
+  }, [effectivePressureBathMode, boxHalfSize]);
+  const automationKindOptions = (
+    <>
+      <option value={AUTOMATION_ACTION_KIND.CONDITION}>Change controls</option>
+      <option value={AUTOMATION_ACTION_KIND.ATOMS}>Add/Remove atoms</option>
+      <option value={AUTOMATION_ACTION_KIND.WAIT}>Wait</option>
+    </>
+  );
+  const renderAutomationBuilderActionFields = (rowAction) => {
+    const actionKind = String(rowAction.kind || "");
+    if (actionKind === AUTOMATION_ACTION_KIND.CONDITION) {
+      const durationValue = Math.max(
+        1,
+        Math.floor(Number(rowAction.durationSec) || 5),
+      );
+      return (
+        <div className="reactor-automation-builder-line">
+          <select
+            value={String(rowAction.speed || "slowly")}
+            onChange={(e) =>
+              updateAutomationBuilderAction(rowAction.id, {
+                speed: e.target.value,
+              })
+            }
+            disabled={automationBuilderRunning}
+            className={ui.select}
+          >
+            {AUTOMATION_SPEED_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <select
+            value={String(rowAction.direction || "increase")}
+            onChange={(e) =>
+              updateAutomationBuilderAction(rowAction.id, {
+                direction: e.target.value,
+              })
+            }
+            disabled={automationBuilderRunning}
+            className={ui.select}
+          >
+            {AUTOMATION_DIRECTION_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <select
+            value={String(rowAction.target || "temperature")}
+            onChange={(e) =>
+              updateAutomationBuilderAction(rowAction.id, {
+                target: e.target.value,
+              })
+            }
+            disabled={automationBuilderRunning}
+            className={ui.select}
+          >
+            {AUTOMATION_CONDITION_TARGET_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <span className="reactor-text-10-muted">for</span>
+          <select
+            value={durationValue}
+            onChange={(e) =>
+              updateAutomationBuilderAction(rowAction.id, {
+                durationSec: parseInt(e.target.value, 10),
+              })
+            }
+            disabled={automationBuilderRunning}
+            className={ui.select}
+          >
+            {AUTOMATION_DURATION_OPTIONS.map((seconds) => (
+              <option key={seconds} value={seconds}>
+                {seconds}
+              </option>
+            ))}
+          </select>
+          <span className="reactor-text-10-muted">
+            {durationValue === 1 ? "second" : "seconds"}
+          </span>
+        </div>
+      );
+    }
+    if (actionKind === AUTOMATION_ACTION_KIND.ATOMS) {
+      const atomOperation = normalizeAutomationBuilderAtomOperation(
+        rowAction.operation,
+      );
+      const atomEntries = normalizeAutomationBuilderAtomEntries(
+        rowAction,
+        atomOperation,
+      );
+      const commitAtomEntries = (nextEntries, nextOperation = atomOperation) => {
+        const normalizedOperation =
+          normalizeAutomationBuilderAtomOperation(nextOperation);
+        const normalizedEntries =
+          Array.isArray(nextEntries) && nextEntries.length > 0
+            ? nextEntries.map((entry) =>
+                normalizeAutomationBuilderAtomEntry(entry, normalizedOperation),
+              )
+            : [createAutomationBuilderAtomEntry(normalizedOperation)];
+        const primaryEntry = normalizedEntries[0];
+        updateAutomationBuilderAction(rowAction.id, {
+          operation: normalizedOperation,
+          atomEntries: normalizedEntries,
+          count: primaryEntry.count,
+          element: primaryEntry.element,
+        });
+      };
+      return (
+        <div className="reactor-automation-builder-atom-ops">
+          <select
+            value={atomOperation}
+            onChange={(e) => {
+              const nextOperation = normalizeAutomationBuilderAtomOperation(
+                e.target.value,
+              );
+              commitAtomEntries(atomEntries, nextOperation);
+            }}
+            disabled={automationBuilderRunning}
+            className={ui.select}
+          >
+            <option value="add">add</option>
+            <option value="remove">remove</option>
+          </select>
+          {atomEntries.map((entry, entryIndex) => (
+            <div
+              key={`atom-entry-${entryIndex}`}
+              className="reactor-automation-builder-line reactor-automation-builder-atom-row"
+            >
+              {entryIndex > 0 ? (
+                <span className="reactor-text-10-muted">and</span>
+              ) : null}
+              <select
+                value={
+                  atomOperation === "remove"
+                    ? String(entry.count ?? "half")
+                    : Math.max(1, Math.floor(Number(entry.count) || 1))
+                }
+                onChange={(e) => {
+                  const rawValue = e.target.value;
+                  const nextCount =
+                    atomOperation === "remove" &&
+                    (rawValue === "half" || rawValue === "all")
+                      ? rawValue
+                      : parseInt(rawValue, 10);
+                  const nextEntries = atomEntries.map((candidate, idx) =>
+                    idx === entryIndex ? { ...candidate, count: nextCount } : candidate,
+                  );
+                  commitAtomEntries(nextEntries);
+                }}
+                disabled={automationBuilderRunning}
+                className={ui.select}
+              >
+                {atomOperation === "remove"
+                  ? AUTOMATION_ATOM_REMOVE_COUNT_OPTIONS.map((countOption) => (
+                      <option
+                        key={`remove-count-${entryIndex}-${countOption}`}
+                        value={String(countOption)}
+                      >
+                        {String(countOption)}
+                      </option>
+                    ))
+                  : AUTOMATION_ATOM_COUNT_OPTIONS.map((count) => (
+                      <option key={`${entryIndex}-${count}`} value={count}>
+                        {count}
+                      </option>
+                    ))}
+              </select>
+              <span className="reactor-text-10-muted">
+                {Number(entry?.count) === 1 ? "atom of" : "atoms of"}
+              </span>
+              <select
+                value={String(entry.element || "H")}
+                onChange={(e) => {
+                  const nextEntries = atomEntries.map((candidate, idx) =>
+                    idx === entryIndex
+                      ? { ...candidate, element: e.target.value }
+                      : candidate,
+                  );
+                  commitAtomEntries(nextEntries);
+                }}
+                disabled={automationBuilderRunning}
+                className={ui.select}
+              >
+                {ELEMENTS.map((el) => (
+                  <option key={el} value={el}>
+                    {String(ELEMENT_NAMES[el] || el).toLowerCase()}
+                  </option>
+                ))}
+              </select>
+              {entryIndex > 0 ? (
+                <button
+                  onClick={() => {
+                    const nextEntries = atomEntries.filter(
+                      (_, idx) => idx !== entryIndex,
+                    );
+                    commitAtomEntries(nextEntries);
+                  }}
+                  disabled={automationBuilderRunning}
+                  className={`${ui.btnLight} reactor-automation-builder-atom-entry-remove`}
+                  title="Remove this AND atom target."
+                >
+                  -
+                </button>
+              ) : null}
+            </div>
+          ))}
+          <div className="reactor-row-gap-8-wrap">
+            <button
+              onClick={() =>
+                commitAtomEntries([
+                  ...atomEntries,
+                  createAutomationBuilderAtomEntry(atomOperation),
+                ])
+              }
+              disabled={automationBuilderRunning}
+              className={ui.btnLight}
+              title="Add another atom target to this same action."
+            >
+              And
+            </button>
+          </div>
+        </div>
+      );
+    }
+    const waitDurationValue = Math.max(
+      1,
+      Math.floor(Number(rowAction.durationSec) || 5),
+    );
+    return (
+      <div className="reactor-automation-builder-line">
+        <span className="reactor-text-10-muted">wait</span>
+        <select
+          value={waitDurationValue}
+          onChange={(e) =>
+            updateAutomationBuilderAction(rowAction.id, {
+              durationSec: parseInt(e.target.value, 10),
+            })
+          }
+          disabled={automationBuilderRunning}
+          className={ui.select}
+        >
+          {AUTOMATION_DURATION_OPTIONS.map((seconds) => (
+            <option key={seconds} value={seconds}>
+              {seconds}
+            </option>
+          ))}
+        </select>
+        <span className="reactor-text-10-muted">
+          {waitDurationValue === 1 ? "second" : "seconds"}
+        </span>
+      </div>
+    );
+  };
+  const collectAutomationBuilderDescendantStepCodes = (node, stepCode) => {
+    const whileChildren = Array.isArray(node?.whileActions) ? node.whileActions : [];
+    const thenChildren = Array.isArray(node?.thenActions) ? node.thenActions : [];
+    const descendants = [];
+    whileChildren.forEach((child, childIndex) => {
+      const childCode = `${stepCode}.${getAutomationAlphabetSegment(childIndex)}`;
+      descendants.push(childCode);
+      descendants.push(
+        ...collectAutomationBuilderDescendantStepCodes(child, childCode),
+      );
+    });
+    thenChildren.forEach((child, childIndex) => {
+      const childCode = `${stepCode}.${childIndex + 1}`;
+      descendants.push(childCode);
+      descendants.push(
+        ...collectAutomationBuilderDescendantStepCodes(child, childCode),
+      );
+    });
+    return descendants;
+  };
+  const renderAutomationBuilderNode = (rowAction, stepCode, branchKind = "root") => {
+    const whileChildren = Array.isArray(rowAction?.whileActions)
+      ? rowAction.whileActions
+      : [];
+    const thenChildren = Array.isArray(rowAction?.thenActions)
+      ? rowAction.thenActions
+      : [];
+    const isActive =
+      automationBuilderRunning &&
+      automationBuilderActiveActionIds.includes(rowAction.id);
+    return (
+      <div className={`reactor-automation-builder-node is-${branchKind}`}>
+        <div
+          className="reactor-automation-builder-action"
+          data-active={isActive ? "true" : "false"}
+          data-branch={branchKind}
+        >
+          <div className="reactor-automation-builder-index">{stepCode}</div>
+          <div className="reactor-automation-builder-step">
+            <div className="reactor-automation-builder-fields">
+              {renderAutomationBuilderActionFields(rowAction)}
+            </div>
+            <div className="reactor-row-gap-8-wrap reactor-automation-builder-node-controls">
+              <button
+                onClick={() => {
+                  setAutomationBuilderThenPickerForId(null);
+                  setAutomationBuilderWhilePickerForId((current) =>
+                    current === rowAction.id ? null : rowAction.id,
+                  );
+                }}
+                disabled={automationBuilderRunning}
+                className={ui.btnLight}
+                title="Add a concurrent action in this step."
+              >
+                +While
+              </button>
+              <button
+                onClick={() => {
+                  setAutomationBuilderWhilePickerForId(null);
+                  setAutomationBuilderThenPickerForId((current) =>
+                    current === rowAction.id ? null : rowAction.id,
+                  );
+                }}
+                disabled={automationBuilderRunning}
+                className={ui.btnLight}
+                title="Add a next step after this step completes."
+              >
+                +Then
+              </button>
+              <button
+                onClick={() => {
+                  const descendantCodes = collectAutomationBuilderDescendantStepCodes(
+                    rowAction,
+                    stepCode,
+                  );
+                  if (descendantCodes.length > 0) {
+                    const shouldRemove = window.confirm(
+                      `Removing step ${stepCode} will also remove: ${descendantCodes.join(", ")}. Continue?`,
+                    );
+                    if (!shouldRemove) return;
+                  }
+                  removeAutomationBuilderAction(rowAction.id);
+                  setAutomationBuilderWhilePickerForId((current) =>
+                    current === rowAction.id ? null : current,
+                  );
+                  setAutomationBuilderThenPickerForId((current) =>
+                    current === rowAction.id ? null : current,
+                  );
+                }}
+                disabled={automationBuilderRunning}
+                className={`${ui.btnLight} reactor-automation-builder-remove-btn`}
+                title={
+                  branchKind === "root" ? "Remove this step." : "Remove this action."
+                }
+              >
+                -
+              </button>
+            </div>
+            {automationBuilderWhilePickerForId === rowAction.id ? (
+              <div className="reactor-automation-builder-while-picker">
+                <span className="reactor-text-10-muted">Add concurrent:</span>
+                <select
+                  value={automationBuilderWhileAddKind}
+                  onChange={(e) => setAutomationBuilderWhileAddKind(e.target.value)}
+                  disabled={automationBuilderRunning}
+                  className={ui.select}
+                >
+                  {automationKindOptions}
+                </select>
+                <button
+                  onClick={() => {
+                    addAutomationBuilderWhileAction(
+                      rowAction.id,
+                      automationBuilderWhileAddKind,
+                    );
+                    setAutomationBuilderWhilePickerForId(null);
+                  }}
+                  disabled={automationBuilderRunning}
+                  className={ui.btnLight}
+                  title="Add concurrent action."
+                >
+                  Add
+                </button>
+              </div>
+            ) : null}
+            {automationBuilderThenPickerForId === rowAction.id ? (
+              <div className="reactor-automation-builder-then-picker">
+                <span className="reactor-text-10-muted">Add next step:</span>
+                <select
+                  value={automationBuilderThenAddKind}
+                  onChange={(e) => setAutomationBuilderThenAddKind(e.target.value)}
+                  disabled={automationBuilderRunning}
+                  className={ui.select}
+                >
+                  {automationKindOptions}
+                </select>
+                <button
+                  onClick={() => {
+                    addAutomationBuilderThenAction(
+                      rowAction.id,
+                      automationBuilderThenAddKind,
+                    );
+                    setAutomationBuilderThenPickerForId(null);
+                  }}
+                  disabled={automationBuilderRunning}
+                  className={ui.btnLight}
+                  title="Insert next step."
+                >
+                  Add
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        {whileChildren.length > 0 ? (
+          <div className="reactor-automation-builder-children reactor-automation-builder-children-while">
+            {whileChildren.map((child, childIndex) => (
+              <div key={child.id} className="reactor-automation-builder-branch">
+                <div className="reactor-automation-builder-branch-label">While</div>
+                {renderAutomationBuilderNode(
+                  child,
+                  `${stepCode}.${getAutomationAlphabetSegment(childIndex)}`,
+                  "while",
+                )}
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {thenChildren.length > 0 ? (
+          <div className="reactor-automation-builder-children reactor-automation-builder-children-then">
+            {thenChildren.map((child, childIndex) => (
+              <div key={child.id} className="reactor-automation-builder-branch is-then">
+                <div className="reactor-automation-builder-branch-label is-then">
+                  -&gt;Then
+                </div>
+                {renderAutomationBuilderNode(
+                  child,
+                  `${stepCode}.${childIndex + 1}`,
+                  "then",
+                )}
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+  const automationBuilderActiveStepLabel =
+    automationBuilderActiveStepCodes.length > 0
+      ? automationBuilderActiveStepCodes.join(", ")
+      : `${Math.max(1, automationBuilderActiveIndex + 1)}`;
 
   return (
     <section className="page">
@@ -3941,390 +4603,330 @@ export default function ReactorPage() {
       </div>
 
       <div ref={canvasCardRef} className={ui.canvasCard}>
-        {/* Controls: top-left */}
+        {/* Automation: top-left */}
         {controlsOpen ? (
-          <div
-            id="controls-overlay"
-            className={ui.controls}
-            style={{ maxHeight: "calc(100% - 136px)" }}
-          >
-            <div className={ui.headerRow}>
-              <button
-                onClick={() => setControlsOpen(false)}
-                className={ui.titleBtn}
-                title="Close controls panel."
-              >
-                Controls
-              </button>
-              <button
-                onClick={() => setControlsOpen(false)}
-                className={ui.btnLight}
-                title="Close controls panel."
-              >
-                Hide
-              </button>
-            </div>
-
-            <div className="reactor-col-gap-8">
-              <div className="reactor-row-gap-8-wrap">
-                <button
-                  onClick={() => setPaused((p) => !p)}
-                  className={ui.btnDark}
-                  title="Pause or resume physics updates."
-                >
-                  {paused ? "Resume" : "Pause"}
-                </button>
-                <button
-                  onClick={shake}
-                  className={ui.btnLight}
-                  title="Apply a random nudge to all atoms."
-                >
-                  Shake
-                </button>
-                <button
-                  onClick={resetAllControls}
-                  className={ui.btnLight}
-                  title="Restore reactor/control defaults."
-                >
-                  Reset all controls
-                </button>
-              </div>
-            </div>
-
-            <div className={ui.section}>
-              <div className="reactor-text-11-title">Reactor controls</div>
-
-              <MiniSlider
-                label="Temperature"
-                value={temperatureK}
-                min={0}
-                max={1800}
-                step={10}
-                onChange={setTemperatureK}
-                tooltip="Thermal energy level. Higher values increase motion and collisions."
-              />
-              <MiniSlider
-                label="Damping"
-                value={damping}
-                min={0.95}
-                max={0.9998}
-                step={0.001}
-                onChange={setDamping}
-                tooltip="Velocity retention per step. Higher values keep motion longer."
-              />
-              <MiniSlider
-                label="Bond strength"
-                value={bondScale}
-                min={0.1}
-                max={7.0}
-                step={0.05}
-                onChange={setBondScale}
-                tooltip="Scales bond attraction/hold strength."
-              />
-              <MiniSlider
-                label="Volume (box size)"
-                value={boxHalfSize}
-                min={2.0}
-                max={14}
-                step={0.1}
-                onChange={setBoxHalfSize}
-                tooltip="Container size. Smaller volume increases collision frequency."
-              />
-            </div>
-
-            <div className={ui.section}>
-              <div className={ui.row}>
-                <button
-                  onClick={() => setAutomationOpen((open) => !open)}
-                  className={ui.sectionTitleBtn}
-                  title="Show or hide Reactor automation cycle controls."
-                >
-                  Reactor automation cycles
-                </button>
-                <div className="reactor-row-gap-8">
-                  {!automationOpen && protocolRunning ? (
-                    <button
-                      onClick={() => stopControlProtocol("stopped")}
-                      className={ui.btnDark}
-                      title="Stop the currently running automation protocol."
-                    >
-                      Stop
-                    </button>
-                  ) : null}
-                  <button
-                    onClick={() => setAutomationOpen((open) => !open)}
-                    className={ui.btnLight}
-                    title="Show or hide Reactor automation cycle controls."
-                  >
-                    {automationOpen ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-              {automationOpen ? (
-                <div className="reactor-grid-gap-4">
-                  <div
-                    style={{
-                      border: "1px solid rgba(15,23,42,0.12)",
-                      borderRadius: 10,
-                      background: "rgba(241,245,249,0.72)",
-                      padding: "8px 9px",
-                      display: "grid",
-                      gap: 4,
-                    }}
-                  >
-                    <div
-                      className="reactor-text-11-title"
-                      style={{ fontWeight: 900 }}
-                    >
-                      {`Current automation: ${activeProtocolMeta?.name ?? "Unknown"}`}
-                    </div>
-                    <div
-                      className="reactor-text-10-muted"
-                      style={{
-                        color: protocolStatusIsActive ? "#a16207" : "#475569",
-                        fontWeight: protocolStatusIsActive ? 800 : 700,
-                      }}
-                    >
-                      {`Status: ${protocolStatus}`}
-                    </div>
-                    <div
-                      className="reactor-text-10-muted"
-                      style={{
-                        minHeight: 14,
-                        color: protocolCountdownRowHasContent
-                          ? "#334155"
-                          : "#94a3b8",
-                        fontWeight: 800,
-                        letterSpacing: 0.2,
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {protocolCountdownRowHasContent
-                        ? protocolCountdownRowText
-                        : "\u00A0"}
-                    </div>
-                    <div
-                      className="reactor-text-10-muted"
-                      style={{
-                        minHeight: 14,
-                        color: protocolTrendRowHasContent
-                          ? "#334155"
-                          : "#94a3b8",
-                        fontWeight: 800,
-                        letterSpacing: 0.2,
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {protocolTrendRowHasContent
-                        ? protocolTrendRowText
-                        : "\u00A0"}
-                    </div>
-                    <div className="reactor-text-10-muted">
-                      {activeProtocolMeta?.description}
-                    </div>
-                    <div className="reactor-text-10-muted">
-                      {activeProtocolDosingPanelText}
-                    </div>
-                  </div>
-                  <select
-                    value={protocolPreset}
-                    onChange={(e) => {
-                      if (protocolRunning) stopControlProtocol("stopped");
-                      setProtocolPreset(e.target.value);
-                      setProtocolSelectOpen(false);
-                    }}
-                    onFocus={() => setProtocolSelectOpen(true)}
-                    onMouseDown={() => setProtocolSelectOpen(true)}
-                    onBlur={() => setProtocolSelectOpen(false)}
-                    className={`${ui.select} reactor-ui-select-full`}
-                    title="Select an automation cycle for reactor control values."
-                  >
-                    {CONTROL_PROTOCOLS.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.id === protocolPreset && !protocolSelectOpen
-                          ? item.name
-                          : item.label}
-                      </option>
-                    ))}
-                  </select>
-                  <label className={ui.row}>
-                    <span
-                      className="reactor-text-10-muted"
-                      title="Automatically restart the protocol when a run completes."
-                    >
-                      Auto-run protocol
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={protocolAutoRun}
-                      onChange={(e) => setProtocolAutoRun(e.target.checked)}
-                      title="Repeat completed protocol runs automatically."
-                    />
-                  </label>
-                  <label className={ui.row}>
-                    <span
-                      className="reactor-text-10-muted"
-                      title="Inject preset atom doses while automation runs."
-                    >
-                      Include dosing with automation
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={protocolIncludeDosing}
-                      onChange={(e) =>
-                        setProtocolIncludeDosing(e.target.checked)
-                      }
-                      title="When enabled, automation injects recipe doses during applicable stages."
-                    />
-                  </label>
-                  <div className="reactor-row-gap-8-wrap reactor-center-justify">
-                    <button
-                      onClick={() =>
-                        protocolRunning
-                          ? stopControlProtocol("stopped")
-                          : setProtocolRunning(true)
-                      }
-                      className={protocolRunning ? ui.btnDark : ui.btnLight}
-                      title={
-                        protocolRunning
-                          ? "Stop the current protocol run."
-                          : "Run the selected protocol once."
-                      }
-                    >
-                      {protocolRunning
-                        ? "Stop automation protocol"
-                        : "Run automation protocol"}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className={ui.section}>
-              <div className={ui.row}>
-                <button
-                  onClick={() => setWellsOpen((open) => !open)}
-                  className={ui.sectionTitleBtn}
-                  title="Show or hide electronics controls."
-                >
-                  Electronics controls
-                </button>
-                <button
-                  onClick={() => setWellsOpen((s) => !s)}
-                  className={ui.btnLight}
-                  title="Show or hide electronics controls."
-                >
-                  {wellsOpen ? "Hide" : "Show"}
-                </button>
-              </div>
-
-              {wellsOpen ? (
-                <>
-                  <label className={ui.row}>
-                    <span
-                      className="reactor-text-12-strong"
-                      title="Allow higher bond orders when chemistry rules permit."
-                    >
-                      Allow double/triple bonds
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={allowMultipleBonds}
-                      onChange={(e) => setAllowMultipleBonds(e.target.checked)}
-                      title="Allow higher bond orders when chemistry rules permit."
-                    />
-                  </label>
-                  <label className={ui.row}>
-                    <span
-                      className="reactor-text-12-strong"
-                      title="Auto-tune force field intensity as local chemistry changes."
-                    >
-                      Adaptive force field
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={adaptiveForceField}
-                      onChange={(e) => setAdaptiveForceField(e.target.checked)}
-                      title="Auto-tune force field intensity as local chemistry changes."
-                    />
-                  </label>
-                  <div className={ui.row}>
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        minWidth: 0,
-                      }}
-                    >
-                      <div className="reactor-text-11-title">
-                        Nonbonded (LJ) for
-                      </div>
-                      <select
-                        value={ljElement}
-                        onChange={(e) => setLjElement(e.target.value)}
-                        className={ui.select}
-                        title="Choose which element's LJ profile to edit."
-                      >
-                        {ELEMENTS.map((k) => (
-                          <option key={k} value={k}>
-                            {k}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <MiniSlider
-                    label="Sigma (distance)"
-                    value={selectedSigma}
-                    min={0.6}
-                    max={2.3}
-                    step={0.02}
-                    onChange={(v) => updateSelectedLJ("sigma", v)}
-                    tooltip="Preferred nonbonded spacing (larger = farther apart)."
-                  />
-                  <MiniSlider
-                    label="Epsilon (stickiness)"
-                    value={selectedEpsilon}
-                    min={0.0}
-                    max={2.4}
-                    step={0.05}
-                    onChange={(v) => updateSelectedLJ("epsilon", v)}
-                    tooltip="Nonbonded attraction depth (larger = stickier)."
-                  />
-
-                  <div style={{ marginTop: 8 }}>
-                    <CombinedEnergyWells lj={lj} cutoff={FIXED_CUTOFF} />
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </div>
+          <AutomationBuilderPanel
+            ui={ui}
+            setControlsOpen={setControlsOpen}
+            automationBuilderRunning={automationBuilderRunning}
+            automationBuilderActiveStepLabel={automationBuilderActiveStepLabel}
+            automationBuilderRemainingMs={automationBuilderRemainingMs}
+            automationBuilderStatus={automationBuilderStatus}
+            stopAutomationBuilder={stopAutomationBuilder}
+            startAutomationBuilder={startAutomationBuilder}
+            automationBuilderActions={automationBuilderActions}
+            automationBuilderAddKind={automationBuilderAddKind}
+            setAutomationBuilderAddKind={setAutomationBuilderAddKind}
+            automationKindOptions={automationKindOptions}
+            addAutomationBuilderAction={addAutomationBuilderAction}
+            renderAutomationBuilderNode={renderAutomationBuilderNode}
+            automationBuilderRepeatCycle={automationBuilderRepeatCycle}
+            setAutomationBuilderRepeatCycle={setAutomationBuilderRepeatCycle}
+            clearAutomationBuilder={clearAutomationBuilder}
+          />
         ) : (
           <div className={ui.floatingShow}>
-            <button onClick={() => setControlsOpen(true)} className={ui.btnLight}>
-              Show controls
-            </button>
+            <div className="reactor-automation-quick-control">
+              <button
+                onClick={() =>
+                  automationBuilderRunning
+                    ? stopAutomationBuilder("stopped")
+                    : startAutomationBuilder()
+                }
+                className={`${
+                  automationBuilderRunning ? ui.btnDark : ui.btnLight
+                } reactor-automation-quick-run-btn`}
+                title={
+                  automationBuilderRunning
+                    ? "Stop the current automation builder run."
+                    : "Run the current automation builder flow."
+                }
+              >
+                {automationBuilderRunning ? "Stop automation" : "Run automation"}
+              </button>
+              <button
+                onClick={() => setControlsOpen(true)}
+                className={`${
+                  automationBuilderRunning ? ui.btnLight : ui.btnDark
+                } reactor-automation-quick-edit-btn`}
+                data-tone={automationBuilderRunning ? "light" : "dark"}
+                title={
+                  automationBuilderRunning
+                    ? "View automation builder."
+                    : "Open automation builder editor."
+                }
+              >
+                {automationBuilderRunning ? "View" : "Edit"}
+              </button>
+            </div>
+            <div className="reactor-temp-bath-controls">
+              <div className="reactor-temp-bath-header">
+                <div className="reactor-temp-bath-title">Temperature control</div>
+              </div>
+              <div className="reactor-temp-bath-cluster" role="group" aria-label="Temperature bath controls">
+                <button
+                  type="button"
+                  className="reactor-temp-bath-pulse-btn"
+                  data-tone="cool"
+                  data-active={tempBathPulse === TEMP_BATH_PULSE.COOL ? "true" : "false"}
+                  title="Pulse cool"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    setTempBathPulse(TEMP_BATH_PULSE.COOL);
+                    e.currentTarget.setPointerCapture?.(e.pointerId);
+                  }}
+                  onPointerUp={() => setTempBathPulse(null)}
+                  onPointerCancel={() => setTempBathPulse(null)}
+                  onLostPointerCapture={() => setTempBathPulse(null)}
+                  onBlur={() => setTempBathPulse(null)}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  <span className="reactor-temp-bath-pulse-dot" aria-hidden="true" />
+                </button>
+
+                <div className="reactor-temp-bath-row">
+                  {[
+                    {
+                      id: TEMP_BATH_MODE.FAST_COOL,
+                      tone: "cool",
+                      label: "Cool quickly",
+                      icon: tempBathLeftIcon,
+                    },
+                    {
+                      id: TEMP_BATH_MODE.SLOW_COOL,
+                      tone: "cool",
+                      label: "Cool slowly",
+                      icon: tempBathLeftIcon,
+                    },
+                    {
+                      id: TEMP_BATH_MODE.OFF,
+                      tone: "off",
+                      label: "Bath off",
+                    },
+                    {
+                      id: TEMP_BATH_MODE.SLOW_HEAT,
+                      tone: "heat",
+                      label: "Heat slowly",
+                      icon: tempBathRightIcon,
+                    },
+                    {
+                      id: TEMP_BATH_MODE.FAST_HEAT,
+                      tone: "heat",
+                      label: "Heat quickly",
+                      icon: tempBathRightIcon,
+                    },
+                  ].map((item) => {
+                    const active =
+                      effectiveTempBathMode === item.id ||
+                      (effectiveTempBathMode === TEMP_BATH_MODE.FAST_COOL &&
+                        item.id === TEMP_BATH_MODE.SLOW_COOL) ||
+                      (effectiveTempBathMode === TEMP_BATH_MODE.FAST_HEAT &&
+                        item.id === TEMP_BATH_MODE.SLOW_HEAT);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="reactor-temp-bath-btn"
+                        data-active={active ? "true" : "false"}
+                        data-tone={item.tone}
+                        aria-pressed={active}
+                        title={item.label}
+                        onClick={() => setTempBathMode(item.id)}
+                      >
+                        {item.id === TEMP_BATH_MODE.OFF ? (
+                          <>
+                            <span className="reactor-temp-bath-dot" aria-hidden="true" />
+                            {tempBathCenterLabel ? (
+                              <span
+                                className="reactor-temp-bath-off-symbol"
+                                data-tone={
+                                  tempBathCenterLabel === "MIN"
+                                    ? "cool"
+                                    : tempBathCenterLabel === "MAX"
+                                      ? "heat"
+                                      : "off"
+                                }
+                                aria-hidden="true"
+                              >
+                                {tempBathCenterLabel}
+                              </span>
+                            ) : null}
+                          </>
+                        ) : (
+                          <span
+                            className="reactor-temp-bath-icon"
+                            aria-hidden="true"
+                            style={{
+                              "--temp-bath-icon-url": `url("${item.icon.src}")`,
+                            }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  className="reactor-temp-bath-pulse-btn"
+                  data-tone="heat"
+                  data-active={tempBathPulse === TEMP_BATH_PULSE.HEAT ? "true" : "false"}
+                  title="Pulse heat"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    setTempBathPulse(TEMP_BATH_PULSE.HEAT);
+                    e.currentTarget.setPointerCapture?.(e.pointerId);
+                  }}
+                  onPointerUp={() => setTempBathPulse(null)}
+                  onPointerCancel={() => setTempBathPulse(null)}
+                  onLostPointerCapture={() => setTempBathPulse(null)}
+                  onBlur={() => setTempBathPulse(null)}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  <span className="reactor-temp-bath-pulse-dot" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+            <div className="reactor-temp-bath-controls">
+              <div className="reactor-temp-bath-header">
+                <div className="reactor-temp-bath-title">Volume control</div>
+              </div>
+              <div className="reactor-temp-bath-cluster" role="group" aria-label="Volume controls">
+                <button
+                  type="button"
+                  className="reactor-temp-bath-pulse-btn"
+                  data-tone="cool"
+                  data-active={
+                    pressureBathPulse === PRESSURE_BATH_PULSE.CONTRACT
+                      ? "true"
+                      : "false"
+                  }
+                  title="Pulse contract"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    setPressureBathPulse(PRESSURE_BATH_PULSE.CONTRACT);
+                    e.currentTarget.setPointerCapture?.(e.pointerId);
+                  }}
+                  onPointerUp={() => setPressureBathPulse(null)}
+                  onPointerCancel={() => setPressureBathPulse(null)}
+                  onLostPointerCapture={() => setPressureBathPulse(null)}
+                  onBlur={() => setPressureBathPulse(null)}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  <span className="reactor-temp-bath-pulse-dot" aria-hidden="true" />
+                </button>
+
+                <div className="reactor-temp-bath-row">
+                  {[
+                    {
+                      id: PRESSURE_BATH_MODE.FAST_CONTRACT,
+                      tone: "cool",
+                      label: "Contract quickly",
+                      icon: tempBathLeftIcon,
+                    },
+                    {
+                      id: PRESSURE_BATH_MODE.SLOW_CONTRACT,
+                      tone: "cool",
+                      label: "Contract slowly",
+                      icon: tempBathLeftIcon,
+                    },
+                    {
+                      id: PRESSURE_BATH_MODE.OFF,
+                      tone: "off",
+                      label: "Volume control off",
+                    },
+                    {
+                      id: PRESSURE_BATH_MODE.SLOW_EXPAND,
+                      tone: "heat",
+                      label: "Expand slowly",
+                      icon: tempBathRightIcon,
+                    },
+                    {
+                      id: PRESSURE_BATH_MODE.FAST_EXPAND,
+                      tone: "heat",
+                      label: "Expand quickly",
+                      icon: tempBathRightIcon,
+                    },
+                  ].map((item) => {
+                    const active =
+                      effectivePressureBathMode === item.id ||
+                      (effectivePressureBathMode ===
+                        PRESSURE_BATH_MODE.FAST_CONTRACT &&
+                        item.id === PRESSURE_BATH_MODE.SLOW_CONTRACT) ||
+                      (effectivePressureBathMode ===
+                        PRESSURE_BATH_MODE.FAST_EXPAND &&
+                        item.id === PRESSURE_BATH_MODE.SLOW_EXPAND);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="reactor-temp-bath-btn"
+                        data-active={active ? "true" : "false"}
+                        data-tone={item.tone}
+                        aria-pressed={active}
+                        title={item.label}
+                        onClick={() => setPressureBathMode(item.id)}
+                      >
+                        {item.id === PRESSURE_BATH_MODE.OFF ? (
+                          <>
+                            <span className="reactor-temp-bath-dot" aria-hidden="true" />
+                            {pressureBathCenterLabel ? (
+                              <span
+                                className="reactor-temp-bath-off-symbol"
+                                data-tone={
+                                  pressureBathCenterLabel === "MIN"
+                                    ? "cool"
+                                    : pressureBathCenterLabel === "MAX"
+                                      ? "heat"
+                                      : "off"
+                                }
+                                aria-hidden="true"
+                              >
+                                {pressureBathCenterLabel}
+                              </span>
+                            ) : null}
+                          </>
+                        ) : (
+                          <span
+                            className="reactor-temp-bath-icon"
+                            aria-hidden="true"
+                            style={{
+                              "--temp-bath-icon-url": `url("${item.icon.src}")`,
+                            }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  className="reactor-temp-bath-pulse-btn"
+                  data-tone="heat"
+                  data-active={
+                    pressureBathPulse === PRESSURE_BATH_PULSE.EXPAND
+                      ? "true"
+                      : "false"
+                  }
+                  title="Pulse expand"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    setPressureBathPulse(PRESSURE_BATH_PULSE.EXPAND);
+                    e.currentTarget.setPointerCapture?.(e.pointerId);
+                  }}
+                  onPointerUp={() => setPressureBathPulse(null)}
+                  onPointerCancel={() => setPressureBathPulse(null)}
+                  onLostPointerCapture={() => setPressureBathPulse(null)}
+                  onBlur={() => setPressureBathPulse(null)}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  <span className="reactor-temp-bath-pulse-dot" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
-        {statusReadoutRows.length > 0 ? (
-          <div className={ui.trendTagShow}>
-            {statusReadoutRows.map((tag, idx) => (
-              <div
-                key={`trend-tag-stack-${idx}-${tag}`}
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  color: REACTOR_OVERLAY_LIGHT_TEXT,
-                  lineHeight: 1.35,
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {tag}
-              </div>
-            ))}
-          </div>
-        ) : null}
 
         {/* Mode: top-right */}
         {modeOpen ? (
@@ -4463,7 +5065,7 @@ export default function ReactorPage() {
                       />
                     </div>
                     <button
-                      onClick={() => spawnAtoms(spawnElementCount, "selected")}
+                      onClick={() => spawnAtoms(spawnElementCount)}
                       className={ui.btnLight}
                       disabled={spawnElementCount <= 0}
                       title="Spawn selected-element atoms."
@@ -4472,50 +5074,6 @@ export default function ReactorPage() {
                     </button>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "minmax(0, 1fr) auto",
-                      alignItems: "start",
-                      gap: 8,
-                    }}
-                  >
-                    <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
-                      <select
-                        value={spawnFeedType}
-                        onChange={(e) => {
-                          setSpawnFeedType(e.target.value);
-                          setSpawnFeedSelectOpen(false);
-                        }}
-                        onFocus={() => setSpawnFeedSelectOpen(true)}
-                        onMouseDown={() => setSpawnFeedSelectOpen(true)}
-                        onBlur={() => setSpawnFeedSelectOpen(false)}
-                        className={`${ui.select} reactor-ui-select-220`}
-                        title={
-                          AUTOMATION_FEEDS[spawnFeedType]?.description ||
-                          "Choose automation feed recipe."
-                        }
-                      >
-                        {Object.entries(AUTOMATION_FEEDS).map(([key, feed]) => (
-                          <option key={key} value={key}>
-                            {spawnFeedSelectOpen || spawnFeedType !== key
-                              ? `${feed.label} [${formatFeedAtomBreakdown(feed.counts)}]`
-                              : feed.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      onClick={() => spawnAutomationFeed(spawnFeedType)}
-                      className={ui.btnLight}
-                      title={
-                        AUTOMATION_FEEDS[spawnFeedType]?.description ||
-                        "Spawn selected automation feed."
-                      }
-                    >
-                      Spawn
-                    </button>
-                  </div>
                 </>
               ) : null}
 
@@ -4664,13 +5222,16 @@ export default function ReactorPage() {
                 menu: Place).
               </div>
               <div>
-                2. Mix; Change temperature, bond strength, and reactor volume
-                (Controls menu). Different conditions cause different molecules
-                to form.
+                2. Mix; Change temperature and volume. Higher temperature
+                means faster molecules. Lower volume means more collisions.
               </div>
               <div>
                 3. See what you made (Catalogue menu). Molecules made in the
                 reactor will automatically be added to your catalogue.
+              </div>
+              <div>
+                4. Use automation to do everything for you. Set it and forget
+                it.
               </div>
             </div>
             {!hasEverLocalSave && !starterSeedUsed ? (
@@ -5237,9 +5798,18 @@ export default function ReactorPage() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {presentElementRows.map((row) => (
-              <div key={`present-el-${row.el}`}>{`${row.count} ${row.el}`}</div>
-            ))}
+            {presentElementRows.map((row) => {
+              const deltaMarker = elementCountDeltaByElement[row.el] || "";
+              return (
+                <div
+                  key={`present-el-${row.el}`}
+                  style={{ display: "grid", gridTemplateColumns: "auto auto", gap: 6 }}
+                >
+                  <span>{`${row.count} ${row.el}`}</span>
+                  <span style={{ fontWeight: 900, minWidth: 8 }}>{deltaMarker}</span>
+                </div>
+              );
+            })}
             <div>--</div>
             <div style={{ fontWeight: 900 }}>{liveElementTotal}</div>
           </div>
@@ -5248,27 +5818,24 @@ export default function ReactorPage() {
         <div id="live-molecules-overlay" className={ui.liveHud}>
           <div className={ui.liveHudControls}>
             <button
+              onClick={shake}
+              className={`${ui.btnLight} reactor-ui-btn-inline`}
+              title="Apply a random nudge to all atoms."
+            >
+              Shake
+            </button>
+            <button
+              onClick={resetAllControls}
+              className={`${ui.btnLight} reactor-ui-btn-inline`}
+              title="Restore reactor/control defaults."
+            >
+              Reset controls
+            </button>
+            <button
               onClick={resetView}
               className={`${ui.btnLight} reactor-ui-btn-inline`}
             >
               Reset view
-            </button>
-            <button
-              onClick={() =>
-                protocolRunning
-                  ? stopControlProtocol("stopped")
-                  : setProtocolRunning(true)
-              }
-              className={`${ui.btnLight} reactor-ui-btn-inline`}
-              title={
-                protocolRunning
-                  ? "Stop the currently running automation protocol."
-                  : "Run the currently selected automation protocol."
-              }
-            >
-              {protocolRunning
-                ? "Stop automation protocol"
-                : "Run automation protocol"}
             </button>
             <button
               onClick={() => setPaused((p) => !p)}
@@ -5439,186 +6006,8 @@ export default function ReactorPage() {
   );
 }
 
-function MiniSlider({ label, value, min, max, step, onChange, tooltip = "" }) {
-  const format = () => {
-    if (Number.isInteger(step)) return `${Math.round(value)}`;
-    return value.toFixed(step < 0.01 ? 3 : step < 0.1 ? 2 : 2);
-  };
-
-  return (
-    <label className="reactor-mini-slider" title={tooltip}>
-      <div className="reactor-mini-slider-row">
-        <span className="reactor-mini-slider-label">
-          {label}
-        </span>
-        <span className="reactor-mini-slider-value">
-          {format()}
-        </span>
-      </div>
-      <input
-        className="reactor-slider"
-        type="range"
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        title={tooltip}
-        onChange={(e) =>
-          onChange(
-            step % 1 === 0
-              ? parseInt(e.target.value, 10)
-              : parseFloat(e.target.value),
-          )
-        }
-      />
-    </label>
-  );
-}
-
 function normalizeAngleDeg(value) {
   return ((Number(value) % 360) + 360) % 360;
-}
-
-function CombinedEnergyWells({ lj, cutoff }) {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-
-    const W = c.width;
-    const H = c.height;
-
-    let rMin = 0.4;
-    let rMax = Math.min(cutoff, 5.5);
-
-    const N = 260;
-    const curves = ELEMENTS.map((el) => {
-      const { sigma, epsilon } = mixLorentzBerthelot(lj, el, el);
-      const rrMin = Math.max(0.35, sigma * 0.65);
-      const rrMax = Math.max(rrMin + 0.5, Math.min(rMax, sigma * 4.2));
-      rMin = Math.min(rMin, rrMin);
-      rMax = Math.max(rMax, rrMax);
-
-      const xs = [];
-      const ys = [];
-      for (let i = 0; i < N; i++) {
-        const t = i / (N - 1);
-        const r = rrMin + (rrMax - rrMin) * t;
-        xs.push(r);
-        ys.push(ljPotential(r, epsilon, sigma));
-      }
-      return { el, xs, ys };
-    });
-
-    let yMin = Infinity;
-    let yMax = -Infinity;
-    for (const cur of curves) {
-      for (const u of cur.ys) {
-        yMin = Math.min(yMin, u);
-        yMax = Math.max(yMax, u);
-      }
-    }
-    const wallCap = Math.max(2.2, Math.abs(yMin) * 0.6);
-    yMax = Math.min(yMax, wallCap);
-    yMin = Math.max(yMin, -wallCap);
-
-    const pad = 28;
-    const plotW = W - pad * 2;
-    const plotH = H - pad * 2;
-
-    const xToPx = (r) => pad + ((r - rMin) / (rMax - rMin)) * plotW;
-    const yToPx = (u) => pad + (1 - (u - yMin) / (yMax - yMin)) * plotH;
-
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(255,255,255,0.94)";
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.globalAlpha = 0.25;
-    ctx.strokeStyle = "#94a3b8";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let i = 0; i <= 4; i++) {
-      const y = pad + (plotH * i) / 4;
-      ctx.moveTo(pad, y);
-      ctx.lineTo(W - pad, y);
-    }
-    for (let i = 0; i <= 5; i++) {
-      const x = pad + (plotW * i) / 5;
-      ctx.moveTo(x, pad);
-      ctx.lineTo(x, H - pad);
-    }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    ctx.fillStyle = "#0f172a";
-    ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText("U(r)", 10, 10);
-    ctx.textAlign = "right";
-    ctx.fillText("r", W - 10, H - 16);
-
-    const y0 = yToPx(0);
-    ctx.globalAlpha = 0.55;
-    ctx.strokeStyle = "#0f172a";
-    ctx.beginPath();
-    ctx.moveTo(pad, y0);
-    ctx.lineTo(W - pad, y0);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    const colors = {
-      S: "#b45309",
-      P: "#d97706",
-      O: "#dc2626",
-      N: "#2563eb",
-      C: "#111827",
-      H: "#334155",
-    };
-
-    for (const cur of curves) {
-      ctx.strokeStyle = colors[cur.el] || "#0f172a";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let i = 0; i < cur.xs.length; i++) {
-        const x = xToPx(cur.xs[i]);
-        const y = yToPx(clamp(cur.ys[i], yMin, yMax));
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-
-    // legend
-    ctx.font = "12px ui-sans-serif, system-ui, -apple-system";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    let lx = pad;
-    let ly = pad - 12;
-    for (const el of ELEMENTS) {
-      ctx.fillStyle = colors[el] || "#0f172a";
-      ctx.fillRect(lx, ly - 5, 10, 10);
-      ctx.fillStyle = "#0f172a";
-      ctx.fillText(el, lx + 14, ly);
-      lx += 42;
-    }
-  }, [lj, cutoff]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={390}
-      height={180}
-      style={{
-        width: "100%",
-        height: 180,
-        borderRadius: 12,
-        border: "1px solid rgba(15,23,42,0.12)",
-      }}
-    />
-  );
 }
 
 function makeBondKey(aId, bId) {
@@ -5637,4 +6026,5 @@ function clamp01(v) {
 function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v));
 }
+
 

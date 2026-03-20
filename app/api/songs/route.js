@@ -28,17 +28,11 @@ function normalizeDate(input) {
 }
 
 function getConfiguredUsername() {
-  return (
-    safeTrim(process.env.SONGS_API_USERNAME) ||
-    safeTrim(process.env.SONGS_USERNAME)
-  );
+  return safeTrim(process.env.SONGS_API_USERNAME);
 }
 
 function getConfiguredPassword() {
-  return (
-    safeTrim(process.env.SONGS_API_PASSWORD) ||
-    safeTrim(process.env.SONGS_PASSWORD)
-  );
+  return safeTrim(process.env.SONGS_API_PASSWORD);
 }
 
 function validateSongFields({ title, artist, date }) {

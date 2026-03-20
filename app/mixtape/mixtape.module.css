@@ -246,9 +246,9 @@
 }
 
 .columnHeaderRow {
-  min-width: 620px;
+  min-width: 664px;
   display: grid;
-  grid-template-columns: 164px 52px minmax(220px, 1fr) minmax(180px, auto);
+  grid-template-columns: 208px 52px minmax(220px, 1fr) minmax(180px, auto);
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
@@ -385,12 +385,12 @@
 
 .playlistRow {
   cursor: pointer;
-  grid-template-columns: 164px 52px minmax(220px, 1fr) minmax(180px, auto);
+  grid-template-columns: 208px 52px minmax(220px, 1fr) minmax(180px, auto);
 }
 
 .wakeupRow {
   cursor: pointer;
-  grid-template-columns: 164px 52px minmax(220px, 1fr) minmax(180px, auto);
+  grid-template-columns: 208px 52px minmax(220px, 1fr) minmax(180px, auto);
 }
 
 .playlistRow:hover,

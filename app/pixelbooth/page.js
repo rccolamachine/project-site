@@ -816,14 +816,8 @@ export default function Page() {
         const text = await res.text().catch(() => "");
         throw new Error(text || `Upload failed (${res.status})`);
       }
-      const json = await res.json(); // { id, url }
-
       setSaveResult({
-        url: json.url || "",
-        tone: json.emailWarning ? "warning" : "success",
-        message:
-          json.emailWarning ||
-          "Saved to guestbook. Notification email sent.",
+        message: "Saved to guestbook. Notification email sent.",
       });
 
       setShowSaveModal(false);
@@ -888,12 +882,7 @@ export default function Page() {
         </div>
 
         {saveResult ? (
-          <div className={`ui-feedback ${styles.saveFeedback}`} data-tone={saveResult.tone}>
-            {saveResult.message}{" "}
-            <a href={saveResult.url} target="_blank" rel="noreferrer">
-              {saveResult.url}
-            </a>
-          </div>
+          <div className={`ui-feedback ${styles.saveFeedback}`}>{saveResult.message}</div>
         ) : null}
 
         <div

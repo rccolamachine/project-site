@@ -26,31 +26,19 @@ function splitCsv(input) {
 }
 
 function getConfiguredGateUsername() {
-  return (
-    safeTrim(process.env.SONGS_API_USERNAME) ||
-    safeTrim(process.env.SONGS_USERNAME)
-  );
+  return safeTrim(process.env.SONGS_API_USERNAME);
 }
 
 function getConfiguredGatePassword() {
-  return (
-    safeTrim(process.env.SONGS_API_PASSWORD) ||
-    safeTrim(process.env.SONGS_PASSWORD)
-  );
+  return safeTrim(process.env.SONGS_API_PASSWORD);
 }
 
 function getHamPagerUsername() {
-  return (
-    safeTrim(process.env.HAMPAGER_API_USERNAME) ||
-    safeTrim(process.env.HAMPAGER_USERNAME)
-  );
+  return safeTrim(process.env.HAMPAGER_API_USERNAME);
 }
 
 function getHamPagerPassword() {
-  return (
-    safeTrim(process.env.HAMPAGER_API_PASSWORD) ||
-    safeTrim(process.env.HAMPAGER_PASSWORD)
-  );
+  return safeTrim(process.env.HAMPAGER_API_PASSWORD);
 }
 
 function getCallSignNames() {
@@ -329,7 +317,7 @@ export async function POST(req) {
       return NextResponse.json(
         {
           error:
-            "HamPager credentials are not configured. Set HAMPAGER_USERNAME and HAMPAGER_PASSWORD.",
+            "HamPager credentials are not configured. Set HAMPAGER_API_USERNAME and HAMPAGER_API_PASSWORD.",
         },
         { status: 500 },
       );

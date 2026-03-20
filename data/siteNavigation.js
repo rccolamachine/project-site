@@ -46,12 +46,12 @@ const ROUTE_CATALOG = [
       section: "Play",
       title: "Reactor",
       description:
-        "Fun little molecular modeling sandbox: throw some atoms into a box, change the conditions and the physics, and watch matter change. New: can you synthesize the molecules in the catalogue?",
+        "Chemical sandbox: throw some atoms into a box, change the conditions, and watch matter change. Can you synthesize the molecules in the catalogue? New: build your own automation flow!",
       cta: "Do computational chemistry",
     },
     about: {
       title: "Molecular Reactor",
-      desc: "Atoms, sliders, and curiosity in a box.",
+      desc: "Atoms, controls, and curiosity in a box.",
     },
   },
   {

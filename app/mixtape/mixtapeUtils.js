@@ -26,6 +26,7 @@ export function formatPlaylistAddedAt(input) {
   if (Number.isNaN(date.getTime())) return raw;
 
   return date.toLocaleDateString(undefined, {
+    weekday: "short",
     year: "numeric",
     month: "short",
     day: "numeric",
