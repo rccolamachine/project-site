@@ -6,6 +6,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.acs.org/doi/10.1021/acs.langmuir.1c03422",
     journal: "Langmuir",
     year: 2022,
+    pdfFileName: "pub-rareEarthSeparation.pdf",
     tags: ["rare-earths", "catalysis", "surface chemistry"],
   },
   {
@@ -15,6 +16,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.acs.org/doi/10.1021/acscatal.1c03646",
     journal: "ACS Catalysis",
     year: 2021,
+    pdfFileName: "pub-redoxBranchingPredictor.pdf",
     tags: ["catalysis", "polymers"],
   },
   {
@@ -24,6 +26,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2021/cp/d1cp03587h",
     journal: "Physical Chemistry Chemical Physics",
     year: 2021,
+    pdfFileName: "pub-titanateSurfaceAcidity.pdf",
     tags: ["catalysis", "surface chemistry"],
   },
   {
@@ -33,6 +36,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2021/cp/d1cp02466c",
     journal: "Physical Chemistry Chemical Physics",
     year: 2021,
+    pdfFileName: "pub-lanthanideActinideSeparation.pdf",
     tags: ["rare-earths", "catalysis"],
   },
   {
@@ -61,6 +65,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2020/cy/c9cy02538c",
     journal: "Catalysis Science and Technology",
     year: 2020,
+    pdfFileName: "pub-nickelCatalystMicrostructure.pdf",
     tags: ["catalysis", "polymers"],
   },
   {
@@ -99,6 +104,7 @@ export const publicationsCatalog = [
       "https://www.sciencedirect.com/science/article/abs/pii/S1010603016308024",
     journal: "Journal of Photochemistry and Photobiology A: Chemistry",
     year: 2017,
+    pdfFileName: "pub-anthraceneExcitedStates.pdf",
     tags: ["photochemistry", "catalysis"],
   },
   {
@@ -108,6 +114,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.acs.org/doi/10.1021/acs.jpcc.6b05528",
     journal: "The Journal of Physical Chemistry C",
     year: 2016,
+    pdfFileName: "pub-nerveAgentHydrolysis.pdf",
     tags: [
       "chemical warfare agents",
       "catalysis",
@@ -139,6 +146,7 @@ export const publicationsCatalog = [
     sourceUrl: "https://pubs.rsc.org/en/content/articlelanding/2014/cp/c4cp01982b",
     journal: "Physical Chemistry Chemical Physics",
     year: 2014,
+    pdfFileName: "pub-nitrateSurfaceReactions.pdf",
     tags: ["surface chemistry", "atmospheric chemistry"],
   },
   {
