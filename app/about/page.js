@@ -2,6 +2,7 @@ import "./about.css";
 import Image from "next/image";
 import Link from "next/link";
 import { ABOUT_INTERNAL_LINKS } from "@/data/siteNavigation";
+import MioPet from "@/components/MioPet";
 
 export const metadata = {
   title: "About | rccolamachine",
@@ -171,6 +172,18 @@ export default function AboutPage() {
           <p className="lede aboutLedeFollowup">
             Part portfolio, part lab, part snackable little universe.
           </p>
+        </div>
+
+        <div className="card aboutCard aboutWide">
+          <h2>My mio</h2>
+          <p className="aboutSubtle aboutSubtleTop">
+            My little desk pet from{" "}
+            <a href="https://www.mioclick.com" target="_blank" rel="noreferrer">
+              mioclick
+            </a>
+            .
+          </p>
+          <MioPet />
         </div>
 
         <div className="card aboutCard aboutWide">
