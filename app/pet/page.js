@@ -21,7 +21,7 @@ export default function PetPage() {
       />
       {WATCH_URL ? (
         <div className="petFrameWrap">
-          <iframe className="petFrame" src={WATCH_URL} title="Petworld live view" allow="autoplay" loading="lazy" />
+          <iframe className="petFrame" src={WATCH_URL} title="Petworld live view" allow="autoplay; fullscreen" allowFullScreen loading="lazy" />
         </div>
       ) : (
         <div className="petFeedNotice">The pet is still moving in. Check back soon.</div>
