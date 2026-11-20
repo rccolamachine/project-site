@@ -55,6 +55,23 @@ const ROUTE_CATALOG = [
     },
   },
   {
+    href: "/pet",
+    label: "Pet",
+    nav: true,
+    sitemap: true,
+    home: {
+      section: "Play",
+      title: "Petworld",
+      description:
+        "New: A live, read-only window into a little pet that lives on a Raspberry Pi. It explores a huge world on our clock, builds things, and keeps a research journal with its own photos and recordings.",
+      cta: "Peek at the pet",
+    },
+    about: {
+      title: "Petworld",
+      desc: "A live window into a pet living full-time on a Raspberry Pi.",
+    },
+  },
+  {
     href: "/button",
     label: "Button",
     nav: true,

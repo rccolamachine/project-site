@@ -1,0 +1,43 @@
+/* app/pet/pet.css: page shell for the embedded Petworld watch page. */
+.petPage .pageIntro {
+  margin-bottom: 14px;
+}
+
+.petFrameWrap {
+  position: relative;
+  width: 100%;
+  height: min(860px, 88vh);
+  min-height: 520px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(45, 226, 230, 0.35);
+  box-shadow: 0 0 0 1px rgba(255, 79, 216, 0.15), inset 0 0 40px rgba(138, 92, 255, 0.25);
+  background: #120a30;
+}
+
+.petFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.petFeedNotice {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  padding: 24px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--muted);
+  border: 1px solid rgba(45, 226, 230, 0.35);
+  border-radius: 14px;
+}
+
+@media (max-width: 600px) {
+  .petFrameWrap {
+    height: 80vh;
+    min-height: 460px;
+  }
+}
