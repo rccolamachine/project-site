@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { HOME_SECTIONS } from "@/data/siteNavigation";
 
@@ -65,33 +65,11 @@ function closeOpenNavDropdowns(exceptDropdown = null) {
   });
 }
 
-// on /pet the banner wears the pet's current name (rcblobmachine), from the live Petworld feed
-function usePetName(active) {
-  const [name, setName] = useState(null);
-  useEffect(() => {
-    const watch = process.env.NEXT_PUBLIC_PETWORLD_WATCH_URL;
-    if (!active || !watch) return;
-    let live = true;
-    fetch(new URL("/api/feed?name=1", watch))
-      .then((r) => r.json())
-      .then((j) => {
-        const n = String(j?.name || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
-        if (live && n) setName(n);
-      })
-      .catch(() => {});
-    return () => {
-      live = false;
-    };
-  }, [active]);
-  return name;
-}
-
 export default function SiteHeader() {
   const pathname = usePathname();
   const isHomeActive = isRouteActive(pathname, "/");
   const raw = titleFromPath(pathname);
-  const petName = usePetName(raw === "pet");
-  const middle = raw === "cola" ? "cola" : raw === "pet" && petName ? petName : singularizeForHeader(raw);
+  const middle = raw === "cola" ? "cola" : singularizeForHeader(raw); // /truman → rctrumanmachine
   const brandTextLength = `rc${middle}machine`.length;
   const brandFontSize =
     brandTextLength >= 22
