@@ -1,8 +1,8 @@
 import PageIntro from "@/components/PageIntro";
-import "./truman.css";
+import "./petworld.css";
 
 export const metadata = {
-  title: "Truman | rccolamachine",
+  title: "Petworld | rccolamachine",
   description:
     "A live, read-only window into a little pet that lives on a Raspberry Pi: it explores a big world, builds things, and keeps a research journal with its own photos and recordings.",
 };
@@ -12,11 +12,11 @@ export const metadata = {
 // serves the watch page embedded here.
 const WATCH_URL = process.env.NEXT_PUBLIC_PETWORLD_WATCH_URL || "";
 
-export default function TrumanPage() {
+export default function PetworldPage() {
   return (
     <section className="page petPage">
       <PageIntro
-        title="Truman"
+        title="Petworld"
         lede="A small, earnest, slightly awkward creature lives full-time on a Raspberry Pi in my house. Its world runs on our clock (same sun, moon and seasons), and nothing here is scripted: it decides what to do, makes friends, builds its home up from a tent, and keeps a research journal with its own photos, videos and sound recordings. This page is a read-only window. Just watch."
       />
       {WATCH_URL ? (

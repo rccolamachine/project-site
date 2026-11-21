@@ -69,7 +69,7 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const isHomeActive = isRouteActive(pathname, "/");
   const raw = titleFromPath(pathname);
-  const middle = raw === "cola" ? "cola" : singularizeForHeader(raw); // /truman → rctrumanmachine
+  const middle = raw === "cola" ? "cola" : singularizeForHeader(raw); // /petworld → rcpetworldmachine
   const brandTextLength = `rc${middle}machine`.length;
   const brandFontSize =
     brandTextLength >= 22
