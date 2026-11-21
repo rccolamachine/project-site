@@ -36,8 +36,10 @@
 }
 
 @media (max-width: 600px) {
+  /* phones: the world (on top) and its menu (underneath) fill the visible screen below the header */
   .petFrameWrap {
-    height: 80vh;
+    height: calc(100svh - 76px);
     min-height: 460px;
+    border-radius: 10px;
   }
 }
