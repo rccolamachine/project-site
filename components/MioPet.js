@@ -131,7 +131,7 @@ export default function MioPet({ mioId }) {
           )}
           <a
             className="mioShellChip"
-            href={mio?.liveViewUrl || "https://www.mioclick.com"}
+            href="https://www.mioclick.com"
             target="_blank"
             rel="noreferrer"
           >
