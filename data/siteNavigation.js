@@ -61,14 +61,14 @@ const ROUTE_CATALOG = [
     sitemap: true,
     home: {
       section: "Play",
-      title: "pipets",
+      title: "Pipets",
       description:
-        "New: A live, read-only window into a little pet that lives on a Raspberry Pi. It explores a huge world on our clock, builds things, and keeps a research journal with its own photos and recordings.",
-      cta: "Peek at the pet",
+        "New: A live, read-only window into two small creatures on a Raspberry Pi. They explore a big world, learn, build, and keep research journals.",
+      cta: "Peek at the pipets",
     },
     about: {
-      title: "pipets",
-      desc: "A live window into a pet living full-time on a Raspberry Pi.",
+      title: "Pipets",
+      desc: "A live window into two creatures living full-time on a Raspberry Pi, in 2D or 3D.",
     },
   },
   {
@@ -97,7 +97,7 @@ const ROUTE_CATALOG = [
       section: "Play",
       title: "Mixtape",
       description:
-        "New: Songs that are in my head when I wake up in the morning. Play a mixtape from my past.",
+        "Songs that are in my head when I wake up in the morning. Play a mixtape from my past.",
       cta: "Hear the voices",
     },
     about: {
@@ -113,7 +113,7 @@ const ROUTE_CATALOG = [
     home: {
       section: "Play",
       title: "Pager",
-      description: "New: 07734! Page Rob, like it was the 90s. Only over the internet.",
+      description: "07734! Page Rob, like it was the 90s. Only over the internet.",
       cta: "Bleep Bleep",
     },
     about: {
@@ -129,7 +129,7 @@ const ROUTE_CATALOG = [
     home: {
       section: "Play",
       title: "Packets",
-      description: "New: Track Rob's radios via APRS.",
+      description: "Track Rob's radios via APRS.",
       cta: "Follow Rob",
     },
     about: {
@@ -195,7 +195,7 @@ const ROUTE_CATALOG = [
       section: "Learn",
       title: "Publications",
       description:
-        "New: Research papers, citations, and links to Rob's published work.",
+        "Research papers, citations, and links to Rob's published work.",
       cta: "Browse publications",
     },
     about: {

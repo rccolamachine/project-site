@@ -347,7 +347,6 @@ export default function ButtonGamePage() {
           <div className="card">
             <div className={styles.chartHeader}>
               <span className={styles.chartTitle}>
-                <span className="ui-badgeNew">NEW</span>
                 <span className={styles.metricLabel}>Count over time</span>
               </span>
 
