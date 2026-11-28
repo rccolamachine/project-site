@@ -55,8 +55,8 @@ const ROUTE_CATALOG = [
     },
   },
   {
-    href: "/pet",
-    label: "Pet",
+    href: "/pipets",
+    label: "Pipets",
     nav: true,
     sitemap: true,
     home: {

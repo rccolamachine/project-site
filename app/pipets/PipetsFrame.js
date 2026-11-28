@@ -15,7 +15,7 @@ function withView(url, view) {
   }
 }
 
-export default function PetworldFrame({ src }) {
+export default function PipetsFrame({ src }) {
   const [view, setView] = useState("auto");
   const origin = (() => {
     try {
