@@ -1,8 +1,9 @@
 import PageIntro from "@/components/PageIntro";
+import PetworldFrame from "./PetworldFrame";
 import "./petworld.css";
 
 export const metadata = {
-  title: "Petworld | rccolamachine",
+  title: "pipets | rccolamachine",
   description:
     "A live, read-only window into a little pet that lives on a Raspberry Pi: it explores a big world, builds things, and keeps a research journal with its own photos and recordings.",
 };
@@ -16,13 +17,11 @@ export default function PetworldPage() {
   return (
     <section className="page petPage">
       <PageIntro
-        title="Petworld"
+        title="pipets"
         lede="A small, earnest, slightly awkward creature lives full-time on a Raspberry Pi in my house. Its world runs on our clock (same sun, moon and seasons), and nothing here is scripted: it decides what to do, makes friends, builds its home up from a tent, and keeps a research journal with its own photos, videos and sound recordings. This page is a read-only window. Just watch."
       />
       {WATCH_URL ? (
-        <div className="petFrameWrap">
-          <iframe className="petFrame" src={WATCH_URL} title="Petworld live view" allow="autoplay; fullscreen" allowFullScreen loading="lazy" />
-        </div>
+        <PetworldFrame src={WATCH_URL} />
       ) : (
         <div className="petFeedNotice">The pet is still moving in. Check back soon.</div>
       )}
