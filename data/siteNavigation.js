@@ -63,7 +63,7 @@ const ROUTE_CATALOG = [
       section: "Play",
       title: "Pipets",
       description:
-        "New: A live, read-only window into two small creatures living on a Raspberry Pi. They explore a big world on our clock, learn as they go, build things, and keep research journals with their own photos and recordings.",
+        "New: A live, read-only window into two small creatures on a Raspberry Pi. They explore a big world, learn, build, and keep research journals.",
       cta: "Peek at the pipets",
     },
     about: {
