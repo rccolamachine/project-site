@@ -43,3 +43,19 @@
     border-radius: 10px;
   }
 }
+
+.petViewPick {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.petViewPick select {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid rgba(45, 226, 230, 0.35);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
