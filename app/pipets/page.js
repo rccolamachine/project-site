@@ -3,9 +3,9 @@ import PipetsFrame from "./PipetsFrame";
 import "./pipets.css";
 
 export const metadata = {
-  title: "pipets | rccolamachine",
+  title: "Pipets | rccolamachine",
   description:
-    "A live, read-only window into a little pet that lives on a Raspberry Pi: it explores a big world, builds things, and keeps a research journal with its own photos and recordings.",
+    "A live, read-only window into two small creatures that live on a Raspberry Pi: they explore a big world on our clock, learn as they go, build things, and keep research journals with their own photos and recordings.",
 };
 
 // The pet and its world live in their own project (the petworld repo) and run on a
@@ -18,8 +18,8 @@ export default function PipetsPage() {
   return (
     <section className="page petPage">
       <PageIntro
-        title="pipets"
-        lede="A small, earnest, slightly awkward creature lives full-time on a Raspberry Pi in my house. Its world runs on our clock (same sun, moon and seasons), and nothing here is scripted: it decides what to do, makes friends, builds its home up from a tent, and keeps a research journal with its own photos, videos and sound recordings. This page is a read-only window. Just watch."
+        title="Pipets"
+        lede="Two small, earnest, slightly awkward cube creatures live full-time on a Raspberry Pi in my house. Their world runs on our clock (same sun, moon, weather and seasons) and is full of towns, townsfolk, plants and animals. Nothing here is scripted: they decide what to do, learn what to eat and what to fear, make friends, build their homes up from a tent, and keep research journals with their own photos, videos and sound recordings. This page is a read-only window. Switch between 2D and 3D, or just watch."
       />
       {WATCH_URL ? (
         <PipetsFrame src={WATCH_URL} />

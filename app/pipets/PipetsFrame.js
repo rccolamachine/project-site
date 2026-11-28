@@ -61,7 +61,7 @@ export default function PipetsFrame({ src }) {
           key={view}
           className="petFrame"
           src={withView(src, view)}
-          title="pipets live view"
+          title="Pipets live view"
           allow="autoplay; fullscreen"
           allowFullScreen
           loading="lazy"

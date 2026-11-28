@@ -61,14 +61,14 @@ const ROUTE_CATALOG = [
     sitemap: true,
     home: {
       section: "Play",
-      title: "pipets",
+      title: "Pipets",
       description:
-        "New: A live, read-only window into a little pet that lives on a Raspberry Pi. It explores a huge world on our clock, builds things, and keeps a research journal with its own photos and recordings.",
-      cta: "Peek at the pet",
+        "New: A live, read-only window into two small creatures living on a Raspberry Pi. They explore a big world on our clock, learn as they go, build things, and keep research journals with their own photos and recordings.",
+      cta: "Peek at the pipets",
     },
     about: {
-      title: "pipets",
-      desc: "A live window into a pet living full-time on a Raspberry Pi.",
+      title: "Pipets",
+      desc: "A live window into two creatures living full-time on a Raspberry Pi, in 2D or 3D.",
     },
   },
   {
