@@ -97,7 +97,7 @@ const ROUTE_CATALOG = [
       section: "Play",
       title: "Mixtape",
       description:
-        "New: Songs that are in my head when I wake up in the morning. Play a mixtape from my past.",
+        "Songs that are in my head when I wake up in the morning. Play a mixtape from my past.",
       cta: "Hear the voices",
     },
     about: {
@@ -113,7 +113,7 @@ const ROUTE_CATALOG = [
     home: {
       section: "Play",
       title: "Pager",
-      description: "New: 07734! Page Rob, like it was the 90s. Only over the internet.",
+      description: "07734! Page Rob, like it was the 90s. Only over the internet.",
       cta: "Bleep Bleep",
     },
     about: {
@@ -129,7 +129,7 @@ const ROUTE_CATALOG = [
     home: {
       section: "Play",
       title: "Packets",
-      description: "New: Track Rob's radios via APRS.",
+      description: "Track Rob's radios via APRS.",
       cta: "Follow Rob",
     },
     about: {
@@ -195,7 +195,7 @@ const ROUTE_CATALOG = [
       section: "Learn",
       title: "Publications",
       description:
-        "New: Research papers, citations, and links to Rob's published work.",
+        "Research papers, citations, and links to Rob's published work.",
       cta: "Browse publications",
     },
     about: {

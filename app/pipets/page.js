@@ -19,7 +19,7 @@ export default function PipetsPage() {
     <section className="page petPage">
       <PageIntro
         title="Pipets"
-        lede="Two small, awkward cube creatures live full-time on a Raspberry Pi in my house. Their world runs on our clock, and nothing is scripted: they learn, make friends, build their homes up from a tent, and keep research journals with their own photos and recordings. This page is a read-only window. Just watch."
+        lede="Two small, awkward cube creatures live full-time on a Raspberry Pi in my house, thinking with small AI models that run right there. Their world runs on our clock, and nothing is scripted: they learn from what they live, make friends, build their homes up from a tent, and keep research journals with their own photos and recordings. This page is a read-only window. Just watch."
       />
       {WATCH_URL ? (
         <PipetsFrame src={WATCH_URL} />
