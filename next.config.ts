@@ -1,11 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // the Petworld page lives at /petworld (it was /pet, then briefly /truman)
+  // the pipets page lives at /pipets (it was /petworld, /pet, then briefly /truman)
   async redirects() {
     return [
-      { source: "/pet", destination: "/petworld", permanent: true },
-      { source: "/truman", destination: "/petworld", permanent: true },
+      { source: "/pet", destination: "/pipets", permanent: true },
+      { source: "/petworld", destination: "/pipets", permanent: true },
+      { source: "/truman", destination: "/pipets", permanent: true },
     ];
   },
   turbopack: {
